@@ -2,6 +2,7 @@ import {
   Button,
   ButtonGroup,
   Card,
+  Checkbox,
   Divider,
   Elevation,
   H4,
@@ -19,6 +20,8 @@ import { SceneHelpers } from "./helpers";
 
 interface ISceneCardProps {
   scene: GQL.SlimSceneDataFragment;
+  selected: boolean | undefined;
+  onSelectedChanged: (selected : boolean) => void;
 }
 
 export const SceneCard: FunctionComponent<ISceneCardProps> = (props: ISceneCardProps) => {
@@ -122,6 +125,12 @@ export const SceneCard: FunctionComponent<ISceneCardProps> = (props: ISceneCardP
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      <Checkbox
+        className="card-select"
+        checked={props.selected}
+        onChange={() => props.onSelectedChanged(!props.selected)}
+        onClick={(event: React.MouseEvent<HTMLInputElement, MouseEvent>) => { event.stopPropagation(); } }
+      />
       <Link to={`/scenes/${props.scene.id}`} className="image previewable">
         {maybeRenderRatingBanner()}
         <video className="preview" loop={true} poster={props.scene.paths.screenshot || ""} ref={videoHoverHook.videoEl}>

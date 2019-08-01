@@ -1,5 +1,5 @@
 import _ from "lodash";
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, useState } from "react";
 import { QueryHookResult } from "react-apollo-hooks";
 import { FindScenesQuery, FindScenesVariables } from "../../core/generated-graphql";
 import { ListHook } from "../../hooks/ListHook";
@@ -18,12 +18,25 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
     renderContent,
   });
 
+  const [selectedScenes, setSelectedScenes] = useState<Map<string, boolean>>(new Map());
+
   function renderContent(result: QueryHookResult<FindScenesQuery, FindScenesVariables>, filter: ListFilterModel) {
     if (!result.data || !result.data.findScenes) { return; }
     if (filter.displayMode === DisplayMode.Grid) {
       return (
         <div className="grid">
-          {result.data.findScenes.scenes.map((scene) => (<SceneCard key={scene.id} scene={scene} />))}
+          {result.data.findScenes.scenes.map((scene) => (
+            <SceneCard 
+              key={scene.id} 
+              scene={scene}
+              selected={selectedScenes && selectedScenes.get(scene.id)}
+              onSelectedChanged={() => {
+                if (selectedScenes) {
+                  selectedScenes.set(scene.id, !selectedScenes.get(scene.id));
+                  setSelectedScenes(selectedScenes);
+                }
+              }} />)
+          )}
         </div>
       );
     } else if (filter.displayMode === DisplayMode.List) {
