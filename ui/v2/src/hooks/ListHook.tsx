@@ -20,12 +20,14 @@ export interface IListHookData {
 export interface IListHookOptions {
   filterMode: FilterMode;
   props: IBaseProps;
-  renderContent: (result: QueryHookResult<any, any>, filter: ListFilterModel) => JSX.Element | undefined;
+  renderContent: (result: QueryHookResult<any, any>, filter: ListFilterModel, onSelectedChanged: (selected : any[]) => void) => JSX.Element | undefined;
+  renderSelectedOptions: (selected: any[]) => JSX.Element | undefined;
 }
 
 export class ListHook {
   public static useList(options: IListHookOptions): IListHookData {
     const [filter, setFilter] = useState<ListFilterModel>(new ListFilterModel(options.filterMode));
+    const [selected, setSelected] = useState<any[]>([]);
 
     // Update the filter when the query parameters change
     useEffect(() => {
@@ -158,6 +160,10 @@ export class ListHook {
       setFilter(newFilter);
     }
 
+    function onSelectedChanged(selected : any[]) {
+      setSelected(selected);
+    }
+
     const template = (
       <div>
         <ListFilter
@@ -170,9 +176,10 @@ export class ListHook {
           onRemoveCriterion={onRemoveCriterion}
           filter={filter}
         />
+        {options.renderSelectedOptions(selected)}
         {result.loading ? <Spinner size={Spinner.SIZE_LARGE} /> : undefined}
         {result.error ? <h1>{result.error.message}</h1> : undefined}
-        {options.renderContent(result, filter)}
+        {options.renderContent(result, filter, onSelectedChanged)}
         <Pagination
           itemsPerPage={filter.itemsPerPage}
           currentPage={filter.currentPage}

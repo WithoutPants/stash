@@ -84,7 +84,7 @@ video.preview {
   object-fit: cover;
 }
 
-.filter-item {
+.filter-item, .operation-item {
   margin: 0 10px;
 }
 
@@ -101,7 +101,7 @@ video.preview {
   }
 }
 
-.filter-container {
+.filter-container, .operation-container {
   display: flex;
   justify-content: center;
   margin: 10px auto;

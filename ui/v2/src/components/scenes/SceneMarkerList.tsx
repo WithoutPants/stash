@@ -15,7 +15,12 @@ export const SceneMarkerList: FunctionComponent<IProps> = (props: IProps) => {
     filterMode: FilterMode.SceneMarkers,
     props,
     renderContent,
+    renderSelectedOptions
   });
+
+  function renderSelectedOptions(selected : any[]) {
+    return undefined;
+  }
 
   function renderContent(
     result: QueryHookResult<FindSceneMarkersQuery, FindSceneMarkersVariables>,

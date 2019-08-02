@@ -138,6 +138,10 @@ export class StashService {
     return GQL.useSceneUpdate({ variables: input });
   }
 
+  public static useBulkSceneUpdate(input: GQL.BulkSceneUpdateInput) {
+    return GQL.useBulkSceneUpdate({ variables: input });
+  }
+
   public static useStudioCreate(input: GQL.StudioCreateInput) {
     return GQL.useStudioCreate({ variables: input });
   }

@@ -8,6 +8,8 @@ import { ListFilterModel } from "../../models/list-filter/filter";
 import { DisplayMode, FilterMode } from "../../models/list-filter/types";
 import { WallPanel } from "../Wall/WallPanel";
 import { SceneCard } from "./SceneCard";
+import { SceneSelectedOptions } from "./SceneSelectedOptions";
+import * as GQL from "../../core/generated-graphql";
 
 interface ISceneListProps extends IBaseProps {}
 
@@ -16,11 +18,47 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
     filterMode: FilterMode.Scenes,
     props,
     renderContent,
+    renderSelectedOptions
   });
 
   const [selectedScenes, setSelectedScenes] = useState<Map<string, boolean>>(new Map());
+  const [selectedSceneArray, setSelectedSceneArray] = useState<GQL.SlimSceneDataFragment[]>([]);
 
-  function renderContent(result: QueryHookResult<FindScenesQuery, FindScenesVariables>, filter: ListFilterModel) {
+  function sceneSelected(scene : GQL.SlimSceneDataFragment) {
+    var prevValue : boolean | undefined = false;
+    if (selectedScenes) {
+      prevValue = !!selectedScenes.get(scene.id);
+      selectedScenes.set(scene.id, !prevValue);
+      setSelectedScenes(selectedScenes);
+      
+      if (prevValue) {
+        // remove object from array
+        var index = selectedSceneArray.indexOf(scene);
+        if (index !== -1) {
+          selectedSceneArray.splice(index, 1);
+        }
+      } else {
+        // add to the array
+        selectedSceneArray.push(scene);
+      }
+
+      setSelectedSceneArray(selectedSceneArray.slice());
+    }
+  }
+
+  function onEdit() {
+    console.log("modifying");
+  }
+
+  function renderSelectedOptions(selected : any[]) {
+    return (
+      <>
+      {selected && selected.length > 0 ? <SceneSelectedOptions selected={selected} onEdit={() => onEdit()}/> : undefined}
+      </>
+    );
+  }
+
+  function renderContent(result: QueryHookResult<FindScenesQuery, FindScenesVariables>, filter: ListFilterModel, onSelectedChanged: (selected : any[]) => void) {
     if (!result.data || !result.data.findScenes) { return; }
     if (filter.displayMode === DisplayMode.Grid) {
       return (
@@ -31,10 +69,8 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
               scene={scene}
               selected={selectedScenes && selectedScenes.get(scene.id)}
               onSelectedChanged={() => {
-                if (selectedScenes) {
-                  selectedScenes.set(scene.id, !selectedScenes.get(scene.id));
-                  setSelectedScenes(selectedScenes);
-                }
+                sceneSelected(scene);
+                onSelectedChanged(selectedSceneArray);
               }} />)
           )}
         </div>
