@@ -27,7 +27,7 @@ interface IListOperationProps {
 }
 
 export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (props: IListOperationProps) => {
-  const [rating, setRating] = useState<number | undefined>(undefined);
+  const [rating, setRating] = useState<string>("");
   const [studioId, setStudioId] = useState<string | undefined>(undefined);
   const [performerIds, setPerformerIds] = useState<string[] | undefined>(undefined);
   const [tagIds, setTagIds] = useState<string[] | undefined>(undefined);
@@ -45,14 +45,13 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
     var aggregateTagIds = getTagIds(props.selected);
 
     var sceneInput : GQL.BulkSceneUpdateInput = {
-      // TODO - temp hack until we get the bulk interface done
       ids: props.selected.map((scene) => {
         return scene.id;
       })
     };
 
     // if rating is undefined 
-    if (rating === undefined) {
+    if (rating === "") {
       // and all scenes have the same rating, then we are unsetting the rating.
       if(aggregateRating) {
         sceneInput.rating = undefined;
@@ -60,7 +59,7 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
       // otherwise not setting the rating
     } else {
       // if rating is set, then we are setting the rating for all
-      sceneInput.rating = rating;
+      sceneInput.rating = Number.parseInt(rating);
     }
     
     // if studioId is undefined 
@@ -198,22 +197,23 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
       return object.id;
     }
 
-    var rating : number | undefined;
+    var rating : string = "";
     var studioId : string | undefined;
     var performerIds : string[] = [];
     var tagIds : string[] = [];
     var first = true;
 
     state.forEach((scene : GQL.SlimSceneDataFragment) => {
+      var thisRating = scene.rating ? scene.rating.toString() : "";
       if (first) {
-        rating = scene.rating;
+        rating = thisRating;
         studioId = scene.studio ? scene.studio.id : undefined;
         performerIds = !!scene.performers ? scene.performers.map(toId).sort() : [];
         tagIds = !!scene.tags ? scene.tags.map(toId).sort() : [];
         first = false;
       } else {
-        if (rating !== scene.rating) {
-          rating = undefined;
+        if (rating !== thisRating) {
+          rating = "";
         }
         if (scene.studio && studioId != scene.studio.id) {
           studioId = undefined;
@@ -265,7 +265,7 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
           <FormGroup className="operation-item" label="Rating">
             <HTMLSelect
               options={["", 1, 2, 3, 4, 5]}
-              onChange={(event) => setRating(parseInt(event.target.value, 10))}
+              onChange={(event) => setRating(event.target.value)}
               value={rating}
             />
           </FormGroup>

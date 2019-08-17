@@ -51,16 +51,14 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
 
   /* eslint-disable react-hooks/rules-of-hooks */
   const [selectedItems, setSelectedItems] = React.useState<ValidTypes[]>([]);
-  const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
-  /* eslint-enable */
 
-  if (!!props.initialIds && selectedItems.length === 0 && !isInitialized) {
-    const initialItems = items.filter((item) => props.initialIds!.includes(item.id));
-    if (initialItems.length > 0) {
+  React.useEffect(() => {
+    if (!!props.initialIds) {
+      const initialItems = items.filter((item) => props.initialIds!.includes(item.id));
       setSelectedItems(initialItems);
-      setIsInitialized(true);
     }
-  }
+  }, [props.initialIds]);
+  /* eslint-enable */
 
   const renderItem: ItemRenderer<ValidTypes> = (item, itemProps) => {
     if (!itemProps.modifiers.matchesPredicate) { return null; }
