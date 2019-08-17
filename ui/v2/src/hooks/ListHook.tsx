@@ -15,6 +15,7 @@ export interface IListHookData {
   filter: ListFilterModel;
   template: JSX.Element;
   options: IListHookOptions;
+  refresh: () => void;
 }
 
 export interface IListHookOptions {
@@ -123,6 +124,11 @@ export class ListHook {
       setFilter(newFilter);
     }
 
+    function refresh() {
+      const newFilter = _.cloneDeep(filter);
+      setFilter(newFilter);
+    }
+
     function onAddCriterion(criterion: Criterion, oldId?: string) {
       const newFilter = _.cloneDeep(filter);
 
@@ -189,6 +195,6 @@ export class ListHook {
       </div>
     );
 
-    return { filter, template, options };
+    return { filter, template, options, refresh };
   }
 }

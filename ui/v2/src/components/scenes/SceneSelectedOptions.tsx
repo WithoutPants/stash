@@ -23,7 +23,7 @@ import { ToastUtils } from "../../utils/toasts";
 
 interface IListOperationProps {
   selected: GQL.SlimSceneDataFragment[],
-  onEdit: () => void;
+  onScenesUpdated: () => void;
 }
 
 export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (props: IListOperationProps) => {
@@ -110,6 +110,7 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
       ErrorUtils.handle(e);
     }
     setIsLoading(false);
+    props.onScenesUpdated();
   }
 
   function getRating(state: GQL.SlimSceneDataFragment[]) {

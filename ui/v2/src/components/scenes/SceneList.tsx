@@ -46,14 +46,14 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
     }
   }
 
-  function onEdit() {
-    console.log("modifying");
+  function onScenesUpdated() {
+    listData.refresh();
   }
 
   function renderSelectedOptions(selected : any[]) {
     return (
       <>
-      {selected && selected.length > 0 ? <SceneSelectedOptions selected={selected} onEdit={() => onEdit()}/> : undefined}
+      {selected && selected.length > 0 ? <SceneSelectedOptions selected={selected} onScenesUpdated={() => onScenesUpdated()}/> : undefined}
       </>
     );
   }
