@@ -63,8 +63,8 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
       }
       case "tags": {
         getInternalMultiSelect = () => { return InternalTagMultiSelect; };
-        getData = () => { const { data } = StashService.useAllStudiosForFilter(); return data; }
-        translateData = () => { let studioData = data as GQL.AllStudiosForFilterQuery; setItems(!!studioData && !!studioData.allStudios ? studioData.allStudios : []); };
+        getData = () => { const { data } = StashService.useAllTagsForFilter(); return data; }
+        translateData = () => { let tagData = data as GQL.AllTagsForFilterQuery; setItems(!!tagData && !!tagData.allTags ? tagData.allTags : []); };
         break;
       }
       default: {
