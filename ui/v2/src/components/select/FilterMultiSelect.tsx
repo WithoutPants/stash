@@ -5,6 +5,7 @@ import { IMultiSelectProps, ItemPredicate, ItemRenderer, MultiSelect } from "@bl
 import * as GQL from "../../core/generated-graphql";
 import { StashService } from "../../core/StashService";
 import { HTMLInputProps } from "../../models";
+import { getIn } from "formik";
 
 const InternalPerformerMultiSelect = MultiSelect.ofType<GQL.AllPerformersForFilterAllPerformers>();
 const InternalTagMultiSelect = MultiSelect.ofType<GQL.AllTagsForFilterAllTags>();
@@ -22,43 +23,61 @@ interface IProps extends HTMLInputProps, Partial<IMultiSelectProps<ValidTypes>> 
 }
 
 export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps) => {
-  let items: ValidTypes[];
-  let InternalMultiSelect: new (props: IMultiSelectProps<any>) => MultiSelect<any>;
-  switch (props.type) {
-    case "performers": {
-      const { data } = StashService.useAllPerformersForFilter();
-      items = !!data && !!data.allPerformers ? data.allPerformers : [];
-      InternalMultiSelect = InternalPerformerMultiSelect;
-      break;
-    }
-    case "studios": {
-      const { data } = StashService.useAllStudiosForFilter();
-      items = !!data && !!data.allStudios ? data.allStudios : [];
-      InternalMultiSelect = InternalStudioMultiSelect;
-      break;
-    }
-    case "tags": {
-      const { data } = StashService.useAllTagsForFilter();
-      items = !!data && !!data.allTags ? data.allTags : [];
-      InternalMultiSelect = InternalTagMultiSelect;
-      break;
-    }
-    default: {
-      console.error("Unhandled case in FilterMultiSelect");
-      return <>Unhandled case in FilterMultiSelect</>;
-    }
-  }
-
-  /* eslint-disable react-hooks/rules-of-hooks */
+  let MultiSelectImpl = getMultiSelectImpl();
+  let InternalMultiSelect = MultiSelectImpl.getInternalMultiSelect();
+  const data = MultiSelectImpl.getData();
+  
   const [selectedItems, setSelectedItems] = React.useState<ValidTypes[]>([]);
+  const [items, setItems] = React.useState<ValidTypes[]>([]);
 
   React.useEffect(() => {
-    if (!!props.initialIds) {
+    if (!!data) {
+      MultiSelectImpl.translateData();
+    }
+  }, [data]);
+
+  React.useEffect(() => {
+    if (!!props.initialIds && !!items) {
       const initialItems = items.filter((item) => props.initialIds!.includes(item.id));
       setSelectedItems(initialItems);
     }
-  }, [props.initialIds]);
-  /* eslint-enable */
+  }, [props.initialIds, items]);
+
+  function getMultiSelectImpl() {
+    let getInternalMultiSelect: () => new (props: IMultiSelectProps<any>) => MultiSelect<any>;
+    let getData: () => GQL.AllPerformersForFilterQuery | GQL.AllStudiosForFilterQuery | GQL.AllTagsForFilterQuery | undefined;
+    let translateData: () => void;
+
+    switch (props.type) {
+      case "performers": {
+        getInternalMultiSelect = () => { return InternalPerformerMultiSelect; };
+        getData = () => { const { data } = StashService.useAllPerformersForFilter(); return data; }
+        translateData = () => { let perfData = data as GQL.AllPerformersForFilterQuery; setItems(!!perfData && !!perfData.allPerformers ? perfData.allPerformers : []); };
+        break;
+      }
+      case "studios": {
+        getInternalMultiSelect = () => { return InternalStudioMultiSelect; };
+        getData = () => { const { data } = StashService.useAllStudiosForFilter(); return data; }
+        translateData = () => { let studioData = data as GQL.AllStudiosForFilterQuery; setItems(!!studioData && !!studioData.allStudios ? studioData.allStudios : []); };
+        break;
+      }
+      case "tags": {
+        getInternalMultiSelect = () => { return InternalTagMultiSelect; };
+        getData = () => { const { data } = StashService.useAllStudiosForFilter(); return data; }
+        translateData = () => { let studioData = data as GQL.AllStudiosForFilterQuery; setItems(!!studioData && !!studioData.allStudios ? studioData.allStudios : []); };
+        break;
+      }
+      default: {
+        throw "Unhandled case in FilterMultiSelect";
+      }
+    }
+
+    return {
+      getInternalMultiSelect: getInternalMultiSelect,
+      getData: getData,
+      translateData: translateData
+    };
+  }
 
   const renderItem: ItemRenderer<ValidTypes> = (item, itemProps) => {
     if (!itemProps.modifiers.matchesPredicate) { return null; }
