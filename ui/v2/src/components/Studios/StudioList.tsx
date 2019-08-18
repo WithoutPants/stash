@@ -18,7 +18,7 @@ export const StudioList: FunctionComponent<IProps> = (props: IProps) => {
     renderSelectedOptions
   });
 
-  function renderSelectedOptions(selected : any[]) {
+  function renderSelectedOptions() {
     return undefined;
   }
 

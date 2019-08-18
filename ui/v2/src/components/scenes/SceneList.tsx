@@ -14,15 +14,17 @@ import * as GQL from "../../core/generated-graphql";
 interface ISceneListProps extends IBaseProps {}
 
 export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListProps) => {
+  const [selectedScenes, setSelectedScenes] = useState<Map<string, boolean>>(new Map());
+  const [selectedSceneArray, setSelectedSceneArray] = useState<GQL.SlimSceneDataFragment[]>([]);
+
   const listData = ListHook.useList({
     filterMode: FilterMode.Scenes,
     props,
     renderContent,
-    renderSelectedOptions
+    renderSelectedOptions,
+    onSelectAll: onSelectAll,
+    onSelectNone: onSelectNone
   });
-
-  const [selectedScenes, setSelectedScenes] = useState<Map<string, boolean>>(new Map());
-  const [selectedSceneArray, setSelectedSceneArray] = useState<GQL.SlimSceneDataFragment[]>([]);
 
   function sceneSelected(scene : GQL.SlimSceneDataFragment) {
     var prevValue : boolean | undefined = false;
@@ -50,15 +52,35 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
     listData.refresh();
   }
 
-  function renderSelectedOptions(selected : any[]) {
+  function onSelectAll(scenes: QueryHookResult<FindScenesQuery, FindScenesVariables>) {
+    var newSelectedScenes = new Map();
+    var newSelectedSceneArray : GQL.SlimSceneDataFragment[] = [];
+    
+    if (!scenes.data || !scenes.data.findScenes) { return; }
+
+    scenes.data.findScenes.scenes.forEach((scene) => {
+      newSelectedScenes.set(scene.id, true);
+      newSelectedSceneArray.push(scene);
+    });
+
+    setSelectedScenes(newSelectedScenes);
+    setSelectedSceneArray(newSelectedSceneArray);
+  }
+
+  function onSelectNone() {
+    setSelectedScenes(new Map());
+    setSelectedSceneArray([]);
+  }
+
+  function renderSelectedOptions() {
     return (
       <>
-      {selected && selected.length > 0 ? <SceneSelectedOptions selected={selected} onScenesUpdated={() => onScenesUpdated()}/> : undefined}
+      {selectedSceneArray && selectedSceneArray.length > 0 ? <SceneSelectedOptions selected={selectedSceneArray} onScenesUpdated={() => onScenesUpdated()}/> : undefined}
       </>
     );
   }
 
-  function renderContent(result: QueryHookResult<FindScenesQuery, FindScenesVariables>, filter: ListFilterModel, onSelectedChanged: (selected : any[]) => void) {
+  function renderContent(result: QueryHookResult<FindScenesQuery, FindScenesVariables>, filter: ListFilterModel) {
     if (!result.data || !result.data.findScenes) { return; }
     if (filter.displayMode === DisplayMode.Grid) {
       return (
@@ -70,7 +92,6 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
               selected={selectedScenes && selectedScenes.get(scene.id)}
               onSelectedChanged={() => {
                 sceneSelected(scene);
-                onSelectedChanged(selectedSceneArray);
               }} />)
           )}
         </div>

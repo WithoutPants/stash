@@ -21,15 +21,16 @@ export interface IListHookData {
 export interface IListHookOptions {
   filterMode: FilterMode;
   props: IBaseProps;
-  renderContent: (result: QueryHookResult<any, any>, filter: ListFilterModel, onSelectedChanged: (selected : any[]) => void) => JSX.Element | undefined;
-  renderSelectedOptions: (selected: any[]) => JSX.Element | undefined;
+  renderContent: (result: QueryHookResult<any, any>, filter: ListFilterModel) => JSX.Element | undefined;
+  renderSelectedOptions: () => JSX.Element | undefined;
+  onSelectAll?: (selections : QueryHookResult<any, any>) => void;
+  onSelectNone?: () => void;
 }
 
 export class ListHook {
   public static useList(options: IListHookOptions): IListHookData {
     const [filter, setFilter] = useState<ListFilterModel>(new ListFilterModel(options.filterMode));
-    const [selected, setSelected] = useState<any[]>([]);
-
+    
     // Update the filter when the query parameters change
     useEffect(() => {
       const queryParams = queryString.parse(options.props.location.search);
@@ -166,8 +167,16 @@ export class ListHook {
       setFilter(newFilter);
     }
 
-    function onSelectedChanged(selected : any[]) {
-      setSelected(selected);
+    function onSelectAll() {
+      if (options.onSelectAll) {
+        options.onSelectAll(result);
+      }
+    }
+
+    function onSelectNone() {
+      if (options.onSelectNone) {
+        options.onSelectNone();
+      }
     }
 
     const template = (
@@ -180,12 +189,14 @@ export class ListHook {
           onChangeDisplayMode={onChangeDisplayMode}
           onAddCriterion={onAddCriterion}
           onRemoveCriterion={onRemoveCriterion}
+          onSelectAll={() => onSelectAll()}
+          onSelectNone={() => onSelectNone()}
           filter={filter}
         />
-        {options.renderSelectedOptions(selected)}
+        {options.renderSelectedOptions()}
         {result.loading ? <Spinner size={Spinner.SIZE_LARGE} /> : undefined}
         {result.error ? <h1>{result.error.message}</h1> : undefined}
-        {options.renderContent(result, filter, onSelectedChanged)}
+        {options.renderContent(result, filter)}
         <Pagination
           itemsPerPage={filter.itemsPerPage}
           currentPage={filter.currentPage}

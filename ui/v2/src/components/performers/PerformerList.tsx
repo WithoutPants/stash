@@ -18,7 +18,7 @@ export const PerformerList: FunctionComponent<IPerformerListProps> = (props: IPe
     renderSelectedOptions
   });
 
-  function renderSelectedOptions(selected : any[]) {
+  function renderSelectedOptions() {
     return undefined;
   }
 
