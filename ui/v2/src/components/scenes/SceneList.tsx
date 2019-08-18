@@ -16,7 +16,10 @@ interface ISceneListProps extends IBaseProps {}
 export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListProps) => {
   const [selectedScenes, setSelectedScenes] = useState<Map<string, boolean>>(new Map());
   const [selectedSceneArray, setSelectedSceneArray] = useState<GQL.SlimSceneDataFragment[]>([]);
-
+  
+  // for shift-selection
+  const [lastClickedScene, setLastClickedScene] = useState<GQL.SlimSceneDataFragment | undefined>();
+  
   const listData = ListHook.useList({
     filterMode: FilterMode.Scenes,
     props,
@@ -27,6 +30,8 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
   });
 
   function sceneSelected(scene : GQL.SlimSceneDataFragment) {
+    setLastClickedScene(scene);
+    
     var prevValue : boolean | undefined = false;
     if (selectedScenes) {
       prevValue = !!selectedScenes.get(scene.id);
@@ -45,6 +50,40 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
       }
 
       setSelectedSceneArray(selectedSceneArray.slice());
+    }
+  }
+
+  function multiSelect(data : FindScenesQuery | undefined, scene : GQL.SlimSceneDataFragment) {
+    let startIndex = 0;
+    let thisIndex = -1;
+
+    if (data) {
+      if (!!lastClickedScene) {
+        startIndex = data.findScenes.scenes.indexOf(lastClickedScene);
+      }
+
+      thisIndex = data.findScenes.scenes.indexOf(scene);
+      selectRange(data, startIndex, thisIndex);
+    }
+  }
+
+  function selectRange(data : FindScenesQuery | undefined, startIndex : number, endIndex : number) {
+    if (startIndex > endIndex) {
+      let tmp = startIndex;
+      startIndex = endIndex;
+      endIndex = tmp;
+    }
+
+    if (data) {
+      let subset = data.findScenes.scenes.slice(startIndex, endIndex + 1);
+      
+      selectedScenes.clear();
+      subset.forEach((scene) => {
+        selectedScenes.set(scene.id, true);
+      });
+
+      setSelectedScenes(selectedScenes);
+      setSelectedSceneArray(subset);
     }
   }
 
@@ -90,8 +129,12 @@ export const SceneList: FunctionComponent<ISceneListProps> = (props: ISceneListP
               key={scene.id} 
               scene={scene}
               selected={selectedScenes && selectedScenes.get(scene.id)}
-              onSelectedChanged={() => {
-                sceneSelected(scene);
+              onSelectedChanged={(_, shiftKey) => {
+                if (shiftKey) {
+                  multiSelect(result.data, scene);
+                } else {
+                  sceneSelected(scene);
+                }
               }} />)
           )}
         </div>
