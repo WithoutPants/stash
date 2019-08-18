@@ -5,7 +5,8 @@ import { IMultiSelectProps, ItemPredicate, ItemRenderer, MultiSelect } from "@bl
 import * as GQL from "../../core/generated-graphql";
 import { StashService } from "../../core/StashService";
 import { HTMLInputProps } from "../../models";
-import { getIn } from "formik";
+import { ErrorUtils } from "../../utils/errors";
+import { ToastUtils } from "../../utils/toasts";
 
 const InternalPerformerMultiSelect = MultiSelect.ofType<GQL.AllPerformersForFilterAllPerformers>();
 const InternalTagMultiSelect = MultiSelect.ofType<GQL.AllTagsForFilterAllTags>();
@@ -29,12 +30,59 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
   
   const [selectedItems, setSelectedItems] = React.useState<ValidTypes[]>([]);
   const [items, setItems] = React.useState<ValidTypes[]>([]);
+  const [newTagName, setNewTagName] = React.useState<string>("");
+  const createTag = StashService.useTagCreate(getTagInput() as GQL.TagCreateInput);
 
   React.useEffect(() => {
     if (!!data) {
       MultiSelectImpl.translateData();
     }
   }, [data]);
+      
+  function getTagInput() {
+    const tagInput: Partial<GQL.TagCreateInput | GQL.TagUpdateInput> = { name: newTagName };
+    return tagInput;
+  }
+
+  async function onCreateNewObject(item: ValidTypes) {
+    var created : any;
+    if (props.type === "tags") {
+      try {
+        created = await createTag();
+        
+        addSelectedItem(created.data.tagCreate);
+
+        ToastUtils.success("Created tag");
+      } catch (e) {
+        ErrorUtils.handle(e);
+      }
+    }
+  }
+
+  function createNewTag(query : string) {
+    setNewTagName(query);
+    return {
+      name : query
+    };
+  }
+
+  function createNewRenderer(query: string, active: boolean, handleClick: React.MouseEventHandler<HTMLElement>) {
+    // if tag already exists with that name, then don't return anything
+    if (items.find((item) => {
+      return item.name === query;
+    })) {
+      return undefined;
+    }
+
+    return (
+      <MenuItem
+        icon="add"
+        text={`Create "${query}"`}
+        active={active}
+        onClick={handleClick}
+      />
+    );
+  }
 
   React.useEffect(() => {
     if (!!props.initialIds && !!items) {
@@ -47,6 +95,7 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
     let getInternalMultiSelect: () => new (props: IMultiSelectProps<any>) => MultiSelect<any>;
     let getData: () => GQL.AllPerformersForFilterQuery | GQL.AllStudiosForFilterQuery | GQL.AllTagsForFilterQuery | undefined;
     let translateData: () => void;
+    let createNewObject: ((query : string) => void) | undefined = undefined; 
 
     switch (props.type) {
       case "performers": {
@@ -65,6 +114,7 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
         getInternalMultiSelect = () => { return InternalTagMultiSelect; };
         getData = () => { const { data } = StashService.useAllTagsForFilter(); return data; }
         translateData = () => { let tagData = data as GQL.AllTagsForFilterQuery; setItems(!!tagData && !!tagData.allTags ? tagData.allTags : []); };
+        createNewObject = createNewTag;
         break;
       }
       default: {
@@ -75,7 +125,8 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
     return {
       getInternalMultiSelect: getInternalMultiSelect,
       getData: getData,
-      translateData: translateData
+      translateData: translateData,
+      createNewObject: createNewObject
     };
   }
 
@@ -97,10 +148,19 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
     return item.name!.toLowerCase().indexOf(query.toLowerCase()) >= 0;
   };
 
-  function onItemSelect(item: ValidTypes) {
+  function addSelectedItem(item: ValidTypes) {
     selectedItems.push(item);
     setSelectedItems(selectedItems);
     props.onUpdate(selectedItems);
+  }
+
+  function onItemSelect(item: ValidTypes) {
+    if (item.id === undefined) {
+      // create the new item, if applicable
+      onCreateNewObject(item);
+    } else {
+      addSelectedItem(item);
+    }
   }
 
   function onItemRemove(value: string, index: number) {
@@ -120,6 +180,8 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
       onItemSelect={onItemSelect}
       resetOnSelect={true}
       popoverProps={{position: "bottom"}}
+      createNewItemFromQuery={MultiSelectImpl.createNewObject}
+      createNewItemRenderer={createNewRenderer}
       {...props}
     />
   );
