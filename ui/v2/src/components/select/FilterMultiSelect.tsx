@@ -50,8 +50,10 @@ export const FilterMultiSelect: React.FunctionComponent<IProps> = (props: IProps
       try {
         created = await createTag();
         
+        items.push(created.data.tagCreate);
+        setItems(items.slice());
         addSelectedItem(created.data.tagCreate);
-
+        
         ToastUtils.success("Created tag");
       } catch (e) {
         ErrorUtils.handle(e);
