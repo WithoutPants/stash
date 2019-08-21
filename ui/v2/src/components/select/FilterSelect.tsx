@@ -22,44 +22,64 @@ interface IProps extends HTMLInputProps {
 }
 
 export const FilterSelect: React.FunctionComponent<IProps> = (props: IProps) => {
-  let items: ValidTypes[];
-  let InternalSelect: new (props: ISelectProps<any>) => Select<any>;
-  switch (props.type) {
-    case "performers": {
-      const { data } = StashService.useAllPerformersForFilter();
-      items = !!data && !!data.allPerformers ? data.allPerformers : [];
-      InternalSelect = InternalPerformerSelect;
-      break;
-    }
-    case "studios": {
-      const { data } = StashService.useAllStudiosForFilter();
-      items = !!data && !!data.allStudios ? data.allStudios : [];
-      InternalSelect = InternalStudioSelect;
-      break;
-    }
-    case "tags": {
-      const { data } = StashService.useAllTagsForFilter();
-      items = !!data && !!data.allTags ? data.allTags : [];
-      InternalSelect = InternalTagSelect;
-      break;
-    }
-    default: {
-      console.error("Unhandled case in FilterSelect");
-      return <>Unhandled case in FilterSelect</>;
-    }
-  }
+  let SelectImpl = getSelectImpl();
+  let InternalSelect = SelectImpl.getInternalSelect();
+  const data = SelectImpl.getData();
 
-  /* eslint-disable react-hooks/rules-of-hooks */
   const [selectedItem, setSelectedItem] = React.useState<ValidTypes | null>(null);
-  const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
-  /* eslint-enable */
-
-  if (!!props.initialId && !selectedItem && !isInitialized) {
-    const initialItem = items.find((item) => props.initialId === item.id);
-    if (!!initialItem) {
-      setSelectedItem(initialItem);
-      setIsInitialized(true);
+  const [items, setItems] = React.useState<ValidTypes[]>([]);
+ 
+  React.useEffect(() => {
+    if (!!data) {
+      SelectImpl.translateData();
     }
+  }, [data]);
+
+  React.useEffect(() => {
+    if (!!items) {
+      const initialItem = items.find((item) => props.initialId === item.id);
+      if (!!initialItem) {
+        setSelectedItem(initialItem);
+      } else {
+        setSelectedItem(null);
+      }
+    }
+  }, [props.initialId, items]);
+
+  function getSelectImpl() {
+    let getInternalSelect: () => new (props: ISelectProps<any>) => Select<any>;
+    let getData: () => GQL.AllPerformersForFilterQuery | GQL.AllStudiosForFilterQuery | GQL.AllTagsForFilterQuery | undefined;
+    let translateData: () => void;
+    
+    switch (props.type) {
+      case "performers": {
+        getInternalSelect = () => { return InternalPerformerSelect; };
+        getData = () => { const { data } = StashService.useAllPerformersForFilter(); return data; }
+        translateData = () => { let perfData = data as GQL.AllPerformersForFilterQuery; setItems(!!perfData && !!perfData.allPerformers ? perfData.allPerformers : []); };
+        break;
+      }
+      case "studios": {
+        getInternalSelect = () => { return InternalStudioSelect; };
+        getData = () => { const { data } = StashService.useAllStudiosForFilter(); return data; }
+        translateData = () => { let studioData = data as GQL.AllStudiosForFilterQuery; setItems(!!studioData && !!studioData.allStudios ? studioData.allStudios : []); };
+        break;
+      }
+      case "tags": {
+        getInternalSelect = () => { return InternalTagSelect; };
+        getData = () => { const { data } = StashService.useAllTagsForFilter(); return data; }
+        translateData = () => { let tagData = data as GQL.AllTagsForFilterQuery; setItems(!!tagData && !!tagData.allTags ? tagData.allTags : []); };
+        break;
+      }
+      default: {
+        throw "Unhandled case in FilterMultiSelect";
+      }
+    }
+
+    return {
+      getInternalSelect: getInternalSelect,
+      getData: getData,
+      translateData: translateData
+    };
   }
 
   const renderItem: ItemRenderer<ValidTypes> = (item, itemProps) => {

@@ -206,9 +206,11 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
 
     state.forEach((scene : GQL.SlimSceneDataFragment) => {
       var thisRating = scene.rating ? scene.rating.toString() : "";
+      var thisStudio = scene.studio ? scene.studio.id : undefined;
+
       if (first) {
         rating = thisRating;
-        studioId = scene.studio ? scene.studio.id : undefined;
+        studioId = thisStudio;
         performerIds = !!scene.performers ? scene.performers.map(toId).sort() : [];
         tagIds = !!scene.tags ? scene.tags.map(toId).sort() : [];
         first = false;
@@ -216,7 +218,7 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
         if (rating !== thisRating) {
           rating = "";
         }
-        if (scene.studio && studioId != scene.studio.id) {
+        if (studioId != thisStudio) {
           studioId = undefined;
         }
         const perfIds = !!scene.performers ? scene.performers.map(toId).sort() : [];
