@@ -63,7 +63,7 @@ export const SceneSelectedOptions: FunctionComponent<IListOperationProps> = (pro
     }
     
     // if studioId is undefined 
-    if (studioId !== undefined) {
+    if (studioId === undefined) {
       // and all scenes have the same studioId,
       // then unset the studioId, otherwise ignoring studioId
       if (aggregateStudioId) {
