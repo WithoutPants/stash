@@ -684,6 +684,22 @@ export type StatsStats = {
   tag_count: number;
 };
 
+export type VersionVariables = {};
+
+export type VersionQuery = {
+  __typename?: "Query";
+
+  version: VersionVersion;
+};
+
+export type VersionVersion = {
+  __typename?: "Version";
+
+  hash: string;
+
+  build_time: string;
+};
+
 export type FindPerformersVariables = {
   filter?: Maybe<FindFilterType>;
   performer_filter?: Maybe<PerformerFilterType>;
@@ -2216,6 +2232,22 @@ export function useStats(
 ) {
   return ReactApolloHooks.useQuery<StatsQuery, StatsVariables>(
     StatsDocument,
+    baseOptions
+  );
+}
+export const VersionDocument = gql`
+  query Version {
+    version {
+      hash
+      build_time
+    }
+  }
+`;
+export function useVersion(
+  baseOptions?: ReactApolloHooks.QueryHookOptions<VersionVariables>
+) {
+  return ReactApolloHooks.useQuery<VersionQuery, VersionVariables>(
+    VersionDocument,
     baseOptions
   );
 }
