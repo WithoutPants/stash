@@ -114,6 +114,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		BulkSceneUpdate    func(childComplexity int, input BulkSceneUpdateInput) int
 		ConfigureGeneral   func(childComplexity int, input ConfigGeneralInput) int
 		ConfigureInterface func(childComplexity int, input ConfigInterfaceInput) int
 		PerformerCreate    func(childComplexity int, input PerformerCreateInput) int
@@ -302,6 +303,7 @@ type GalleryResolver interface {
 type MutationResolver interface {
 	SceneUpdate(ctx context.Context, input SceneUpdateInput) (*Scene, error)
 	SceneDestroy(ctx context.Context, input SceneDestroyInput) (bool, error)
+	BulkSceneUpdate(ctx context.Context, input BulkSceneUpdateInput) ([]*Scene, error)
 	SceneMarkerCreate(ctx context.Context, input SceneMarkerCreateInput) (*SceneMarker, error)
 	SceneMarkerUpdate(ctx context.Context, input SceneMarkerUpdateInput) (*SceneMarker, error)
 	SceneMarkerDestroy(ctx context.Context, id string) (bool, error)
@@ -631,6 +633,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MarkerStringsResultType.Title(childComplexity), true
+
+	case "Mutation.bulkSceneUpdate":
+		if e.complexity.Mutation.BulkSceneUpdate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkSceneUpdate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkSceneUpdate(childComplexity, args["input"].(BulkSceneUpdateInput)), true
 
 	case "Mutation.configureGeneral":
 		if e.complexity.Mutation.ConfigureGeneral == nil {
@@ -1969,6 +1983,7 @@ type Query {
 type Mutation {
   sceneUpdate(input: SceneUpdateInput!): Scene
   sceneDestroy(input: SceneDestroyInput!): Boolean!
+  bulkSceneUpdate(input: BulkSceneUpdateInput!): [Scene!]
 
   sceneMarkerCreate(input: SceneMarkerCreateInput!): SceneMarker
   sceneMarkerUpdate(input: SceneMarkerUpdateInput!): SceneMarker
@@ -2332,6 +2347,20 @@ input SceneDestroyInput {
   delete_generated: Boolean
 }
 
+input BulkSceneUpdateInput {
+  clientMutationId: String
+  ids: [ID!]
+  title: String
+  details: String
+  url: String
+  date: String
+  rating: Int
+  studio_id: ID
+  gallery_id: ID
+  performer_ids: [ID!]
+  tag_ids: [ID!]
+}
+
 type FindScenesResultType {
   count: Int!
   scenes: [Scene!]!
@@ -2423,6 +2452,20 @@ input TagDestroyInput {
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_bulkSceneUpdate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 BulkSceneUpdateInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNBulkSceneUpdateInput2githubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐBulkSceneUpdateInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_configureGeneral_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -3880,6 +3923,37 @@ func (ec *executionContext) _Mutation_sceneDestroy(ctx context.Context, field gr
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_bulkSceneUpdate(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_bulkSceneUpdate_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkSceneUpdate(rctx, args["input"].(BulkSceneUpdateInput))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*Scene)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOScene2ᚕᚖgithubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐScene(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_sceneMarkerCreate(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
@@ -8490,6 +8564,84 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputBulkSceneUpdateInput(ctx context.Context, v interface{}) (BulkSceneUpdateInput, error) {
+	var it BulkSceneUpdateInput
+	var asMap = v.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "clientMutationId":
+			var err error
+			it.ClientMutationID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ids":
+			var err error
+			it.Ids, err = ec.unmarshalOID2ᚕstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "title":
+			var err error
+			it.Title, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "details":
+			var err error
+			it.Details, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "url":
+			var err error
+			it.URL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "date":
+			var err error
+			it.Date, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rating":
+			var err error
+			it.Rating, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "studio_id":
+			var err error
+			it.StudioID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gallery_id":
+			var err error
+			it.GalleryID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "performer_ids":
+			var err error
+			it.PerformerIds, err = ec.unmarshalOID2ᚕstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "tag_ids":
+			var err error
+			it.TagIds, err = ec.unmarshalOID2ᚕstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputConfigGeneralInput(ctx context.Context, v interface{}) (ConfigGeneralInput, error) {
 	var it ConfigGeneralInput
 	var asMap = v.(map[string]interface{})
@@ -9803,6 +9955,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "bulkSceneUpdate":
+			out.Values[i] = ec._Mutation_bulkSceneUpdate(ctx, field)
 		case "sceneMarkerCreate":
 			out.Values[i] = ec._Mutation_sceneMarkerCreate(ctx, field)
 		case "sceneMarkerUpdate":
@@ -11477,6 +11631,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNBulkSceneUpdateInput2githubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐBulkSceneUpdateInput(ctx context.Context, v interface{}) (BulkSceneUpdateInput, error) {
+	return ec.unmarshalInputBulkSceneUpdateInput(ctx, v)
+}
+
 func (ec *executionContext) unmarshalNConfigGeneralInput2githubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐConfigGeneralInput(ctx context.Context, v interface{}) (ConfigGeneralInput, error) {
 	return ec.unmarshalInputConfigGeneralInput(ctx, v)
 }
@@ -12743,6 +12901,46 @@ func (ec *executionContext) marshalOResolutionEnum2ᚖgithubᚗcomᚋstashappᚋ
 
 func (ec *executionContext) marshalOScene2githubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐScene(ctx context.Context, sel ast.SelectionSet, v Scene) graphql.Marshaler {
 	return ec._Scene(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOScene2ᚕᚖgithubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐScene(ctx context.Context, sel ast.SelectionSet, v []*Scene) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNScene2ᚖgithubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐScene(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOScene2ᚖgithubᚗcomᚋstashappᚋstashᚋpkgᚋmodelsᚐScene(ctx context.Context, sel ast.SelectionSet, v *Scene) graphql.Marshaler {

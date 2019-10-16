@@ -8,6 +8,20 @@ import (
 	"strconv"
 )
 
+type BulkSceneUpdateInput struct {
+	ClientMutationID *string  `json:"clientMutationId"`
+	Ids              []string `json:"ids"`
+	Title            *string  `json:"title"`
+	Details          *string  `json:"details"`
+	URL              *string  `json:"url"`
+	Date             *string  `json:"date"`
+	Rating           *int     `json:"rating"`
+	StudioID         *string  `json:"studio_id"`
+	GalleryID        *string  `json:"gallery_id"`
+	PerformerIds     []string `json:"performer_ids"`
+	TagIds           []string `json:"tag_ids"`
+}
+
 type ConfigGeneralInput struct {
 	// Array of file paths to content
 	Stashes []string `json:"stashes"`

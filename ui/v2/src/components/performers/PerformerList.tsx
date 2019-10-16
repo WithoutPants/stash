@@ -15,7 +15,12 @@ export const PerformerList: FunctionComponent<IPerformerListProps> = (props: IPe
     filterMode: FilterMode.Performers,
     props,
     renderContent,
+    renderSelectedOptions
   });
+
+  function renderSelectedOptions() {
+    return undefined;
+  }
 
   function renderContent(
     result: QueryHookResult<FindPerformersQuery, FindPerformersVariables>, filter: ListFilterModel) {

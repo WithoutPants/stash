@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated in 2019-10-12T18:20:41+11:00
+// Generated in 2019-10-16T13:36:43+11:00
 export type Maybe<T> = T | undefined;
 
 export interface SceneFilterType {
@@ -98,6 +98,30 @@ export interface SceneDestroyInput {
   delete_file?: Maybe<boolean>;
 
   delete_generated?: Maybe<boolean>;
+}
+
+export interface BulkSceneUpdateInput {
+  clientMutationId?: Maybe<string>;
+
+  ids?: Maybe<string[]>;
+
+  title?: Maybe<string>;
+
+  details?: Maybe<string>;
+
+  url?: Maybe<string>;
+
+  date?: Maybe<string>;
+
+  rating?: Maybe<number>;
+
+  studio_id?: Maybe<string>;
+
+  gallery_id?: Maybe<string>;
+
+  performer_ids?: Maybe<string[]>;
+
+  tag_ids?: Maybe<string[]>;
 }
 
 export interface SceneMarkerCreateInput {
@@ -454,6 +478,27 @@ export type SceneDestroyMutation = {
 
   sceneDestroy: boolean;
 };
+
+export type BulkSceneUpdateVariables = {
+  ids?: Maybe<string[]>;
+  title?: Maybe<string>;
+  details?: Maybe<string>;
+  url?: Maybe<string>;
+  date?: Maybe<string>;
+  rating?: Maybe<number>;
+  studio_id?: Maybe<string>;
+  gallery_id?: Maybe<string>;
+  performer_ids?: Maybe<string[]>;
+  tag_ids?: Maybe<string[]>;
+};
+
+export type BulkSceneUpdateMutation = {
+  __typename?: "Mutation";
+
+  bulkSceneUpdate: Maybe<BulkSceneUpdateBulkSceneUpdate[]>;
+};
+
+export type BulkSceneUpdateBulkSceneUpdate = SceneDataFragment;
 
 export type StudioCreateVariables = {
   name: string;
@@ -1957,6 +2002,50 @@ export function useSceneDestroy(
     SceneDestroyMutation,
     SceneDestroyVariables
   >(SceneDestroyDocument, baseOptions);
+}
+export const BulkSceneUpdateDocument = gql`
+  mutation BulkSceneUpdate(
+    $ids: [ID!] = []
+    $title: String
+    $details: String
+    $url: String
+    $date: String
+    $rating: Int
+    $studio_id: ID
+    $gallery_id: ID
+    $performer_ids: [ID!] = []
+    $tag_ids: [ID!] = []
+  ) {
+    bulkSceneUpdate(
+      input: {
+        ids: $ids
+        title: $title
+        details: $details
+        url: $url
+        date: $date
+        rating: $rating
+        studio_id: $studio_id
+        gallery_id: $gallery_id
+        performer_ids: $performer_ids
+        tag_ids: $tag_ids
+      }
+    ) {
+      ...SceneData
+    }
+  }
+
+  ${SceneDataFragmentDoc}
+`;
+export function useBulkSceneUpdate(
+  baseOptions?: ReactApolloHooks.MutationHookOptions<
+    BulkSceneUpdateMutation,
+    BulkSceneUpdateVariables
+  >
+) {
+  return ReactApolloHooks.useMutation<
+    BulkSceneUpdateMutation,
+    BulkSceneUpdateVariables
+  >(BulkSceneUpdateDocument, baseOptions);
 }
 export const StudioCreateDocument = gql`
   mutation StudioCreate($name: String!, $url: String, $image: String) {

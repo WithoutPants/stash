@@ -15,7 +15,12 @@ export const StudioList: FunctionComponent<IProps> = (props: IProps) => {
     filterMode: FilterMode.Studios,
     props,
     renderContent,
+    renderSelectedOptions
   });
+
+  function renderSelectedOptions() {
+    return undefined;
+  }
 
   function renderContent(result: QueryHookResult<FindStudiosQuery, FindStudiosVariables>, filter: ListFilterModel) {
     if (!result.data || !result.data.findStudios) { return; }

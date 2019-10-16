@@ -27,37 +27,18 @@ function addNoneOption(items: ValidTypes[]) {
 }
 
 export const FilterSelect: React.FunctionComponent<IProps> = (props: IProps) => {
-  let items: ValidTypes[];
-  let InternalSelect: new (props: ISelectProps<any>) => Select<any>;
-  switch (props.type) {
-    case "performers": {
-      const { data } = StashService.useAllPerformersForFilter();
-      items = !!data && !!data.allPerformers ? data.allPerformers : [];
-      addNoneOption(items);
-      InternalSelect = InternalPerformerSelect;
-      break;
-    }
-    case "studios": {
-      const { data } = StashService.useAllStudiosForFilter();
-      items = !!data && !!data.allStudios ? data.allStudios : [];
-      addNoneOption(items);
-      InternalSelect = InternalStudioSelect;
-      break;
-    }
-    case "tags": {
-      const { data } = StashService.useAllTagsForFilter();
-      items = !!data && !!data.allTags ? data.allTags : [];
-      InternalSelect = InternalTagSelect;
-      break;
-    }
-    default: {
-      console.error("Unhandled case in FilterSelect");
-      return <>Unhandled case in FilterSelect</>;
-    }
-  }
+  let SelectImpl = getSelectImpl();
+  let InternalSelect = SelectImpl.getInternalSelect();
+  const data = SelectImpl.getData();
 
-  /* eslint-disable react-hooks/rules-of-hooks */
   const [selectedItem, setSelectedItem] = React.useState<ValidTypes | undefined>(undefined);
+  const [items, setItems] = React.useState<ValidTypes[]>([]);
+ 
+  React.useEffect(() => {
+    if (!!data) {
+      SelectImpl.translateData();
+    }
+  }, [data]);
 
   React.useEffect(() => {
     if (!!items) {
@@ -69,7 +50,42 @@ export const FilterSelect: React.FunctionComponent<IProps> = (props: IProps) => 
       }
     }
   }, [props.initialId, items]);
-  /* eslint-enable */
+
+  function getSelectImpl() {
+    let getInternalSelect: () => new (props: ISelectProps<any>) => Select<any>;
+    let getData: () => GQL.AllPerformersForFilterQuery | GQL.AllStudiosForFilterQuery | GQL.AllTagsForFilterQuery | undefined;
+    let translateData: () => void;
+    
+    switch (props.type) {
+      case "performers": {
+        getInternalSelect = () => { return InternalPerformerSelect; };
+        getData = () => { const { data } = StashService.useAllPerformersForFilter(); return data; }
+        translateData = () => { let perfData = data as GQL.AllPerformersForFilterQuery; setItems(!!perfData && !!perfData.allPerformers ? perfData.allPerformers : []); };
+        break;
+      }
+      case "studios": {
+        getInternalSelect = () => { return InternalStudioSelect; };
+        getData = () => { const { data } = StashService.useAllStudiosForFilter(); return data; }
+        translateData = () => { let studioData = data as GQL.AllStudiosForFilterQuery; setItems(!!studioData && !!studioData.allStudios ? studioData.allStudios : []); };
+        break;
+      }
+      case "tags": {
+        getInternalSelect = () => { return InternalTagSelect; };
+        getData = () => { const { data } = StashService.useAllTagsForFilter(); return data; }
+        translateData = () => { let tagData = data as GQL.AllTagsForFilterQuery; setItems(!!tagData && !!tagData.allTags ? tagData.allTags : []); };
+        break;
+      }
+      default: {
+        throw "Unhandled case in FilterMultiSelect";
+      }
+    }
+
+    return {
+      getInternalSelect: getInternalSelect,
+      getData: getData,
+      translateData: translateData
+    };
+  }
 
   const renderItem: ItemRenderer<ValidTypes> = (item, itemProps) => {
     if (!itemProps.modifiers.matchesPredicate) { return null; }

@@ -16,7 +16,12 @@ export const GalleryList: FunctionComponent<IProps> = (props: IProps) => {
     filterMode: FilterMode.Galleries,
     props,
     renderContent,
+    renderSelectedOptions
   });
+
+  function renderSelectedOptions() {
+    return undefined;
+  }
 
   function renderContent(result: QueryHookResult<FindGalleriesQuery, FindGalleriesVariables>, filter: ListFilterModel) {
     if (!result.data || !result.data.findGalleries) { return; }

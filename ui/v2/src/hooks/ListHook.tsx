@@ -15,18 +15,22 @@ export interface IListHookData {
   filter: ListFilterModel;
   template: JSX.Element;
   options: IListHookOptions;
+  refresh: () => void;
 }
 
 export interface IListHookOptions {
   filterMode: FilterMode;
   props: IBaseProps;
   renderContent: (result: QueryHookResult<any, any>, filter: ListFilterModel) => JSX.Element | undefined;
+  renderSelectedOptions: () => JSX.Element | undefined;
+  onSelectAll?: (selections : QueryHookResult<any, any>) => void;
+  onSelectNone?: () => void;
 }
 
 export class ListHook {
   public static useList(options: IListHookOptions): IListHookData {
     const [filter, setFilter] = useState<ListFilterModel>(new ListFilterModel(options.filterMode));
-
+    
     // Update the filter when the query parameters change
     useEffect(() => {
       const queryParams = queryString.parse(options.props.location.search);
@@ -122,6 +126,11 @@ export class ListHook {
       setFilter(newFilter);
     }
 
+    function refresh() {
+      const newFilter = _.cloneDeep(filter);
+      setFilter(newFilter);
+    }
+
     function onAddCriterion(criterion: Criterion, oldId?: string) {
       const newFilter = _.cloneDeep(filter);
 
@@ -159,6 +168,18 @@ export class ListHook {
       setFilter(newFilter);
     }
 
+    function onSelectAll() {
+      if (options.onSelectAll) {
+        options.onSelectAll(result);
+      }
+    }
+
+    function onSelectNone() {
+      if (options.onSelectNone) {
+        options.onSelectNone();
+      }
+    }
+
     const template = (
       <div>
         <ListFilter
@@ -169,8 +190,11 @@ export class ListHook {
           onChangeDisplayMode={onChangeDisplayMode}
           onAddCriterion={onAddCriterion}
           onRemoveCriterion={onRemoveCriterion}
+          onSelectAll={() => onSelectAll()}
+          onSelectNone={() => onSelectNone()}
           filter={filter}
         />
+        {options.renderSelectedOptions()}
         {result.loading ? <Spinner size={Spinner.SIZE_LARGE} /> : undefined}
         {result.error ? <h1>{result.error.message}</h1> : undefined}
         {options.renderContent(result, filter)}
@@ -183,6 +207,6 @@ export class ListHook {
       </div>
     );
 
-    return { filter, template, options };
+    return { filter, template, options, refresh };
   }
 }
