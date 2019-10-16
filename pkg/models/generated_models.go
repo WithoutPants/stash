@@ -127,7 +127,7 @@ type PerformerCreateInput struct {
 	Instagram    *string `json:"instagram"`
 	Favorite     *bool   `json:"favorite"`
 	// This should be base64 encoded
-	Image string `json:"image"`
+	Image *string `json:"image"`
 }
 
 type PerformerDestroyInput struct {
@@ -280,7 +280,7 @@ type StudioCreateInput struct {
 	Name string  `json:"name"`
 	URL  *string `json:"url"`
 	// This should be base64 encoded
-	Image string `json:"image"`
+	Image *string `json:"image"`
 }
 
 type StudioDestroyInput struct {

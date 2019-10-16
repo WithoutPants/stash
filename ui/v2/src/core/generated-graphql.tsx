@@ -151,7 +151,7 @@ export interface PerformerCreateInput {
 
   favorite?: Maybe<boolean>;
   /** This should be base64 encoded */
-  image: string;
+  image?: Maybe<string>;
 }
 
 export interface PerformerUpdateInput {
@@ -201,7 +201,7 @@ export interface StudioCreateInput {
 
   url?: Maybe<string>;
   /** This should be base64 encoded */
-  image: string;
+  image?: Maybe<string>;
 }
 
 export interface StudioUpdateInput {
@@ -321,7 +321,7 @@ export type PerformerCreateVariables = {
   twitter?: Maybe<string>;
   instagram?: Maybe<string>;
   favorite?: Maybe<boolean>;
-  image: string;
+  image?: Maybe<string>;
 };
 
 export type PerformerCreateMutation = {
@@ -438,7 +438,7 @@ export type SceneUpdateSceneUpdate = SceneDataFragment;
 export type StudioCreateVariables = {
   name: string;
   url?: Maybe<string>;
-  image: string;
+  image?: Maybe<string>;
 };
 
 export type StudioCreateMutation = {
@@ -1666,7 +1666,7 @@ export const PerformerCreateDocument = gql`
     $twitter: String
     $instagram: String
     $favorite: Boolean
-    $image: String!
+    $image: String
   ) {
     performerCreate(
       input: {
@@ -1913,7 +1913,7 @@ export function useSceneUpdate(
   >(SceneUpdateDocument, baseOptions);
 }
 export const StudioCreateDocument = gql`
-  mutation StudioCreate($name: String!, $url: String, $image: String!) {
+  mutation StudioCreate($name: String!, $url: String, $image: String) {
     studioCreate(input: { name: $name, url: $url, image: $image }) {
       ...StudioData
     }
