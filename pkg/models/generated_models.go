@@ -165,6 +165,12 @@ type ScanMetadataInput struct {
 	NameFromMetadata bool `json:"nameFromMetadata"`
 }
 
+type SceneDestroyInput struct {
+	ID              string `json:"id"`
+	DeleteFile      *bool  `json:"delete_file"`
+	DeleteGenerated *bool  `json:"delete_generated"`
+}
+
 type SceneFileType struct {
 	Size       *string  `json:"size"`
 	Duration   *float64 `json:"duration"`

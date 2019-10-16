@@ -92,6 +92,14 @@ export interface SceneUpdateInput {
   tag_ids?: Maybe<string[]>;
 }
 
+export interface SceneDestroyInput {
+  id: string;
+
+  delete_file?: Maybe<boolean>;
+
+  delete_generated?: Maybe<boolean>;
+}
+
 export interface SceneMarkerCreateInput {
   title: string;
 
@@ -434,6 +442,18 @@ export type SceneUpdateMutation = {
 };
 
 export type SceneUpdateSceneUpdate = SceneDataFragment;
+
+export type SceneDestroyVariables = {
+  id: string;
+  delete_file?: Maybe<boolean>;
+  delete_generated?: Maybe<boolean>;
+};
+
+export type SceneDestroyMutation = {
+  __typename?: "Mutation";
+
+  sceneDestroy: boolean;
+};
 
 export type StudioCreateVariables = {
   name: string;
@@ -1911,6 +1931,32 @@ export function useSceneUpdate(
     SceneUpdateMutation,
     SceneUpdateVariables
   >(SceneUpdateDocument, baseOptions);
+}
+export const SceneDestroyDocument = gql`
+  mutation SceneDestroy(
+    $id: ID!
+    $delete_file: Boolean
+    $delete_generated: Boolean
+  ) {
+    sceneDestroy(
+      input: {
+        id: $id
+        delete_file: $delete_file
+        delete_generated: $delete_generated
+      }
+    )
+  }
+`;
+export function useSceneDestroy(
+  baseOptions?: ReactApolloHooks.MutationHookOptions<
+    SceneDestroyMutation,
+    SceneDestroyVariables
+  >
+) {
+  return ReactApolloHooks.useMutation<
+    SceneDestroyMutation,
+    SceneDestroyVariables
+  >(SceneDestroyDocument, baseOptions);
 }
 export const StudioCreateDocument = gql`
   mutation StudioCreate($name: String!, $url: String, $image: String) {
