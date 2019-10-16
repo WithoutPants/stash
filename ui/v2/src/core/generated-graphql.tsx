@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated in 2019-07-28T17:42:59+10:00
+// Generated in 2019-10-12T18:20:41+11:00
 export type Maybe<T> = T | undefined;
 
 export interface SceneFilterType {
@@ -52,6 +52,10 @@ export interface SceneMarkerFilterType {
 export interface PerformerFilterType {
   /** Filter by favorite */
   filter_favorites?: Maybe<boolean>;
+}
+
+export interface ScanMetadataInput {
+  nameFromMetadata: boolean;
 }
 
 export interface GenerateMetadataInput {
@@ -188,6 +192,10 @@ export interface PerformerUpdateInput {
   image?: Maybe<string>;
 }
 
+export interface PerformerDestroyInput {
+  id: string;
+}
+
 export interface StudioCreateInput {
   name: string;
 
@@ -204,6 +212,10 @@ export interface StudioUpdateInput {
   url?: Maybe<string>;
   /** This should be base64 encoded */
   image?: Maybe<string>;
+}
+
+export interface StudioDestroyInput {
+  id: string;
 }
 
 export interface TagCreateInput {
@@ -231,6 +243,13 @@ export interface ConfigGeneralInput {
   username?: Maybe<string>;
   /** Password */
   password?: Maybe<string>;
+}
+
+export interface ConfigInterfaceInput {
+  /** Custom CSS */
+  css?: Maybe<string>;
+
+  cssEnabled?: Maybe<boolean>;
 }
 
 export enum CriterionModifier {
@@ -272,6 +291,18 @@ export type ConfigureGeneralMutation = {
 };
 
 export type ConfigureGeneralConfigureGeneral = ConfigGeneralDataFragment;
+
+export type ConfigureInterfaceVariables = {
+  input: ConfigInterfaceInput;
+};
+
+export type ConfigureInterfaceMutation = {
+  __typename?: "Mutation";
+
+  configureInterface: ConfigureInterfaceConfigureInterface;
+};
+
+export type ConfigureInterfaceConfigureInterface = ConfigInterfaceDataFragment;
 
 export type PerformerCreateVariables = {
   name?: Maybe<string>;
@@ -329,6 +360,16 @@ export type PerformerUpdateMutation = {
 };
 
 export type PerformerUpdatePerformerUpdate = PerformerDataFragment;
+
+export type PerformerDestroyVariables = {
+  id: string;
+};
+
+export type PerformerDestroyMutation = {
+  __typename?: "Mutation";
+
+  performerDestroy: boolean;
+};
 
 export type SceneMarkerCreateVariables = {
   title: string;
@@ -422,6 +463,16 @@ export type StudioUpdateMutation = {
 };
 
 export type StudioUpdateStudioUpdate = StudioDataFragment;
+
+export type StudioDestroyVariables = {
+  id: string;
+};
+
+export type StudioDestroyMutation = {
+  __typename?: "Mutation";
+
+  studioDestroy: boolean;
+};
 
 export type TagCreateVariables = {
   name: string;
@@ -832,7 +883,9 @@ export type MetadataExportQuery = {
   metadataExport: string;
 };
 
-export type MetadataScanVariables = {};
+export type MetadataScanVariables = {
+  input: ScanMetadataInput;
+};
 
 export type MetadataScanQuery = {
   __typename?: "Query";
@@ -912,13 +965,25 @@ export type ConfigGeneralDataFragment = {
   password: string;
 };
 
+export type ConfigInterfaceDataFragment = {
+  __typename?: "ConfigInterfaceResult";
+
+  css: Maybe<string>;
+
+  cssEnabled: Maybe<boolean>;
+};
+
 export type ConfigDataFragment = {
   __typename?: "ConfigResult";
 
   general: ConfigDataGeneral;
+
+  interface: ConfigDataInterface;
 };
 
 export type ConfigDataGeneral = ConfigGeneralDataFragment;
+
+export type ConfigDataInterface = ConfigInterfaceDataFragment;
 
 export type GalleryDataFragment = {
   __typename?: "Gallery";
@@ -1297,14 +1362,25 @@ export const ConfigGeneralDataFragmentDoc = gql`
   }
 `;
 
+export const ConfigInterfaceDataFragmentDoc = gql`
+  fragment ConfigInterfaceData on ConfigInterfaceResult {
+    css
+    cssEnabled
+  }
+`;
+
 export const ConfigDataFragmentDoc = gql`
   fragment ConfigData on ConfigResult {
     general {
       ...ConfigGeneralData
     }
+    interface {
+      ...ConfigInterfaceData
+    }
   }
 
   ${ConfigGeneralDataFragmentDoc}
+  ${ConfigInterfaceDataFragmentDoc}
 `;
 
 export const SlimPerformerDataFragmentDoc = gql`
@@ -1536,6 +1612,26 @@ export function useConfigureGeneral(
     ConfigureGeneralVariables
   >(ConfigureGeneralDocument, baseOptions);
 }
+export const ConfigureInterfaceDocument = gql`
+  mutation ConfigureInterface($input: ConfigInterfaceInput!) {
+    configureInterface(input: $input) {
+      ...ConfigInterfaceData
+    }
+  }
+
+  ${ConfigInterfaceDataFragmentDoc}
+`;
+export function useConfigureInterface(
+  baseOptions?: ReactApolloHooks.MutationHookOptions<
+    ConfigureInterfaceMutation,
+    ConfigureInterfaceVariables
+  >
+) {
+  return ReactApolloHooks.useMutation<
+    ConfigureInterfaceMutation,
+    ConfigureInterfaceVariables
+  >(ConfigureInterfaceDocument, baseOptions);
+}
 export const PerformerCreateDocument = gql`
   mutation PerformerCreate(
     $name: String
@@ -1653,6 +1749,22 @@ export function usePerformerUpdate(
     PerformerUpdateMutation,
     PerformerUpdateVariables
   >(PerformerUpdateDocument, baseOptions);
+}
+export const PerformerDestroyDocument = gql`
+  mutation PerformerDestroy($id: ID!) {
+    performerDestroy(input: { id: $id })
+  }
+`;
+export function usePerformerDestroy(
+  baseOptions?: ReactApolloHooks.MutationHookOptions<
+    PerformerDestroyMutation,
+    PerformerDestroyVariables
+  >
+) {
+  return ReactApolloHooks.useMutation<
+    PerformerDestroyMutation,
+    PerformerDestroyVariables
+  >(PerformerDestroyDocument, baseOptions);
 }
 export const SceneMarkerCreateDocument = gql`
   mutation SceneMarkerCreate(
@@ -1823,6 +1935,22 @@ export function useStudioUpdate(
     StudioUpdateMutation,
     StudioUpdateVariables
   >(StudioUpdateDocument, baseOptions);
+}
+export const StudioDestroyDocument = gql`
+  mutation StudioDestroy($id: ID!) {
+    studioDestroy(input: { id: $id })
+  }
+`;
+export function useStudioDestroy(
+  baseOptions?: ReactApolloHooks.MutationHookOptions<
+    StudioDestroyMutation,
+    StudioDestroyVariables
+  >
+) {
+  return ReactApolloHooks.useMutation<
+    StudioDestroyMutation,
+    StudioDestroyVariables
+  >(StudioDestroyDocument, baseOptions);
 }
 export const TagCreateDocument = gql`
   mutation TagCreate($name: String!) {
@@ -2313,8 +2441,8 @@ export function useMetadataExport(
   >(MetadataExportDocument, baseOptions);
 }
 export const MetadataScanDocument = gql`
-  query MetadataScan {
-    metadataScan
+  query MetadataScan($input: ScanMetadataInput!) {
+    metadataScan(input: $input)
   }
 `;
 export function useMetadataScan(

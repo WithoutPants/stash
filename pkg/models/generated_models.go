@@ -34,9 +34,22 @@ type ConfigGeneralResult struct {
 	Password string `json:"password"`
 }
 
+type ConfigInterfaceInput struct {
+	// Custom CSS
+	CSS        *string `json:"css"`
+	CSSEnabled *bool   `json:"cssEnabled"`
+}
+
+type ConfigInterfaceResult struct {
+	// Custom CSS
+	CSS        *string `json:"css"`
+	CSSEnabled *bool   `json:"cssEnabled"`
+}
+
 // All configuration settings
 type ConfigResult struct {
-	General *ConfigGeneralResult `json:"general"`
+	General   *ConfigGeneralResult   `json:"general"`
+	Interface *ConfigInterfaceResult `json:"interface"`
 }
 
 type FindFilterType struct {
@@ -117,6 +130,10 @@ type PerformerCreateInput struct {
 	Image string `json:"image"`
 }
 
+type PerformerDestroyInput struct {
+	ID string `json:"id"`
+}
+
 type PerformerFilterType struct {
 	// Filter by favorite
 	FilterFavorites *bool `json:"filter_favorites"`
@@ -142,6 +159,10 @@ type PerformerUpdateInput struct {
 	Favorite     *bool   `json:"favorite"`
 	// This should be base64 encoded
 	Image *string `json:"image"`
+}
+
+type ScanMetadataInput struct {
+	NameFromMetadata bool `json:"nameFromMetadata"`
 }
 
 type SceneFileType struct {
@@ -260,6 +281,10 @@ type StudioCreateInput struct {
 	URL  *string `json:"url"`
 	// This should be base64 encoded
 	Image string `json:"image"`
+}
+
+type StudioDestroyInput struct {
+	ID string `json:"id"`
 }
 
 type StudioUpdateInput struct {
