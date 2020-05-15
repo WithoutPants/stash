@@ -22,6 +22,7 @@ before_deploy:
 - git tag -f v999
 - git push -f --tags
 # set TRAVIS_TAG explcitly to the version so that it doesn't pick up latest_develop
+# extra comment to trigger build
 deploy:
   # latest develop release
   - provider: releases
