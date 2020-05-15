@@ -34,6 +34,7 @@ deploy:
       (commit $TRAVIS_COMMIT) built by Travis CI on $(date +'%F %T %Z').
     prerelease: true
     overwrite: true
+    target_commitish: $TRAVIS_COMMIT
     on:
       repo: WithoutPants/stash
       branch: travis_test
