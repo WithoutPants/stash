@@ -27,13 +27,13 @@ deploy:
   - provider: releases
     api_key:
       secure: wknN18XuRTsTw9/W6cYqOcCrjCI5fRt+iIeteP9mq73m9e9sE7ZqsX0FhQUuGGyTGB0tR7mLBVA/QGFJIBNbxAEQ40elU/vPjgY+pkbOtoHQyedgevMZAvNXnWywpxTCCxlpZdM+YUwAV3loBFaqPQ8dVsE4ijb9tigEWcZnoXcx4rasKRPN3ERk0YZvCnbmLU5aTOOMfHbyLySKBCsjgGT/4qoGJncI7Di2Mf+bcFd23S2EQ8dWoqmgDH4DRWQKkX5CRdnMcmqCJo1MC4dE6mt4dLxU9mne56yieOJUZ2DHvYnOJmCZxn0c4k60vXQ8SskCc7Hs/WlqP2L3qFHRFuraf/qpT+Wle9LLjaDzSRyimTnEY7JmqndyqVzmvMVaM/SWF9R4zXcRqDyh6PPNadQ4J4EZ2agEvB4Rth9P4z6aC7JnYQW3hSPUCos1YMwVQ58EL8zrnT5nQVMyZb0BjsUIwK45E++HK1g4Uk6kqwnpei0JkzUGsvIvoocClg463UYECG85//iAiitCv0pqR6JIRdGogNdPeFMv41Mk4w3QbFX3/LWjAIreSevF/J91zxQpjLrM+iPOlFSgrP0B9NUwD/ykYJOpIxPh1iAV/7bazFSZLDU/gtxm2Iobk5fDBJIwyZHjrDHFolZmzHutnnW857Hs8RHqCIkJuwl04HU=
-    file:
-    - README.md
+    file: README.md
     skip_cleanup: true
-    overwrite: true
-    body: Help
-    #name: "${STASH_VERSION}: Latest development build"
+    name: openScale development build (${TRAVIS_BRANCH})
+    body: Automatic openScale development build of $TRAVIS_BRANCH branch
+      (commit $TRAVIS_COMMIT) built by Travis CI on $(date +'%F %T %Z').
     prerelease: true
+    overwrite: true
     on:
       repo: WithoutPants/stash
       branch: travis_test
