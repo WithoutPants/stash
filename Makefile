@@ -3,6 +3,8 @@ ifeq ($(OS),Windows_NT)
   SET := set
 endif
 
+check: fmt-check
+
 release: generate ui build
 
 build:
