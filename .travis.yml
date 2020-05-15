@@ -31,7 +31,7 @@ deploy:
     file: README.md
     skip_cleanup: true
     name: "${STASH_VERSION}: Latest development build"
-    release_notes: ${RELEASE_DATE}\n This is always the latest committed version on the develop branch. Use as your own risk!
+    release_notes: "**${RELEASE_DATE}**\n This is always the latest committed version on the develop branch. Use as your own risk!"
     prerelease: true
     overwrite: true
     target_commitish: $TRAVIS_COMMIT
