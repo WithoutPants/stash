@@ -31,7 +31,7 @@ deploy:
     - README.md
     skip_cleanup: true
     overwrite: true
-    body: "This should write something here"
+    body: Help
     #name: "${STASH_VERSION}: Latest development build"
     prerelease: true
     on:
