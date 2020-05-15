@@ -17,10 +17,10 @@ before_install:
 before_deploy:
 # push the latest tag when on the develop branch
 - export RELEASE_DATE=$(date +'%Y-%m-%d %H:%M:%S %Z')
+- echo $RELEASE_DATE
 - export STASH_VERSION=v999
 - git tag -f v999
 # set TRAVIS_TAG explcitly to the version so that it doesn't pick up latest_develop
-- if [ "$TRAVIS_BRANCH" = "master"]; then export TRAVIS_TAG=${STASH_VERSION}; fi
 deploy:
   # latest develop release
   - provider: releases
@@ -30,8 +30,8 @@ deploy:
     - README.md
     skip_cleanup: true
     overwrite: true
-    body: ${RELEASE_DATE}
-    #name: "${STASH_VERSION}: Latest development build"
+    body: "This should write something here"
+    name: "${STASH_VERSION}: Latest development build"
     prerelease: true
     on:
       repo: WithoutPants/stash
