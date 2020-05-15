@@ -32,7 +32,7 @@ deploy:
     skip_cleanup: true
     overwrite: true
     body: "This should write something here"
-    name: "${STASH_VERSION}: Latest development build"
+    #name: "${STASH_VERSION}: Latest development build"
     prerelease: true
     on:
       repo: WithoutPants/stash
