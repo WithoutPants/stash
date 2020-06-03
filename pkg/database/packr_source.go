@@ -3,16 +3,17 @@ package database
 import (
 	"bytes"
 	"fmt"
-	"github.com/gobuffalo/packr/v2"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/source"
 	"io"
 	"io/ioutil"
 	"os"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/markbates/pkger"
 )
 
 type Packr2Source struct {
-	Box        *packr.Box
+	Box        string
 	Migrations *source.Migrations
 }
 
@@ -21,8 +22,19 @@ func init() {
 }
 
 func WithInstance(instance *Packr2Source) (source.Driver, error) {
-	for _, fi := range instance.Box.List() {
-		m, err := source.DefaultParse(fi)
+	dir, err := pkger.Open(instance.Box)
+	if err != nil {
+		return nil, err
+	}
+	defer dir.Close()
+
+	files, err := dir.Readdir(0)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, fi := range files {
+		m, err := source.DefaultParse(fi.Name())
 		if err != nil {
 			continue // ignore files that we can't parse
 		}
@@ -72,7 +84,10 @@ func (s *Packr2Source) ReadUp(version uint) (r io.ReadCloser, identifier string,
 	if migration, ok := s.Migrations.Up(version); !ok {
 		return nil, "", os.ErrNotExist
 	} else {
-		b := s.Box.Bytes(migration.Raw)
+		f, _ := pkger.Open(s.Box + migration.Raw)
+		defer f.Close()
+		b, _ := ioutil.ReadAll(f)
+
 		return ioutil.NopCloser(bytes.NewBuffer(b)),
 			migration.Identifier,
 			nil
@@ -83,7 +98,10 @@ func (s *Packr2Source) ReadDown(version uint) (r io.ReadCloser, identifier strin
 	if migration, ok := s.Migrations.Down(version); !ok {
 		return nil, "", migrate.ErrNilVersion
 	} else {
-		b := s.Box.Bytes(migration.Raw)
+		f, _ := pkger.Open(s.Box + migration.Raw)
+		defer f.Close()
+		b, _ := ioutil.ReadAll(f)
+
 		return ioutil.NopCloser(bytes.NewBuffer(b)),
 			migration.Identifier,
 			nil

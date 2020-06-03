@@ -3,9 +3,11 @@ package api
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"os"
 
+	"github.com/markbates/pkger"
 	"github.com/stashapp/stash/pkg/database"
 	"github.com/stashapp/stash/pkg/logger"
 )
@@ -30,7 +32,10 @@ func getMigrateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, _ := setupUIBox.Find("migrate.html")
+	f, _ := pkger.Open(setupUIBox + "/migrate.html")
+	defer f.Close()
+	data, _ := ioutil.ReadAll(f)
+
 	templ, err := template.New("Migrate").Parse(string(data))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error: %s", err), 500)

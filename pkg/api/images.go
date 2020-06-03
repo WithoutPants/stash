@@ -1,32 +1,48 @@
 package api
 
 import (
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"strings"
 
-	"github.com/gobuffalo/packr/v2"
+	"github.com/markbates/pkger"
 )
 
-var performerBox *packr.Box
-var performerBoxMale *packr.Box
-
-func initialiseImages() {
-	performerBox = packr.New("Performer Box", "../../static/performer")
-	performerBoxMale = packr.New("Male Performer Box", "../../static/performer_male")
-}
-
 func getRandomPerformerImage(gender string) ([]byte, error) {
-	var box *packr.Box
+	var path string
+	var dir http.File
+	var err error
+
+	performerImageDir := pkger.Include("/static/performer")
+	malePerformerImageDir := pkger.Include("/static/performer_male")
+
 	switch strings.ToUpper(gender) {
 	case "FEMALE":
-		box = performerBox
+		path = performerImageDir
 	case "MALE":
-		box = performerBoxMale
+		path = malePerformerImageDir
 	default:
-		box = performerBox
-
+		path = performerImageDir
 	}
-	imageFiles := box.List()
+
+	dir, err = pkger.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer dir.Close()
+
+	imageFiles, err := dir.Readdir(0)
+	if err != nil {
+		return nil, err
+	}
+
 	index := rand.Intn(len(imageFiles))
-	return box.Find(imageFiles[index])
+	f, err := pkger.Open(path + "/" + imageFiles[index].Name())
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return ioutil.ReadAll(f)
 }

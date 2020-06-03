@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/gobuffalo/packr/v2"
 	"github.com/golang-migrate/migrate/v4"
 	sqlite3mig "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/jmoiron/sqlx"
+	"github.com/markbates/pkger"
 	sqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/utils"
@@ -130,7 +130,7 @@ func Version() uint {
 }
 
 func getMigrate() (*migrate.Migrate, error) {
-	migrationsBox := packr.New("Migrations Box", "./migrations")
+	migrationsBox := pkger.Include("/pkg/database/migrations")
 	packrSource := &Packr2Source{
 		Box:        migrationsBox,
 		Migrations: source.NewMigrations(),
@@ -149,7 +149,7 @@ func getMigrate() (*migrate.Migrate, error) {
 
 	// use sqlite3Driver so that migration has access to durationToTinyInt
 	return migrate.NewWithInstance(
-		"packr2",
+		"pkger",
 		s,
 		databasePath,
 		driver,

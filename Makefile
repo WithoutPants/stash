@@ -61,7 +61,7 @@ pre-ui:
 .PHONY: ui
 ui:
 	cd ui/v2.5 && yarn build
-	packr2
+	pkger
 
 fmt-ui:
 	cd ui/v2.5 && yarn format
@@ -75,7 +75,7 @@ ui-validate:
 # rebuilding the UI
 .PHONY: packr
 packr:
-	packr2
+	pkger
 
 # runs all of the tests and checks required for a PR to be accepted
 .PHONY: validate

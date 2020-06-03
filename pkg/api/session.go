@@ -3,8 +3,10 @@ package api
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 
+	"github.com/markbates/pkger"
 	"github.com/stashapp/stash/pkg/manager/config"
 
 	"github.com/gorilla/sessions"
@@ -29,7 +31,10 @@ func initSessionStore() {
 }
 
 func redirectToLogin(w http.ResponseWriter, returnURL string, loginError string) {
-	data, _ := loginUIBox.Find("login.html")
+	f, _ := pkger.Open(loginUIBox + "/login.html")
+	defer f.Close()
+	data, _ := ioutil.ReadAll(f)
+
 	templ, err := template.New("Login").Parse(string(data))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error: %s", err), http.StatusInternalServerError)

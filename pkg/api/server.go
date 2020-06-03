@@ -18,8 +18,8 @@ import (
 	"github.com/99designs/gqlgen/handler"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/websocket"
+	"github.com/markbates/pkger"
 	"github.com/rs/cors"
 	"github.com/stashapp/stash/pkg/database"
 	"github.com/stashapp/stash/pkg/logger"
@@ -34,11 +34,9 @@ var version string
 var buildstamp string
 var githash string
 
-var uiBox *packr.Box
-
-//var legacyUiBox *packr.Box
-var setupUIBox *packr.Box
-var loginUIBox *packr.Box
+var uiBox = pkger.Include("/ui/v2.5/build")
+var setupUIBox = pkger.Include("/ui/setup")
+var loginUIBox = pkger.Include("/ui/login")
 
 func allowUnauthenticated(r *http.Request) bool {
 	return strings.HasPrefix(r.URL.Path, "/login") || r.URL.Path == "/css"
@@ -99,13 +97,7 @@ const migrateEndPoint = "/migrate"
 const loginEndPoint = "/login"
 
 func Start() {
-	uiBox = packr.New("UI Box", "../../ui/v2.5/build")
-	//legacyUiBox = packr.New("UI Box", "../../ui/v1/dist/stash-frontend")
-	setupUIBox = packr.New("Setup UI Box", "../../ui/setup")
-	loginUIBox = packr.New("Login UI Box", "../../ui/login")
-
 	initSessionStore()
-	initialiseImages()
 
 	r := chi.NewRouter()
 
@@ -179,21 +171,27 @@ func Start() {
 	r.HandleFunc("/setup*", func(w http.ResponseWriter, r *http.Request) {
 		ext := path.Ext(r.URL.Path)
 		if ext == ".html" || ext == "" {
-			data, _ := setupUIBox.Find("index.html")
+			f, _ := pkger.Open(setupUIBox + "/index.html")
+			defer f.Close()
+			data, _ := ioutil.ReadAll(f)
 			_, _ = w.Write(data)
 		} else {
 			r.URL.Path = strings.Replace(r.URL.Path, "/setup", "", 1)
-			http.FileServer(setupUIBox).ServeHTTP(w, r)
+			setupUIDir := pkger.Dir(setupUIBox)
+			http.FileServer(setupUIDir).ServeHTTP(w, r)
 		}
 	})
 	r.HandleFunc("/login*", func(w http.ResponseWriter, r *http.Request) {
 		ext := path.Ext(r.URL.Path)
 		if ext == ".html" || ext == "" {
-			data, _ := loginUIBox.Find("login.html")
+			f, _ := pkger.Open(loginUIBox + "/login.html")
+			defer f.Close()
+			data, _ := ioutil.ReadAll(f)
 			_, _ = w.Write(data)
 		} else {
 			r.URL.Path = strings.Replace(r.URL.Path, loginEndPoint, "", 1)
-			http.FileServer(loginUIBox).ServeHTTP(w, r)
+			loginUIDir := pkger.Dir(loginUIBox)
+			http.FileServer(loginUIDir).ServeHTTP(w, r)
 		}
 	})
 	r.Post("/init", func(w http.ResponseWriter, r *http.Request) {
@@ -255,14 +253,17 @@ func Start() {
 	r.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
 		ext := path.Ext(r.URL.Path)
 		if ext == ".html" || ext == "" {
-			data, _ := uiBox.Find("index.html")
+			f, _ := pkger.Open(uiBox + "/index.html")
+			defer f.Close()
+			data, _ := ioutil.ReadAll(f)
 			_, _ = w.Write(data)
 		} else {
 			isStatic, _ := path.Match("/static/*/*", r.URL.Path)
 			if isStatic {
 				w.Header().Add("Cache-Control", "max-age=604800000")
 			}
-			http.FileServer(uiBox).ServeHTTP(w, r)
+			uiDir := pkger.Dir(uiBox)
+			http.FileServer(uiDir).ServeHTTP(w, r)
 		}
 	})
 

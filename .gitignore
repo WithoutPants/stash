@@ -17,6 +17,7 @@
 
 # Packr2 artifacts
 **/*-packr.go
+pkged.go
 
 # GraphQL generated output
 pkg/models/generated_*.go
