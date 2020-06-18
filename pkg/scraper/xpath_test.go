@@ -833,7 +833,7 @@ xPathScrapers:
       name: //h1[@itemprop="name"]
 `
 
-	config := &scraperConfig{}
+	config := &ScraperConfig{}
 	err := yaml.Unmarshal([]byte(yamlStr), &config)
 
 	if err != nil {

@@ -586,7 +586,7 @@ func (r xPathResults) setKey(index int, key string, value string) xPathResults {
 	return r
 }
 
-func loadURL(url string, c *scraperConfig) (*html.Node, error) {
+func loadURL(url string, c *ScraperConfig) (*html.Node, error) {
 	client := &http.Client{
 		Timeout: scrapeGetTimeout,
 	}

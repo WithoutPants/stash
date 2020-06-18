@@ -11,15 +11,15 @@ import (
 	"github.com/stashapp/stash/pkg/models"
 )
 
-var scrapers []scraperConfig
+var scrapers []ScraperConfig
 
-func loadScrapers() ([]scraperConfig, error) {
+func loadScrapers() ([]ScraperConfig, error) {
 	if scrapers != nil {
 		return scrapers, nil
 	}
 
 	path := config.GetScrapersPath()
-	scrapers = make([]scraperConfig, 0)
+	scrapers = make([]ScraperConfig, 0)
 
 	logger.Debugf("Reading scraper configs from %s", path)
 	scraperFiles := []string{}
@@ -94,7 +94,7 @@ func ListSceneScrapers() ([]*models.Scraper, error) {
 	return ret, nil
 }
 
-func findScraper(scraperID string) *scraperConfig {
+func findScraper(scraperID string) *ScraperConfig {
 	// read scraper config files from the directory and cache
 	loadScrapers()
 

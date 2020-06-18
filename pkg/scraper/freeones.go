@@ -103,10 +103,10 @@ xPathScrapers:
 # Last updated June 15, 2020
 `
 
-func GetFreeonesScraper() scraperConfig {
+func GetFreeonesScraper() ScraperConfig {
 	yml := freeonesScraperConfig
 
-	scraper, err := loadScraperFromYAML(freeonesScraperID, strings.NewReader(yml))
+	scraper, err := LoadScraperFromYAML(freeonesScraperID, strings.NewReader(yml))
 	if err != nil {
 		logger.Fatalf("Error loading builtin freeones scraper: %s", err.Error())
 	}
