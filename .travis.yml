@@ -1,4 +1,4 @@
-if: tag != latest_develop # dont build for the latest_develop tagged version
+if: branch = travis_test
 
 dist: xenial
 git:
@@ -14,37 +14,32 @@ env:
 before_install:
 - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc
 - nvm install 12
-- travis_retry yarn --cwd ui/v2.5 install --frozen-lockfile
+- travis_retry make pre-ui
 - make generate
-- CI=false yarn --cwd ui/v2.5 build-ci
+- CI=false make ui
 #- go get -v github.com/mgechev/revive
 script:
 # left lint off to avoid getting extra dependency
 #- make lint
 - make fmt-check vet it
 after_success:
-- docker pull stashapp/compiler:develop
-- sh ./scripts/cross-compile.sh
-- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then sh ./scripts/upload-pull-request.sh; fi'
+- make build
+- git tag -f vTemp
+- git push -f --tags
 before_deploy:
 # push the latest tag when on the develop branch
 - if [ "$TRAVIS_BRANCH" = "develop" ]; then git tag -f latest_develop; git push -f --tags; fi
 - export RELEASE_DATE=$(date +'%Y-%m-%d %H:%M:%S %Z')
 - export STASH_VERSION=$(git describe --tags --exclude latest_develop)
-# set TRAVIS_TAG explcitly to the version so that it doesn't pick up latest_develop
-- if [ "$TRAVIS_BRANCH" = "master"]; then export TRAVIS_TAG=${STASH_VERSION}; fi
 deploy:
   # latest develop release
   - provider: releases
     # use the v2 release provider for proper release note setting
     edge: true
     api_key:
-      secure: tGJ2q62CfPdayid2qEtW2aGRhMgCl3lBXYYQqp3eH0vFgIIf6cs7IDX7YC/x3XKMEQ/iMLZmtCXZvSTqNrD6Sk7MSnt30GIs+4uxIZDnnd8mV5X3K4n4gjD+NAORc4DrQBvUGrYMKJsR5gtkH0nu6diWb1o1If7OiJEuCPRhrmQYcza7NUdABnA9Z2wn2RNUV9Ga33WUCqLMEU5GtNBlfQPiP/khCQrqn/ocR6wUjYut3J6YagzqH4wsfJi3glHyWtowcNIw1LZi5zFxHD/bRBT4Tln7yypkjWNq9eQILA6i6kRUGf7ggyTx26/k8n4tnu+QD0vVh4EcjlThpU/LGyUXzKrrxjRwaDZnM0oYxg5AfHcBuAiAdo0eWnV3lEWRfTJMIVb9MPf4qDmzR4RREfB5OXOxwq3ODeCcJE8sTIMD/wBPZrlqS/QrRpND2gn2X4snkVukN9t9F4CMTFMtVSzFV7TDJW5E5Lq6VEExulteQhs6kcK9NRPNAaLgRQAw7X9kVWfDtiGUP+fE2i8F9Bo8bm7sOT5O5VPMPykx3EgeNg1IqIgMTCsMlhMJT4xBJoQUgmd2wWyf3Ryw+P+sFgdb5Sd7+lFgJBjMUUoOxMxAOiEgdFvCXcr+/Udyz2RdtetU1/6VzXzLPcKOw0wubZeBkISqu7o9gpfdMP9Eq00=
+      secure: wknN18XuRTsTw9/W6cYqOcCrjCI5fRt+iIeteP9mq73m9e9sE7ZqsX0FhQUuGGyTGB0tR7mLBVA/QGFJIBNbxAEQ40elU/vPjgY+pkbOtoHQyedgevMZAvNXnWywpxTCCxlpZdM+YUwAV3loBFaqPQ8dVsE4ijb9tigEWcZnoXcx4rasKRPN3ERk0YZvCnbmLU5aTOOMfHbyLySKBCsjgGT/4qoGJncI7Di2Mf+bcFd23S2EQ8dWoqmgDH4DRWQKkX5CRdnMcmqCJo1MC4dE6mt4dLxU9mne56yieOJUZ2DHvYnOJmCZxn0c4k60vXQ8SskCc7Hs/WlqP2L3qFHRFuraf/qpT+Wle9LLjaDzSRyimTnEY7JmqndyqVzmvMVaM/SWF9R4zXcRqDyh6PPNadQ4J4EZ2agEvB4Rth9P4z6aC7JnYQW3hSPUCos1YMwVQ58EL8zrnT5nQVMyZb0BjsUIwK45E++HK1g4Uk6kqwnpei0JkzUGsvIvoocClg463UYECG85//iAiitCv0pqR6JIRdGogNdPeFMv41Mk4w3QbFX3/LWjAIreSevF/J91zxQpjLrM+iPOlFSgrP0B9NUwD/ykYJOpIxPh1iAV/7bazFSZLDU/gtxm2Iobk5fDBJIwyZHjrDHFolZmzHutnnW857Hs8RHqCIkJuwl04HU=
     file:
-    - dist/stash-osx
-    - dist/stash-win.exe
-    - dist/stash-linux
-    - dist/stash-pi
+    - READMME.md
     skip_cleanup: true
     overwrite: true
     name: "${STASH_VERSION}: Latest development build"
@@ -52,25 +47,4 @@ deploy:
     prerelease: true
     on:
       repo: stashapp/stash
-      branch: develop
-  # official master release - only build when tagged
-  - provider: releases
-    api_key:
-      secure: tGJ2q62CfPdayid2qEtW2aGRhMgCl3lBXYYQqp3eH0vFgIIf6cs7IDX7YC/x3XKMEQ/iMLZmtCXZvSTqNrD6Sk7MSnt30GIs+4uxIZDnnd8mV5X3K4n4gjD+NAORc4DrQBvUGrYMKJsR5gtkH0nu6diWb1o1If7OiJEuCPRhrmQYcza7NUdABnA9Z2wn2RNUV9Ga33WUCqLMEU5GtNBlfQPiP/khCQrqn/ocR6wUjYut3J6YagzqH4wsfJi3glHyWtowcNIw1LZi5zFxHD/bRBT4Tln7yypkjWNq9eQILA6i6kRUGf7ggyTx26/k8n4tnu+QD0vVh4EcjlThpU/LGyUXzKrrxjRwaDZnM0oYxg5AfHcBuAiAdo0eWnV3lEWRfTJMIVb9MPf4qDmzR4RREfB5OXOxwq3ODeCcJE8sTIMD/wBPZrlqS/QrRpND2gn2X4snkVukN9t9F4CMTFMtVSzFV7TDJW5E5Lq6VEExulteQhs6kcK9NRPNAaLgRQAw7X9kVWfDtiGUP+fE2i8F9Bo8bm7sOT5O5VPMPykx3EgeNg1IqIgMTCsMlhMJT4xBJoQUgmd2wWyf3Ryw+P+sFgdb5Sd7+lFgJBjMUUoOxMxAOiEgdFvCXcr+/Udyz2RdtetU1/6VzXzLPcKOw0wubZeBkISqu7o9gpfdMP9Eq00=
-    file:
-    - dist/stash-osx
-    - dist/stash-win.exe
-    - dist/stash-linux
-    - dist/stash-pi
-    # make the release a draft so the maintainers can confirm before releasing
-    draft: true
-    skip_cleanup: true
-    overwrite: true
-    # don't write the body. To be done manually for now. In future we might 
-    # want to generate the changelog or get it from a file
-    name: ${STASH_VERSION}
-    on:
-      repo: stashapp/stash
-      tags: true
-      # make sure we don't release using the latest_develop tag
-      condition: $TRAVIS_TAG != latest_develop
+      branch: travis_test
