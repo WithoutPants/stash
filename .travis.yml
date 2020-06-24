@@ -23,6 +23,7 @@ script:
 # left lint off to avoid getting extra dependency
 #- make lint
 #- make fmt-check vet it
+make fmt-check
 after_success:
 - docker pull stashapp/compiler:develop
 - sh ./scripts/cross-compile.sh
