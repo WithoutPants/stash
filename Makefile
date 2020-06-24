@@ -71,12 +71,14 @@ it:
 pre-ui:
 	cd ui/v2.5 && yarn install --frozen-lockfile
 
-.PHONY: ui
-ui: pre-build
+.PHONY: ui-only
+ui-only: pre-build
 	$(SET) REACT_APP_DATE="$(DATE)" $(SEPARATOR) \
 	$(SET) REACT_APP_GITHASH=$(GITHASH) $(SEPARATOR) \
 	$(SET) REACT_APP_STASH_VERSION=$(STASH_VERSION) $(SEPARATOR) \
 	cd ui/v2.5 && yarn build
+
+ui: ui-only
 	packr2
 
 ui-start: pre-build
