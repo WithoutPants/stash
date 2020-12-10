@@ -6,22 +6,22 @@ import (
 
 // File stores the metadata for a single file.
 type File struct {
-	ID          int                 `db:"id" json:"id"`
-	Checksum    sql.NullString      `db:"checksum" json:"checksum"`
-	OSHash      sql.NullString      `db:"oshash" json:"oshash"`
-	Path        string              `db:"path" json:"path"`
-	Size        sql.NullString      `db:"size" json:"size"`
-	Duration    sql.NullFloat64     `db:"duration" json:"duration"`
-	VideoCodec  sql.NullString      `db:"video_codec" json:"video_codec"`
-	Format      sql.NullString      `db:"format" json:"format_name"`
-	AudioCodec  sql.NullString      `db:"audio_codec" json:"audio_codec"`
-	Width       sql.NullInt64       `db:"width" json:"width"`
-	Height      sql.NullInt64       `db:"height" json:"height"`
-	Framerate   sql.NullFloat64     `db:"framerate" json:"framerate"`
-	Bitrate     sql.NullInt64       `db:"bitrate" json:"bitrate"`
-	FileModTime NullSQLiteTimestamp `db:"file_mod_time" json:"file_mod_time"`
-	CreatedAt   SQLiteTimestamp     `db:"created_at" json:"created_at"`
-	UpdatedAt   SQLiteTimestamp     `db:"updated_at" json:"updated_at"`
+	ID         int                 `db:"id" json:"id"`
+	Checksum   sql.NullString      `db:"checksum" json:"checksum"`
+	OSHash     sql.NullString      `db:"oshash" json:"oshash"`
+	Path       string              `db:"path" json:"path"`
+	Size       sql.NullString      `db:"size" json:"size"`
+	Duration   sql.NullFloat64     `db:"duration" json:"duration"`
+	VideoCodec sql.NullString      `db:"video_codec" json:"video_codec"`
+	Format     sql.NullString      `db:"format" json:"format_name"`
+	AudioCodec sql.NullString      `db:"audio_codec" json:"audio_codec"`
+	Width      sql.NullInt64       `db:"width" json:"width"`
+	Height     sql.NullInt64       `db:"height" json:"height"`
+	Framerate  sql.NullFloat64     `db:"framerate" json:"framerate"`
+	Bitrate    sql.NullInt64       `db:"bitrate" json:"bitrate"`
+	ModTime    NullSQLiteTimestamp `db:"mod_time" json:"mod_time"`
+	CreatedAt  SQLiteTimestamp     `db:"created_at" json:"created_at"`
+	UpdatedAt  SQLiteTimestamp     `db:"updated_at" json:"updated_at"`
 }
 
 type FilePartial struct {
@@ -38,7 +38,7 @@ type FilePartial struct {
 	Height      *sql.NullInt64       `db:"height" json:"height"`
 	Framerate   *sql.NullFloat64     `db:"framerate" json:"framerate"`
 	Bitrate     *sql.NullInt64       `db:"bitrate" json:"bitrate"`
-	FileModTime *NullSQLiteTimestamp `db:"file_mod_time" json:"file_mod_time"`
+	FileModTime *NullSQLiteTimestamp `db:"mod_time" json:"mod_time"`
 	CreatedAt   *SQLiteTimestamp     `db:"created_at" json:"created_at"`
 	UpdatedAt   *SQLiteTimestamp     `db:"updated_at" json:"updated_at"`
 }

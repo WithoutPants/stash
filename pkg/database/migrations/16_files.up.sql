@@ -12,7 +12,7 @@ CREATE TABLE `files` (
   `framerate` float,
   `bitrate` integer,
   `format` varchar(255),
-  `file_mod_time` datetime,
+  `mod_time` datetime,
   `created_at` datetime not null,
   `updated_at` datetime not null,
   CHECK (`checksum` is not null or `oshash` is not null)
@@ -61,7 +61,7 @@ INSERT INTO `files`
   `framerate`,
   `bitrate`,
   `format`,
-  `file_mod_time`,
+  `mod_time`,
   `created_at`,
   `updated_at`
  )
@@ -91,7 +91,7 @@ INSERT INTO `files`
   `size`,
   `width`,
   `height`,
-  `file_mod_time`,
+  `mod_time`,
   `created_at`,
   `updated_at`
  )
@@ -111,7 +111,7 @@ INSERT INTO `files`
  (
   `path`,
   `checksum`,
-  `file_mod_time`,
+  `mod_time`,
   `created_at`,
   `updated_at`
  )
