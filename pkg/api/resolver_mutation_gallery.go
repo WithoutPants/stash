@@ -10,7 +10,6 @@ import (
 
 	"github.com/stashapp/stash/pkg/manager"
 	"github.com/stashapp/stash/pkg/models"
-	"github.com/stashapp/stash/pkg/utils"
 )
 
 func (r *mutationResolver) GalleryCreate(ctx context.Context, input models.GalleryCreateInput) (*models.Gallery, error) {
@@ -19,9 +18,6 @@ func (r *mutationResolver) GalleryCreate(ctx context.Context, input models.Galle
 		return nil, errors.New("title must not be empty")
 	}
 
-	// for manually created galleries, generate checksum from title
-	checksum := utils.MD5FromString(input.Title)
-
 	// Populate a new performer from the input
 	currentTime := time.Now()
 	newGallery := models.Gallery{
@@ -29,7 +25,6 @@ func (r *mutationResolver) GalleryCreate(ctx context.Context, input models.Galle
 			String: input.Title,
 			Valid:  true,
 		},
-		Checksum:  checksum,
 		CreatedAt: models.SQLiteTimestamp{Timestamp: currentTime},
 		UpdatedAt: models.SQLiteTimestamp{Timestamp: currentTime},
 	}
@@ -187,12 +182,6 @@ func (r *mutationResolver) galleryUpdate(input models.GalleryUpdateInput, transl
 		// ensure title is not empty
 		if *input.Title == "" {
 			return nil, errors.New("title must not be empty")
-		}
-
-		// if gallery is not zip-based, then generate the checksum from the title
-		if !originalGallery.Path.Valid {
-			checksum := utils.MD5FromString(*input.Title)
-			updatedGallery.Checksum = &checksum
 		}
 
 		updatedGallery.Title = &sql.NullString{String: *input.Title, Valid: true}

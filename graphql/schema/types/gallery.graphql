@@ -1,8 +1,6 @@
 """Gallery type"""
 type Gallery {
   id: ID!
-  checksum: String!
-  path: String
   title: String
   url: String
   date: String
@@ -15,9 +13,16 @@ type Gallery {
   tags: [Tag!]!
   performers: [Performer!]!
 
+  files: [GalleryFileType!]! # Resolver
+
   """The images in the gallery"""
   images: [Image!]! # Resolver
   cover: Image
+}
+
+type GalleryFileType {
+  checksum: String!
+  path: String!
 }
 
 type GalleryFilesType {

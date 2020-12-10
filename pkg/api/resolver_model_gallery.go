@@ -8,13 +8,6 @@ import (
 	"github.com/stashapp/stash/pkg/utils"
 )
 
-func (r *galleryResolver) Path(ctx context.Context, obj *models.Gallery) (*string, error) {
-	if obj.Path.Valid {
-		return &obj.Path.String, nil
-	}
-	return nil, nil
-}
-
 func (r *galleryResolver) Title(ctx context.Context, obj *models.Gallery) (*string, error) {
 	if obj.Title.Valid {
 		return &obj.Title.String, nil
@@ -32,6 +25,23 @@ func (r *galleryResolver) Images(ctx context.Context, obj *models.Gallery) (ret 
 	}
 
 	return ret, nil
+}
+
+func (r *galleryResolver) Files(ctx context.Context, obj *models.Gallery) ([]*models.GalleryFileType, error) {
+	// TODO
+
+	// return &models.SceneFileType{
+	// 	Size:       &obj.Size.String,
+	// 	Duration:   &obj.Duration.Float64,
+	// 	VideoCodec: &obj.VideoCodec.String,
+	// 	AudioCodec: &obj.AudioCodec.String,
+	// 	Width:      &width,
+	// 	Height:     &height,
+	// 	Framerate:  &obj.Framerate.Float64,
+	// 	Bitrate:    &bitrate,
+	// }, nil
+
+	return nil, nil
 }
 
 func (r *galleryResolver) Cover(ctx context.Context, obj *models.Gallery) (ret *models.Image, err error) {

@@ -8,20 +8,6 @@ import (
 	"github.com/stashapp/stash/pkg/utils"
 )
 
-func (r *sceneResolver) Checksum(ctx context.Context, obj *models.Scene) (*string, error) {
-	if obj.Checksum.Valid {
-		return &obj.Checksum.String, nil
-	}
-	return nil, nil
-}
-
-func (r *sceneResolver) Oshash(ctx context.Context, obj *models.Scene) (*string, error) {
-	if obj.OSHash.Valid {
-		return &obj.OSHash.String, nil
-	}
-	return nil, nil
-}
-
 func (r *sceneResolver) Title(ctx context.Context, obj *models.Scene) (*string, error) {
 	if obj.Title.Valid {
 		return &obj.Title.String, nil
@@ -59,20 +45,24 @@ func (r *sceneResolver) Rating(ctx context.Context, obj *models.Scene) (*int, er
 	return nil, nil
 }
 
-func (r *sceneResolver) File(ctx context.Context, obj *models.Scene) (*models.SceneFileType, error) {
-	width := int(obj.Width.Int64)
-	height := int(obj.Height.Int64)
-	bitrate := int(obj.Bitrate.Int64)
-	return &models.SceneFileType{
-		Size:       &obj.Size.String,
-		Duration:   &obj.Duration.Float64,
-		VideoCodec: &obj.VideoCodec.String,
-		AudioCodec: &obj.AudioCodec.String,
-		Width:      &width,
-		Height:     &height,
-		Framerate:  &obj.Framerate.Float64,
-		Bitrate:    &bitrate,
-	}, nil
+func (r *sceneResolver) Files(ctx context.Context, obj *models.Scene) ([]*models.SceneFileType, error) {
+	// TODO
+
+	// width := int(obj.Width.Int64)
+	// height := int(obj.Height.Int64)
+	// bitrate := int(obj.Bitrate.Int64)
+	// return &models.SceneFileType{
+	// 	Size:       &obj.Size.String,
+	// 	Duration:   &obj.Duration.Float64,
+	// 	VideoCodec: &obj.VideoCodec.String,
+	// 	AudioCodec: &obj.AudioCodec.String,
+	// 	Width:      &width,
+	// 	Height:     &height,
+	// 	Framerate:  &obj.Framerate.Float64,
+	// 	Bitrate:    &bitrate,
+	// }, nil
+
+	return nil, nil
 }
 
 func (r *sceneResolver) Paths(ctx context.Context, obj *models.Scene) (*models.ScenePathsType, error) {

@@ -22,14 +22,18 @@ func (r *imageResolver) Rating(ctx context.Context, obj *models.Image) (*int, er
 }
 
 func (r *imageResolver) File(ctx context.Context, obj *models.Image) (*models.ImageFileType, error) {
-	width := int(obj.Width.Int64)
-	height := int(obj.Height.Int64)
-	size := int(obj.Size.Int64)
-	return &models.ImageFileType{
-		Size:   &size,
-		Width:  &width,
-		Height: &height,
-	}, nil
+	// TODO
+
+	// width := int(obj.Width.Int64)
+	// height := int(obj.Height.Int64)
+	// size := int(obj.Size.Int64)
+	// return &models.ImageFileType{
+	// 	Size:   &size,
+	// 	Width:  &width,
+	// 	Height: &height,
+	// }, nil
+
+	return nil, nil
 }
 
 func (r *imageResolver) Paths(ctx context.Context, obj *models.Image) (*models.ImagePathsType, error) {

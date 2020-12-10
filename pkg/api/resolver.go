@@ -98,28 +98,6 @@ func (r *queryResolver) MarkerWall(ctx context.Context, q *string) (ret []*model
 	return ret, nil
 }
 
-func (r *queryResolver) SceneWall(ctx context.Context, q *string) (ret []*models.Scene, err error) {
-	if err := r.withReadTxn(ctx, func(repo models.ReaderRepository) error {
-		ret, err = repo.Scene().Wall(q)
-		return err
-	}); err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
-func (r *queryResolver) MarkerStrings(ctx context.Context, q *string, sort *string) (ret []*models.MarkerStringsResultType, err error) {
-	if err := r.withReadTxn(ctx, func(repo models.ReaderRepository) error {
-		ret, err = repo.SceneMarker().GetMarkerStrings(q, sort)
-		return err
-	}); err != nil {
-		return nil, err
-	}
-
-	return ret, nil
-}
-
 func (r *queryResolver) Stats(ctx context.Context) (*models.StatsResultType, error) {
 	var ret models.StatsResultType
 	if err := r.withReadTxn(ctx, func(repo models.ReaderRepository) error {

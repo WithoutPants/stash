@@ -1,7 +1,5 @@
 fragment GallerySlimData on Gallery {
   id
-  checksum
-  path
   title
   date
   url
@@ -9,6 +7,10 @@ fragment GallerySlimData on Gallery {
   rating
   organized
   image_count
+  files {
+    checksum
+    path
+  }
   cover {
     ...SlimImageData
   }

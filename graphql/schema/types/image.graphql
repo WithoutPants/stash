@@ -1,13 +1,11 @@
 type Image {
   id: ID!
-  checksum: String
   title: String
   rating: Int
   o_counter: Int
   organized: Boolean!
-  path: String!
 
-  file: ImageFileType! # Resolver
+  files: [ImageFileType!]! # Resolver
   paths: ImagePathsType! # Resolver
 
   galleries: [Gallery!]!
@@ -17,6 +15,8 @@ type Image {
 }
 
 type ImageFileType {
+  path: String!
+  checksum: String!
   size: Int
   width: Int
   height: Int

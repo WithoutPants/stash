@@ -1,13 +1,15 @@
 fragment GalleryData on Gallery {
   id
-  checksum
-  path
   title
   date
   url
   details
   rating
   organized
+  files {
+    checksum
+    path
+  }
   images {
     ...SlimImageData
   }

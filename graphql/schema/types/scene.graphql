@@ -1,4 +1,7 @@
 type SceneFileType {
+  path: String!
+  checksum: String
+  oshash: String
   size: String
   duration: Float
   video_codec: String
@@ -25,8 +28,6 @@ type SceneMovie {
 
 type Scene {
   id: ID!
-  checksum: String
-  oshash: String
   title: String
   details: String
   url: String
@@ -34,9 +35,8 @@ type Scene {
   rating: Int
   organized: Boolean!
   o_counter: Int
-  path: String!
 
-  file: SceneFileType! # Resolver
+  files: [SceneFileType!]! # Resolver
   paths: ScenePathsType! # Resolver
 
   scene_markers: [SceneMarker!]!
