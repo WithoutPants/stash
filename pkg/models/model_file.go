@@ -54,3 +54,13 @@ func (s File) GetHash(hashAlgorithm HashAlgorithm) string {
 
 	panic("unknown hash algorithm")
 }
+
+type Files []*File
+
+func (s *Files) Append(o interface{}) {
+	*s = append(*s, o.(*File))
+}
+
+func (s *Files) New() interface{} {
+	return &File{}
+}
