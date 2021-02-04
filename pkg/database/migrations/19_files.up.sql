@@ -135,6 +135,7 @@ CREATE TABLE `scenes` (
   `url` varchar(255),
   `date` date,
   `rating` tinyint,
+  `organized` boolean not null default '0',
   `studio_id` integer,
   `o_counter` tinyint not null default 0,
   `created_at` datetime not null,
@@ -151,6 +152,7 @@ CREATE INDEX `index_scenes_on_studio_id` on `scenes` (`studio_id`);
 
 ALTER TABLE `galleries` rename to `_galleries_old`;
 
+-- scene_id is deprecated, so remove it now
 CREATE TABLE `galleries` (
   `id` integer not null primary key autoincrement,
   `zip` boolean not null default '0',
@@ -160,7 +162,7 @@ CREATE TABLE `galleries` (
   `details` text,
   `studio_id` integer,
   `rating` tinyint,
-  `scene_id` integer,
+  `organized` boolean not null default '0',
   `created_at` datetime not null,
   `updated_at` datetime not null,
   foreign key(`scene_id`) references `scenes`(`id`) on delete SET NULL,
@@ -181,6 +183,7 @@ CREATE TABLE `images` (
   `id` integer not null primary key autoincrement,
   `title` varchar(255),
   `rating` tinyint,
+  `organized` boolean not null default '0',
   `studio_id` integer,
   `o_counter` tinyint not null default 0,
   `created_at` datetime not null,
@@ -195,6 +198,7 @@ CREATE INDEX `index_images_on_studio_id` on `images` (`studio_id`);
 
 -- recreate the tables referencing the modified tables to correct their references
 
+ALTER TABLE `scenes_galleries` rename to `_scenes_galleries_old`;
 ALTER TABLE `performers_scenes` rename to `_performers_scenes_old`;
 ALTER TABLE `scene_markers` rename to `_scene_markers_old`;
 ALTER TABLE `scene_markers_tags` rename to `_scene_markers_tags_old`;
@@ -220,6 +224,19 @@ DROP INDEX `index_performers_scenes_on_performer_id`;
 
 CREATE INDEX `index_performers_scenes_on_scene_id` on `performers_scenes` (`scene_id`);
 CREATE INDEX `index_performers_scenes_on_performer_id` on `performers_scenes` (`performer_id`);
+
+CREATE TABLE `scenes_galleries` (
+  `scene_id` integer,
+  `gallery_id` integer,
+  foreign key(`scene_id`) references `scenes`(`id`) on delete CASCADE,
+  foreign key(`gallery_id`) references `galleries`(`id`) on delete CASCADE
+);
+
+DROP INDEX `index_scenes_galleries_on_scene_id`;
+DROP INDEX `index_scenes_galleries_on_gallery_id`;
+
+CREATE INDEX `index_scenes_galleries_on_scene_id` on `scenes_galleries` (`scene_id`);
+CREATE INDEX `index_scenes_galleries_on_gallery_id` on `scenes_galleries` (`gallery_id`);
 
 CREATE TABLE `scene_markers` (
   `id` integer not null primary key autoincrement,
@@ -370,6 +387,7 @@ INSERT INTO `scenes`
     `url`,
     `date`,
     `rating`,
+    `organized`,
     `studio_id`,
     `o_counter`,
     `created_at`,
@@ -382,6 +400,7 @@ INSERT INTO `scenes`
     `url`,
     `date`,
     `rating`,
+    `organized`,
     `studio_id`,
     `o_counter`,
     `created_at`,
@@ -407,6 +426,7 @@ INSERT INTO `images`
     `id`,
     `title`, 
     `rating`,
+    `organized`,
     `studio_id`,
     `o_counter`,
     `created_at`,
@@ -416,6 +436,7 @@ INSERT INTO `images`
     `id`,
     `title`, 
     `rating`,
+    `organized`,
     `studio_id`,
     `o_counter`,
     `created_at`,
@@ -446,7 +467,7 @@ INSERT INTO `galleries`
     `details`,
     `studio_id`,
     `rating`,
-    `scene_id`,
+    `organized`,
     `created_at`,
     `updated_at`,
   )
@@ -459,7 +480,7 @@ INSERT INTO `galleries`
     `details`,
     `studio_id`,
     `rating`,
-    `scene_id`,
+    `organized`,
     `created_at`,
     `updated_at`
   FROM `_galleries_old`;
@@ -479,6 +500,7 @@ INSERT INTO `galleries_files`
 
 -- these tables are a direct copy
 INSERT INTO `performers_scenes` select * from `_performers_scenes_old`;
+INSERT INTO `scenes_galleries` select * from `_scenes_galleries`;
 INSERT INTO `scene_markers` select * from `_scene_markers_old`;
 INSERT INTO `scene_markers_tags` select * from `_scene_markers_tags_old`;
 INSERT INTO `scenes_tags` select * from `_scenes_tags_old`;
@@ -492,18 +514,19 @@ INSERT INTO `performers_images` select * from `_performers_images`;
 INSERT INTO `images_tags` select * from `_images_tags`;
 
 -- drop the old tables
-DROP TABLE `scenes`;
-DROP TABLE `galleries`;
-DROP TABLE `images`;
-DROP TABLE `performers_scenes`;
-DROP TABLE `scene_markers`;
-DROP TABLE `scene_markers_tags`;
-DROP TABLE `scenes_tags`;
-DROP TABLE `movies_scenes`;
-DROP TABLE `scenes_cover`;
-DROP TABLE `scene_stash_ids`;
-DROP TABLE `galleries_images`;
-DROP TABLE `galleries_tags`;
-DROP TABLE `performers_galleries`;
-DROP TABLE `performers_images`;
-DROP TABLE `images_tags`;
+DROP TABLE `_scenes_old`;
+DROP TABLE `_galleries_old`;
+DROP TABLE `_images_old`;
+DROP TABLE `_performers_scenes_old`;
+DROP TABLE `_scenes_galleries`;
+DROP TABLE `_scene_markers_old`;
+DROP TABLE `_scene_markers_tags_old`;
+DROP TABLE `_scenes_tags_old`;
+DROP TABLE `_movies_scenes_old`;
+DROP TABLE `_scenes_cover_old`;
+DROP TABLE `_scene_stash_ids_old`;
+DROP TABLE `_galleries_images_old`;
+DROP TABLE `_galleries_tags_old`;
+DROP TABLE `_performers_galleries_old`;
+DROP TABLE `_performers_images_old`;
+DROP TABLE `_images_tags_old`;
