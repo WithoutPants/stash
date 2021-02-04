@@ -11,7 +11,7 @@ type FileReader interface {
 	// SizeCount() (string, error)
 	CountMissingChecksum() (int, error)
 	CountMissingOSHash() (int, error)
-	Query(FileFilter *FileFilterType, findFilter *FindFilterType) ([]*File, int, error)
+	//Query(FileFilter *FileFilterType, findFilter *FindFilterType) ([]*File, int, error)
 }
 
 type FileWriter interface {

@@ -3,6 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/stashapp/stash/pkg/models"
 )
 
 const fileTable = "files"
@@ -31,7 +33,7 @@ func NewFileReaderWriter(tx dbi) *fileQueryBuilder {
 	}
 }
 
-func (qb *fileQueryBuilder) Create(newFile models.File) (*models.File, error) {
+func (qb *fileQueryBuilder) Create(newObject models.File) (*models.File, error) {
 	var ret models.File
 	if err := qb.insertObject(newObject, &ret); err != nil {
 		return nil, err
@@ -40,7 +42,7 @@ func (qb *fileQueryBuilder) Create(newFile models.File) (*models.File, error) {
 	return &ret, nil
 }
 
-func (qb *fileQueryBuilder) Update(updatedObject models.FilePartial) (*modesl.File, error) {
+func (qb *fileQueryBuilder) Update(updatedObject models.FilePartial) (*models.File, error) {
 	const partial = true
 	if err := qb.update(updatedObject.ID, updatedObject, partial); err != nil {
 		return nil, err
@@ -51,11 +53,11 @@ func (qb *fileQueryBuilder) Update(updatedObject models.FilePartial) (*modesl.Fi
 
 func (qb *fileQueryBuilder) UpdateFull(updatedFile models.File) (*models.File, error) {
 	const partial = false
-	if err := qb.update(updatedObject.ID, updatedObject, partial); err != nil {
+	if err := qb.update(updatedFile.ID, updatedFile, partial); err != nil {
 		return nil, err
 	}
 
-	return qb.find(updatedObject.ID)
+	return qb.find(updatedFile.ID)
 }
 
 func (qb *fileQueryBuilder) UpdateModTime(id int, modTime models.NullSQLiteTimestamp) error {
@@ -73,7 +75,7 @@ func (qb *fileQueryBuilder) Find(id int) (*models.File, error) {
 }
 
 func (qb *fileQueryBuilder) FindMany(ids []int) ([]*models.File, error) {
-	var files []*File
+	var files []*models.File
 	for _, id := range ids {
 		file, err := qb.Find(id)
 		if err != nil {
@@ -104,26 +106,26 @@ func (qb *fileQueryBuilder) find(id int) (*models.File, error) {
 func (qb *fileQueryBuilder) FindByChecksum(checksum string) (*models.File, error) {
 	query := "SELECT * FROM files WHERE checksum = ? LIMIT 1"
 	args := []interface{}{checksum}
-	return qb.queryFile(query, args, nil)
+	return qb.queryFile(query, args)
 }
 
 func (qb *fileQueryBuilder) FindByOSHash(oshash string) (*models.File, error) {
 	query := "SELECT * FROM files WHERE oshash = ? LIMIT 1"
 	args := []interface{}{oshash}
-	return qb.queryFile(query, args, nil)
+	return qb.queryFile(query, args)
 }
 
 func (qb *fileQueryBuilder) FindByPath(path string) (*models.File, error) {
 	query := selectAll(fileTable) + "WHERE path = ? LIMIT 1"
 	args := []interface{}{path}
-	return qb.queryFile(query, args, nil)
+	return qb.queryFile(query, args)
 }
 
 func (qb *fileQueryBuilder) Count() (int, error) {
 	return qb.runCountQuery(qb.buildCountQuery("SELECT files.id FROM files"), nil)
 }
 
-func (qb *fileQueryBuilder) Size() (uint64, error) {
+func (qb *fileQueryBuilder) Size() (float64, error) {
 	return qb.runSumQuery("SELECT SUM(size) as sum FROM files", nil)
 }
 

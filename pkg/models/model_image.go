@@ -16,7 +16,7 @@ type Image struct {
 	Height    sql.NullInt64   `db:"height" json:"height"`
 	StudioID  sql.NullInt64   `db:"studio_id,omitempty" json:"studio_id"`
 	CreatedAt SQLiteTimestamp `db:"created_at" json:"created_at"`
-	UpdatedAt   SQLiteTimestamp     `db:"updated_at" json:"updated_at"`
+	UpdatedAt SQLiteTimestamp `db:"updated_at" json:"updated_at"`
 }
 
 // ImagePartial represents part of a Image object. It is used to update
@@ -43,5 +43,6 @@ func (i *Images) Append(o interface{}) {
 	*i = append(*i, o.(*Image))
 }
 
+func (i *Images) New() interface{} {
 	return &Image{}
 }
