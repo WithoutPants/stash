@@ -87,6 +87,10 @@ jobs:
         name: stash-linux
         path: dist/stash-linux
 
+    - name: Update latest_develop tag
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/github-actions2' }}
+      run : git tag -f latest_develop; git push -f --tags
+
     - name: Development Release
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/github-actions2' }}      
       uses: meeDamian/github-release@2.0
