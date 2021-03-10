@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"path/filepath"
 )
 
 // Image stores the metadata for a single image.
@@ -38,6 +39,16 @@ type ImagePartial struct {
 	FileModTime *NullSQLiteTimestamp `db:"file_mod_time" json:"file_mod_time"`
 	CreatedAt   *SQLiteTimestamp     `db:"created_at" json:"created_at"`
 	UpdatedAt   *SQLiteTimestamp     `db:"updated_at" json:"updated_at"`
+}
+
+// GetTitle returns the title of the image. If the Title field is empty,
+// then the base filename is returned.
+func (i Image) GetTitle() string {
+	if i.Title.String != "" {
+		return i.Title.String
+	}
+
+	return filepath.Base(i.Path)
 }
 
 // ImageFileType represents the file metadata for an image.

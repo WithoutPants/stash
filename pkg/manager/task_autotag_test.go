@@ -146,25 +146,42 @@ func createTag(qb models.TagWriter) error {
 	return nil
 }
 
-func createScenes(sqb models.SceneReaderWriter) error {
-	// create the scenes
-	var scenePatterns []string
-	var falseScenePatterns []string
+func getFilenamePatterns() []string {
+	var patterns []string
 
 	separators := append(testSeparators, testEndSeparators...)
 
 	for _, separator := range separators {
-		scenePatterns = append(scenePatterns, generateNamePatterns(testName, separator)...)
-		scenePatterns = append(scenePatterns, generateNamePatterns(strings.ToLower(testName), separator)...)
-		falseScenePatterns = append(falseScenePatterns, generateFalseNamePattern(testName, separator))
+		patterns = append(patterns, generateNamePatterns(testName, separator)...)
+		patterns = append(patterns, generateNamePatterns(strings.ToLower(testName), separator)...)
 	}
 
 	// add test cases for intra-name separators
 	for _, separator := range testSeparators {
 		if separator != " " {
-			scenePatterns = append(scenePatterns, generateNamePatterns(strings.Replace(testName, " ", separator, -1), separator)...)
+			patterns = append(patterns, generateNamePatterns(strings.Replace(testName, " ", separator, -1), separator)...)
 		}
 	}
+
+	return patterns
+}
+
+func getFalseFilenamePatterns() []string {
+	var patterns []string
+
+	separators := append(testSeparators, testEndSeparators...)
+
+	for _, separator := range separators {
+		patterns = append(patterns, generateFalseNamePattern(testName, separator))
+	}
+
+	return patterns
+}
+
+func createScenes(sqb models.SceneReaderWriter) error {
+	// create the scenes
+	scenePatterns := getFilenamePatterns()
+	falseScenePatterns := getFalseFilenamePatterns()
 
 	for _, fn := range scenePatterns {
 		err := createScene(sqb, makeScene(fn, true))
@@ -224,6 +241,69 @@ func createScene(sqb models.SceneWriter, scene *models.Scene) error {
 	return nil
 }
 
+func createImages(sqb models.ImageReaderWriter) error {
+	// create the images
+	imagePatterns := getFilenamePatterns()
+	falseImagePatterns := getFalseFilenamePatterns()
+
+	for _, fn := range imagePatterns {
+		err := createImage(sqb, makeImage(fn, true))
+		if err != nil {
+			return err
+		}
+	}
+	for _, fn := range falseImagePatterns {
+		err := createImage(sqb, makeImage(fn, false))
+		if err != nil {
+			return err
+		}
+	}
+
+	// add organized image
+	for _, fn := range imagePatterns {
+		s := makeImage("organized"+fn, false)
+		s.Organized = true
+		err := createImage(sqb, s)
+		if err != nil {
+			return err
+		}
+	}
+
+	// create image with existing studio io
+	studioImage := makeImage(existingStudioSceneName, true)
+	studioImage.StudioID = sql.NullInt64{Valid: true, Int64: int64(existingStudioID)}
+	err := createImage(sqb, studioImage)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func makeImage(name string, expectedResult bool) *models.Image {
+	image := &models.Image{
+		Checksum: utils.MD5FromString(name),
+		Path:     name,
+	}
+
+	// if expectedResult is true then we expect it to match, set the title accordingly
+	if expectedResult {
+		image.Title = sql.NullString{Valid: true, String: name}
+	}
+
+	return image
+}
+
+func createImage(sqb models.ImageWriter, image *models.Image) error {
+	_, err := sqb.Create(*image)
+
+	if err != nil {
+		return fmt.Errorf("Failed to create image with name '%s': %s", image.Path, err.Error())
+	}
+
+	return nil
+}
+
 func withTxn(f func(r models.Repository) error) error {
 	t := sqlite.NewTransactionManager()
 	return t.WithTxn(context.TODO(), f)
@@ -231,13 +311,11 @@ func withTxn(f func(r models.Repository) error) error {
 
 func populateDB() error {
 	if err := withTxn(func(r models.Repository) error {
-		err := createPerformer(r.Performer())
-		if err != nil {
+		if err := createPerformer(r.Performer()); err != nil {
 			return err
 		}
 
-		_, err = createStudio(r.Studio(), testName)
-		if err != nil {
+		if _, err := createStudio(r.Studio(), testName); err != nil {
 			return err
 		}
 
@@ -249,13 +327,15 @@ func populateDB() error {
 
 		existingStudioID = existingStudio.ID
 
-		err = createTag(r.Tag())
-		if err != nil {
+		if err := createTag(r.Tag()); err != nil {
 			return err
 		}
 
-		err = createScenes(r.Scene())
-		if err != nil {
+		if err := createScenes(r.Scene()); err != nil {
+			return err
+		}
+
+		if err := createImages(r.Image()); err != nil {
 			return err
 		}
 
@@ -313,6 +393,26 @@ func TestParsePerformers(t *testing.T) {
 			}
 		}
 
+		images, err := r.Image().All()
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		for _, image := range images {
+			performers, err := pqb.FindByImageID(image.ID)
+
+			if err != nil {
+				t.Errorf("Error getting image performers: %s", err.Error())
+			}
+
+			// title is only set on images where we expect performer to be set
+			if image.Title.String == image.Path && len(performers) == 0 {
+				t.Errorf("Did not set performer '%s' for path '%s'", testName, image.Path)
+			} else if image.Title.String != image.Path && len(performers) > 0 {
+				t.Errorf("Incorrectly set performer '%s' for path '%s'", testName, image.Path)
+			}
+		}
+
 		return nil
 	})
 }
@@ -358,6 +458,27 @@ func TestParseStudios(t *testing.T) {
 					t.Errorf("Did not set studio '%s' for path '%s'", testName, scene.Path)
 				} else if scene.Title.String != scene.Path && scene.StudioID.Int64 == int64(studios[0].ID) {
 					t.Errorf("Incorrectly set studio '%s' for path '%s'", testName, scene.Path)
+				}
+			}
+		}
+
+		images, err := r.Image().All()
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		for _, image := range images {
+			// check for existing studio id image first
+			if image.Path == existingStudioSceneName {
+				if image.StudioID.Int64 != int64(existingStudioID) {
+					t.Error("Incorrectly overwrote studio ID for image with existing studio ID")
+				}
+			} else {
+				// title is only set on images where we expect studio to be set
+				if image.Title.String == image.Path && image.StudioID.Int64 != int64(studios[0].ID) {
+					t.Errorf("Did not set studio '%s' for path '%s'", testName, image.Path)
+				} else if image.Title.String != image.Path && image.StudioID.Int64 == int64(studios[0].ID) {
+					t.Errorf("Incorrectly set studio '%s' for path '%s'", testName, image.Path)
 				}
 			}
 		}
@@ -409,6 +530,26 @@ func TestParseTags(t *testing.T) {
 				t.Errorf("Did not set tag '%s' for path '%s'", testName, scene.Path)
 			} else if scene.Title.String != scene.Path && len(tags) > 0 {
 				t.Errorf("Incorrectly set tag '%s' for path '%s'", testName, scene.Path)
+			}
+		}
+
+		images, err := r.Image().All()
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		for _, image := range images {
+			tags, err := tqb.FindByImageID(image.ID)
+
+			if err != nil {
+				t.Errorf("Error getting image tags: %s", err.Error())
+			}
+
+			// title is only set on images where we expect performer to be set
+			if image.Title.String == image.Path && len(tags) == 0 {
+				t.Errorf("Did not set tag '%s' for path '%s'", testName, image.Path)
+			} else if image.Title.String != image.Path && len(tags) > 0 {
+				t.Errorf("Incorrectly set tag '%s' for path '%s'", testName, image.Path)
 			}
 		}
 
