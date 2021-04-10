@@ -38,3 +38,8 @@ jobs:
     - name: Pre-install
       run: make pre-ui
 
+    - name: Generate
+      run: make generate
+    
+    - name: Build UI
+      run: make ui-only
