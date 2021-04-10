@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ develop, master ]
+    branches: [ develop, master, action-test ]
   pull_request:
     branches: [ develop ]
   release:
@@ -34,10 +34,6 @@ jobs:
       with:
         path: ui/v2.5/node_modules
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
 
     - name: Pre-install
       run: make pre-ui
