@@ -22,12 +22,13 @@ ifdef OUTPUT
   OUTPUT := -o $(OUTPUT)
 endif
 
+export CGO_ENABLED = 1
+export GO111MODULE = on
+
 .PHONY: release pre-build install clean 
 
 release: generate ui build-release
 
-pre-build: export CGO_ENABLED = 1
-pre-build: export GO111MODULE = on
 pre-build:
 ifndef BUILD_DATE
 	$(eval BUILD_DATE := $(shell go run -mod=vendor scripts/getDate.go))
