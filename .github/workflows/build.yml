@@ -55,7 +55,7 @@ jobs:
       run: docker exec -t build /bin/bash -c "make ui-validate fmt-check vet it"
 
     - name: Build UI
-      run: docker exec -t build /bin/bash -c "make ui-only"
+      run: docker exec -t build /bin/bash -c "make ui"
 
     - name: Compile for all supported platforms
       run: |
