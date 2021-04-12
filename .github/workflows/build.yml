@@ -62,7 +62,7 @@ jobs:
     - name: Validate UI
       #github.event_name != 'pull_request' || 
       # skip UI validation for pull requests if UI is unchanged
-      if: ${{ steps.cache-ui.outputs.cache-hit != "true" }}
+      if: ${{ steps.cache-ui.outputs.cache-hit != 'true' }}
       run: docker exec -t build /bin/bash -c "make ui-validate"
 
     # TODO: Replace with `make validate` once `revive` is bundled in COMPILER_IMAGE
@@ -74,7 +74,7 @@ jobs:
       # this means that the build version/time may be incorrect if the UI is
       # not changed in a pull request
       #github.event_name != 'pull_request' || 
-      if: ${{ steps.cache-ui.outputs.cache-hit != "true" }}
+      if: ${{ steps.cache-ui.outputs.cache-hit != 'true' }}
       run: docker exec -t build /bin/bash -c "make ui-only"
 
     - name: Compile for all supported platforms
