@@ -34,7 +34,7 @@ jobs:
     - name: Cache go build
       uses: actions/cache@v2
       env:
-        cache-name: cache-go-build
+        cache-name: cache-go-cache
       with:
         path: .go-cache
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/go.sum') }}
