@@ -31,8 +31,16 @@ jobs:
         path: ui/v2.5/node_modules
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('ui/v2.5/yarn.lock') }}
 
+    - name: Cache go build
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-go-build
+      with:
+        path: .go-cache
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/go.sum') }}
+
     - name: Start build container
-      run: docker run -d --name build --mount type=bind,source="$(pwd)",target=/stash,consistency=delegated -w /stash $COMPILER_IMAGE tail -f /dev/null
+      run: docker run -d --name build --mount type=bind,source="$(pwd)",target=/stash,consistency=delegated --mount type=bind,source="$(pwd)/.go-cache",target=/root/.cache/go-build,consistency=delegated -w /stash $COMPILER_IMAGE tail -f /dev/null
     
     - name: Pre-install
       run: docker exec -t build /bin/bash -c "make pre-ui"
@@ -68,7 +76,7 @@ jobs:
     
     - name: Upload Windows binary
       # only upload binaries for pull requests
-      if: ${{ github.event_name == 'pull_request' && github.base_ref != 'refs/heads/develop' && github.base_ref != 'refs/heads/master'}}
+      #if: ${{ github.event_name == 'pull_request' && github.base_ref != 'refs/heads/develop' && github.base_ref != 'refs/heads/master'}}
       uses: actions/upload-artifact@v2
       with:
         name: stash-win.exe
@@ -84,7 +92,7 @@ jobs:
 
     - name: Upload Linux binary
       # only upload binaries for pull requests
-      if: ${{ github.event_name == 'pull_request' && github.base_ref != 'refs/heads/develop' && github.base_ref != 'refs/heads/master'}}
+      #if: ${{ github.event_name == 'pull_request' && github.base_ref != 'refs/heads/develop' && github.base_ref != 'refs/heads/master'}}
       uses: actions/upload-artifact@v2
       with:
         name: stash-linux
