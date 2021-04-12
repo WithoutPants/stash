@@ -64,7 +64,8 @@ cross-compile-osx: export GOARCH := amd64
 cross-compile-osx: export CC := o64-clang
 cross-compile-osx: export CXX := o64-clang++
 cross-compile-osx: OUTPUT := -o dist/stash-osx
-cross-compile-osx: build-release-static
+# can't use static build for OSX
+cross-compile-osx: build-release
 
 cross-compile-linux: export GOOS := linux
 cross-compile-linux: export GOARCH := amd64
