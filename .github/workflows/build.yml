@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ develop, master ]
+    branches: [ develop, master, prs/1268 ]
   pull_request:
     branches: [ develop ]
   release:
