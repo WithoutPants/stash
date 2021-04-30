@@ -88,7 +88,6 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: true
-        allow_override: true
         automatic_release_tag: latest_develop
         title: "${{ env.STASH_VERSION }}: Latest development build"
         files: |
