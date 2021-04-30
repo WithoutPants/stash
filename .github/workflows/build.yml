@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ develop, master ]
+    branches: [ gh-test, master ]
   pull_request:
     branches: [ develop ]
   release:
@@ -83,7 +83,7 @@ jobs:
       run : git tag -f latest_develop; git push -f --tags
 
     - name: Development Release
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}      
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/gh-test' }}      
       uses: meeDamian/github-release@2.0
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
