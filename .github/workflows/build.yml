@@ -79,7 +79,7 @@ jobs:
         path: dist/stash-linux
         
     - name: Update latest_develop tag
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/gh-test' }}
       run : git tag -f latest_develop; git push -f --tags
 
     - name: Development Release
