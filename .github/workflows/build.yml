@@ -84,7 +84,7 @@ jobs:
 
     - name: Development Release
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/gh-test' }}      
-      uses: marvinpinto/action-automatic-releases@1.1.2
+      uses: marvinpinto/action-automatic-releases@v1.1.2
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: true
