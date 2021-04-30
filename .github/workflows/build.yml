@@ -84,14 +84,13 @@ jobs:
 
     - name: Development Release
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/gh-test' }}      
-      uses: meeDamian/github-release@2.0
+      uses: marvinpinto/action-automatic-releases@1.1.2
       with:
-        token: "${{ secrets.GITHUB_TOKEN }}"
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: true
         allow_override: true
-        tag: latest_develop
-        name: "${{ env.STASH_VERSION }}: Latest development build"
-        body: "**${{ env.RELEASE_DATE }}**\n This is always the latest committed version on the develop branch. Use as your own risk!"
+        automatic_release_tag: latest_develop
+        title: "${{ env.STASH_VERSION }}: Latest development build"
         files: |
           dist/stash-osx
           dist/stash-win.exe
@@ -100,7 +99,6 @@ jobs:
           dist/stash-linux-arm32v7
           dist/stash-pi
           CHECKSUMS_SHA1
-        gzip: false
 
     - name: Master release
       if: ${{ github.event_name == 'release' && github.ref != 'refs/tags/latest_develop' }}
