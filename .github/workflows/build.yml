@@ -172,6 +172,7 @@ jobs:
         gzip: false
 
     - name: Development Docker
+      # CHANGEME
       if: ${{ github.repository == 'WithoutPants/stash' && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
@@ -187,6 +188,7 @@ jobs:
         #bash ./docker/ci/x86_64/docker_push.sh development
 
     - name: Release Docker
+      # CHANGEME
       if: ${{ github.repository == 'WithoutPants/stash' && github.event_name == 'release' && github.ref != 'refs/tags/latest_develop' }}
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
