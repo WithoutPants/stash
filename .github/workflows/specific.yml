@@ -1,0 +1,121 @@
+name: Build specific
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ref
+        required: true
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPILER_IMAGE: stashapp/compiler:5
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.inputs.ref }}
+
+    - name: Checkout
+      run: git fetch --prune --unshallow --tags
+
+    - name: Pull compiler image
+      run: docker pull $COMPILER_IMAGE
+
+    - name: Cache node modules
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-node_modules
+      with:
+        path: ui/v2.5/node_modules
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('ui/v2.5/yarn.lock') }}
+
+    - name: Cache UI build
+      uses: actions/cache@v2
+      id: cache-ui
+      env:
+        cache-name: cache-ui
+      with:
+        path: ui/v2.5/build
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('ui/v2.5/yarn.lock', 'ui/v2.5/public/**', 'ui/v2.5/src/**', 'graphql/**/*.graphql') }}
+
+    - name: Cache go build
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-go-cache
+      with:
+        path: .go-cache
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/go.sum') }}
+
+    - name: Start build container
+      run: |
+        mkdir -p .go-cache
+        docker run -d --name build --mount type=bind,source="$(pwd)",target=/stash,consistency=delegated --mount type=bind,source="$(pwd)/.go-cache",target=/root/.cache/go-build,consistency=delegated -w /stash $COMPILER_IMAGE tail -f /dev/null
+
+    - name: Pre-install
+      run: docker exec -t build /bin/bash -c "make pre-ui"
+
+    - name: Generate
+      run: docker exec -t build /bin/bash -c "make generate"
+
+    - name: Validate UI
+      # skip UI validation for pull requests if UI is unchanged
+      if: ${{ github.event_name != 'pull_request' || steps.cache-ui.outputs.cache-hit != 'true' }}
+      run: docker exec -t build /bin/bash -c "make validate-frontend"
+
+    # Static validation happens in the linter workflow in parallel to this workflow
+    # Run Dynamic validation here, to make sure we pass all the projects integration tests
+    #
+    # create UI file so that the embed doesn't fail
+    - name: Test Backend
+      run: |
+        mkdir -p ui/v2.5/build
+        touch ui/v2.5/build/index.html
+        docker exec -t build /bin/bash -c "make it"
+
+    - name: Build UI
+      # skip UI build for pull requests if UI is unchanged (UI was cached)
+      # this means that the build version/time may be incorrect if the UI is
+      # not changed in a pull request
+      if: ${{ github.event_name != 'pull_request' || steps.cache-ui.outputs.cache-hit != 'true' }}
+      run: docker exec -t build /bin/bash -c "make ui"
+
+    - name: Compile for all supported platforms
+      run: |
+        docker exec -t build /bin/bash -c "make cross-compile-windows"
+        docker exec -t build /bin/bash -c "make cross-compile-osx-intel"
+        docker exec -t build /bin/bash -c "make cross-compile-osx-applesilicon"
+        docker exec -t build /bin/bash -c "make cross-compile-linux"
+        docker exec -t build /bin/bash -c "make cross-compile-linux-arm64v8"
+        docker exec -t build /bin/bash -c "make cross-compile-linux-arm32v7"
+        docker exec -t build /bin/bash -c "make cross-compile-pi"
+
+    - name: Cleanup build container
+      run: docker rm -f -v build
+
+    - name: Generate checksums
+      run: |
+        git describe --tags --exclude latest_develop | tee CHECKSUMS_SHA1
+        sha1sum dist/stash-* | sed 's/dist\///g' | tee -a CHECKSUMS_SHA1
+        echo "STASH_VERSION=$(git describe --tags --exclude latest_develop)" >> $GITHUB_ENV
+        echo "RELEASE_DATE=$(date +'%Y-%m-%d %H:%M:%S %Z')" >> $GITHUB_ENV
+
+    - name: Release Docker
+      if: ${{ github.event_name == 'release' && github.ref != 'refs/tags/latest_develop' }}
+      env:
+        DOCKER_CLI_EXPERIMENTAL: enabled
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+        docker info
+        docker buildx create --name builder --use
+        docker buildx inspect --bootstrap
+        docker buildx ls
+        bash ./docker/ci/x86_64/docker_push.sh latest
