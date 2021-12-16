@@ -141,6 +141,8 @@ func (e *Encoder) run(sourcePath string, args []string, stdin io.Reader) (string
 	cmd.Stderr = &stderr
 	cmd.Stdin = stdin
 
+	logger.Tracef("running %s", cmd.String())
+
 	if err := cmd.Start(); err != nil {
 		return "", err
 	}

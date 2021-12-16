@@ -137,7 +137,35 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs sceneRoutes) StreamTS(w http.ResponseWriter, r *http.Request) {
-	rs.streamTranscode(w, r, ffmpeg.CodecHLS)
+	scene := r.Context().Value(sceneKey).(*models.Scene)
+
+	ffprobe := manager.GetInstance().FFProbe
+	videoFile, err := ffprobe.NewVideoFile(scene.Path, false)
+	if err != nil {
+		logger.Errorf("[stream] error reading video file: %v", err)
+		return
+	}
+
+	fileNamingAlgo := config.GetInstance().GetVideoFileNamingAlgorithm()
+	startTime := r.Form.Get("start")
+	start := 0.0
+	if startTime != "" {
+		start, err = strconv.ParseFloat(startTime, 64)
+		if err != nil {
+			logger.Errorf("[stream] invalid start time: %v", err)
+			return
+		}
+	}
+
+	hlsStreamer := ffmpeg.HLSStreamer{
+		Encoder:   manager.GetInstance().FFMPEG,
+		CacheDir:  config.GetInstance().GetCachePath(),
+		Hash:      scene.GetHash(fileNamingAlgo),
+		VideoFile: videoFile,
+		Start:     start,
+	}
+
+	hlsStreamer.Serve(w, r)
 }
 
 func (rs sceneRoutes) streamTranscode(w http.ResponseWriter, r *http.Request, videoCodec ffmpeg.Codec) {
