@@ -147,6 +147,11 @@ func (rs sceneRoutes) StreamTS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileNamingAlgo := config.GetInstance().GetVideoFileNamingAlgorithm()
+
+	if err = r.ParseForm(); err != nil {
+		logger.Warnf("[stream] error parsing query form: %v", err)
+	}
+
 	startTime := r.Form.Get("start")
 	start := 0.0
 	if startTime != "" {

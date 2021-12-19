@@ -117,30 +117,30 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
 
     player.loop(!!scene.file.duration && maxLoopDuration !== 0 && scene.file.duration < maxLoopDuration);
 
-    const isDirect = new URL(scene.sceneStreams[0].url).pathname.endsWith("/stream");
-    if (!isDirect) {
-      (player as any).setOffsetDuration(scene.file.duration);
-    } else {
-      (player as any).clearOffsetDuration();
-    };
+    // const isDirect = new URL(scene.sceneStreams[0].url).pathname.endsWith("/stream");
+    // if (!isDirect) {
+    //   (player as any).setOffsetDuration(scene.file.duration);
+    // } else {
+    //   (player as any).clearOffsetDuration();
+    // };
 
     player.on("timeupdate", function (this: VideoJsPlayer) {
       setTime(this.currentTime());
     });
-    player.on("seeking", function (this: VideoJsPlayer) {
-      if (!isDirect) {
-        // remove the start parameter
-        const srcUrl = new URL(player.src());
-        srcUrl.searchParams.delete("start");
+    // player.on("seeking", function (this: VideoJsPlayer) {
+    //   if (!isDirect) {
+    //     // remove the start parameter
+    //     const srcUrl = new URL(player.src());
+    //     srcUrl.searchParams.delete("start");
 
-        /* eslint-disable no-param-reassign */
-        srcUrl.searchParams.append("start", player.currentTime().toString());
-        player.src(srcUrl.toString());
-        /* eslint-enable no-param-reassign */
+    //     /* eslint-disable no-param-reassign */
+    //     srcUrl.searchParams.append("start", player.currentTime().toString());
+    //     player.src(srcUrl.toString());
+    //     /* eslint-enable no-param-reassign */
 
-        player.play();
-      }
-    });
+    //     player.play();
+    //   }
+    // });
     player.play()?.catch(() => {
       if (scene.paths.screenshot)
         player.poster(scene.paths.screenshot);

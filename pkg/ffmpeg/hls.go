@@ -14,13 +14,12 @@ import (
 	"github.com/stashapp/stash/pkg/utils"
 )
 
-const hlsSegmentLength = 3.0
+const hlsSegmentLength = 2.0
 
 func WriteHLSPlaylist(probeResult VideoFile, baseUrl string, w io.Writer) {
 	fmt.Fprint(w, "#EXTM3U\n")
 	fmt.Fprint(w, "#EXT-X-VERSION:3\n")
 	fmt.Fprint(w, "#EXT-X-MEDIA-SEQUENCE:0\n")
-	fmt.Fprint(w, "#EXT-X-ALLOW-CACHE:YES\n")
 	fmt.Fprintf(w, "#EXT-X-TARGETDURATION:%d\n", int(hlsSegmentLength))
 	fmt.Fprint(w, "#EXT-X-PLAYLIST-TYPE:VOD\n")
 
@@ -38,7 +37,7 @@ func WriteHLSPlaylist(probeResult VideoFile, baseUrl string, w io.Writer) {
 			thisLength = leftover
 		}
 
-		fmt.Fprintf(w, "#EXTINF: %f,\n", thisLength)
+		fmt.Fprintf(w, "#EXTINF:%f,\n", thisLength)
 		fmt.Fprintf(w, "%s?start=%f\n", tsURL, upTo)
 
 		leftover -= thisLength
@@ -68,6 +67,7 @@ func (s *HLSStreamer) Serve(w http.ResponseWriter, r *http.Request) {
 	segmentFilename := filepath.Join(segmentsDir, fmt.Sprintf("%d.ts", segmentNumber))
 
 	if exists, _ := utils.FileExists(segmentFilename); exists {
+		w.Header().Set("Content-Type", "video/mp2t")
 		http.ServeFile(w, r, segmentFilename)
 		return
 	}
@@ -86,6 +86,8 @@ func (s *HLSStreamer) Serve(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ts file not generated", http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "video/mp2t")
 	http.ServeFile(w, r, segmentFilename)
 }
 
