@@ -1,6 +1,7 @@
 package ffmpeg
 
 import (
+	"path/filepath"
 	"strconv"
 
 	"github.com/stashapp/stash/pkg/models"
@@ -65,6 +66,32 @@ func (e *Encoder) Transcode(probeResult VideoFile, options TranscodeOptions) {
 		options.OutputPath,
 	}
 	_, _ = e.runTranscode(probeResult, args)
+}
+
+func (e *Encoder) TranscodeHLS(probeResult VideoFile, options TranscodeOptions) {
+	scale := calculateTranscodeScale(probeResult, options.MaxTranscodeSize)
+	args := []string{
+		"-i", probeResult.Path,
+		"-c:v", "libx264",
+		"-pix_fmt", "yuv420p",
+		"-profile:v", "high",
+		"-level", "4.2",
+		"-preset", "superfast",
+		"-crf", "23",
+		"-force_key_frames:0",
+		"-vf", "scale=" + scale,
+		"-c:a", "aac",
+		"-strict", "-2",
+		"-f", "hls",
+		"-avoid_negative_ts", "disabled",
+		"-hls_time", "3",
+		"-hls_segment_type", "mpegts",
+		"-hls_playlist_type", "vod",
+		"-hls_list_size", "0",
+		"-hls_segment_filename", filepath.Join(options.OutputPath, "%d.ts"),
+		filepath.Join(options.OutputPath, "playlist.m3u8"),
+	}
+	_, _ = e.run(probeResult.Path, args, nil)
 }
 
 // TranscodeVideo transcodes the video, and removes the audio.

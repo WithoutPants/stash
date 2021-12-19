@@ -24,6 +24,10 @@ $sceneTabWidth: 450px;
   &.portrait .video-js {
     height: 177.78vw;
   }
+
+  .jwplayer {
+    outline: none;
+  }
 }
 
 .video-js {
@@ -168,6 +172,10 @@ $sceneTabWidth: 450px;
   margin: 5px 0;
   overflow: hidden;
   position: relative;
+}
+
+.hide-scrubber .scrubber-wrapper {
+  display: none;
 }
 
 /* hide scrubber when height is < 450px or width < 576 */
