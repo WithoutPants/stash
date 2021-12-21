@@ -25,9 +25,16 @@ const (
 	maxSegmentWait       = 5 * time.Second
 	segmentCheckInterval = 100 * time.Millisecond
 
-	maxSegmentGap = 10
+	// number of segments to wait to be generated before we
+	// restart the transcode process at the requested segment
+	maxSegmentWaitGap = 5
 
-	maxIdleTime = 10 * time.Second
+	// number of segments ahead of the currently streaming segment
+	// before we stop the transcode process to save CPU
+	maxSegmentStopGap = 15
+
+	maxIdleTime     = 10 * time.Second
+	monitorInterval = 2 * time.Second
 )
 
 type StreamManagerConfig interface {
@@ -37,6 +44,7 @@ type StreamManagerConfig interface {
 type transcodeProcess struct {
 	cmd          *exec.Cmd
 	cancel       context.CancelFunc
+	cancelled    bool
 	hash         string
 	startSegment int
 }
@@ -44,6 +52,7 @@ type transcodeProcess struct {
 type runningStream struct {
 	running      bool
 	lastAccessed time.Time
+	segment      int
 }
 
 type StreamManager struct {
@@ -156,10 +165,11 @@ func (sm *StreamManager) lastTranscodedSegment(hash string) int {
 	return segment
 }
 
-func (sm *StreamManager) streamNotify(ctx context.Context, hash string) {
+func (sm *StreamManager) streamNotify(ctx context.Context, hash string, segment int) {
 	sm.streamsMutex.Lock()
 	sm.runningStreams[hash] = runningStream{
 		running: true,
+		segment: segment,
 	}
 	sm.streamsMutex.Unlock()
 
@@ -169,27 +179,30 @@ func (sm *StreamManager) streamNotify(ctx context.Context, hash string) {
 		sm.streamsMutex.Lock()
 		sm.runningStreams[hash] = runningStream{
 			lastAccessed: time.Now(),
+			segment:      segment,
 		}
 		sm.streamsMutex.Unlock()
 	}()
 }
 
-func (sm *StreamManager) streamTSFunc(hash string, fn string) http.HandlerFunc {
+func (sm *StreamManager) streamTSFunc(hash string, segment int) http.HandlerFunc {
+	fn := sm.segmentFilename(hash, segment)
 	return func(w http.ResponseWriter, r *http.Request) {
-		sm.streamNotify(r.Context(), hash)
+		sm.streamNotify(r.Context(), hash, segment)
 		w.Header().Set("Content-Type", "video/mp2t")
 		http.ServeFile(w, r, fn)
 	}
 }
 
-func (sm *StreamManager) waitAndStreamTSFunc(hash string, fn string) http.HandlerFunc {
+func (sm *StreamManager) waitAndStreamTSFunc(hash string, segment int) http.HandlerFunc {
+	fn := sm.segmentFilename(hash, segment)
 	started := time.Now()
 
 	logger.Debugf("waiting for segment file %q to be generated", fn)
 	for {
 		if sm.segmentExists(fn) {
 			// TODO - may need to wait for transcode process to finish writing the file first
-			return sm.streamTSFunc(hash, fn)
+			return sm.streamTSFunc(hash, segment)
 		}
 
 		now := time.Now()
@@ -239,7 +252,7 @@ func (sm *StreamManager) StreamTS(src string, hash string, segment int) http.Han
 	// TODO - may need to wait for transcode process to finish writing the file first
 	// if so, return it
 	if sm.segmentExists(segmentFilename) {
-		return sm.streamTSFunc(hash, segmentFilename)
+		return sm.streamTSFunc(hash, segment)
 	}
 
 	// check if transcoding process is already running
@@ -258,16 +271,16 @@ func (sm *StreamManager) StreamTS(src string, hash string, segment int) http.Han
 			return onTranscodeError(err)
 		}
 
-		return sm.waitAndStreamTSFunc(hash, segmentFilename)
+		return sm.waitAndStreamTSFunc(hash, segment)
 	}
 
 	// check if transcoding process is about to transcode the necessary segment
 	lastSegment := sm.lastTranscodedSegment(hash)
 
-	if lastSegment <= segment && lastSegment+maxSegmentGap >= segment {
+	if lastSegment <= segment && lastSegment+maxSegmentWaitGap >= segment {
 		// if so, wait and return
 		sm.transcodesMutex.Unlock()
-		return sm.waitAndStreamTSFunc(hash, segmentFilename)
+		return sm.waitAndStreamTSFunc(hash, segment)
 	}
 
 	logger.Debugf("restarting transcode since up to segment #%d and #%d was requested", lastSegment, segment)
@@ -282,7 +295,7 @@ func (sm *StreamManager) StreamTS(src string, hash string, segment int) http.Han
 	if err != nil {
 		return onTranscodeError(err)
 	}
-	return sm.waitAndStreamTSFunc(hash, segmentFilename)
+	return sm.waitAndStreamTSFunc(hash, segment)
 }
 
 func (sm *StreamManager) segmentToTime(segment int) string {
@@ -394,6 +407,7 @@ func (sm *StreamManager) stopTranscode(hash string) {
 	p := sm.runningTranscodes[hash]
 	if p != nil {
 		p.cancel()
+		p.cancelled = true
 		delete(sm.runningTranscodes, hash)
 	}
 }
@@ -409,7 +423,8 @@ func (sm *StreamManager) waitAndDeregister(hash string, p *transcodeProcess, std
 	// make sure that cancel is called to prevent memory leaks
 	p.cancel()
 
-	if err != nil {
+	// don't log error if cancelled
+	if !p.cancelled && err != nil {
 		e := string(errStr)
 		if e == "" {
 			e = string(outStr)
@@ -438,7 +453,7 @@ func (sm *StreamManager) waitAndDeregister(hash string, p *transcodeProcess, std
 func (sm *StreamManager) monitorStreams() {
 	for {
 		select {
-		case <-time.After(maxIdleTime):
+		case <-time.After(monitorInterval):
 			sm.removeStaleFiles()
 		case <-sm.context.Done():
 			sm.stopAndRemoveAll()
@@ -468,6 +483,16 @@ func (sm *StreamManager) removeStaleFiles() {
 
 				toRemove = append(toRemove, hash)
 			}()
+		} else {
+			// check if the last transcoded file is way ahead of the current streaming one
+			// if so, stop the transcode to save CPU
+			lastGenerated := sm.lastTranscodedSegment(hash)
+			sm.transcodesMutex.Lock()
+			if sm.runningTranscodes[hash] != nil && stream.segment+maxSegmentStopGap < lastGenerated {
+				logger.Debugf("stopping transcode for hash %q as last generated segment %d is too far ahead of current segment %d", hash, lastGenerated, stream.segment)
+				sm.stopTranscode(hash)
+			}
+			sm.transcodesMutex.Unlock()
 		}
 	}
 
