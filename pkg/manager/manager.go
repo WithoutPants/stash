@@ -188,7 +188,7 @@ func initFFMPEG() error {
 
 		instance.FFMPEG = ffmpeg.Encoder(ffmpegPath)
 		instance.FFProbe = ffmpeg.FFProbe(ffprobePath)
-		instance.StreamManager = ffmpeg.NewStreamManager(instance.Config.GetCachePath(), instance.FFMPEG, instance.FFProbe, instance.Config.GetMaxStreamingTranscodeSize())
+		instance.RefreshStreamManager()
 	}
 
 	return nil
@@ -288,6 +288,24 @@ func (s *singleton) RefreshConfig() {
 // configuration changes.
 func (s *singleton) RefreshScraperCache() {
 	s.ScraperCache = s.initScraperCache()
+}
+
+// RefreshStreamManager refreshes the stream manager. Call this when cache directory
+// changes.
+func (s *singleton) RefreshStreamManager() {
+	// shutdown existing manager if needed
+	if s.StreamManager != nil {
+		s.StreamManager.Shutdown()
+		s.StreamManager = nil
+	}
+
+	// only create the stream manager if cache path is set
+	cacheDir := s.Config.GetCachePath()
+	if cacheDir != "" {
+		s.StreamManager = ffmpeg.NewStreamManager(cacheDir, s.FFMPEG, s.FFProbe, s.Config)
+	} else {
+		logger.Warn("cache directory is not set. Live transcoding will be disabled")
+	}
 }
 
 func setSetupDefaults(input *models.SetupInput) {
@@ -461,6 +479,11 @@ func (s *singleton) GetSystemStatus() *models.SystemStatus {
 
 // Shutdown gracefully stops the manager
 func (s *singleton) Shutdown() error {
+	if s.StreamManager != nil {
+		s.StreamManager.Shutdown()
+		s.StreamManager = nil
+	}
+
 	// TODO: Each part of the manager needs to gracefully stop at some point
 	// for now, we just close the database.
 	return database.Close()

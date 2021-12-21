@@ -113,6 +113,12 @@ func (rs sceneRoutes) getTSURL(manifestURL string) string {
 func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	scene := r.Context().Value(sceneKey).(*models.Scene)
 
+	streamManager := manager.GetInstance().StreamManager
+	if streamManager == nil {
+		http.Error(w, "HLS streaming disabled", http.StatusServiceUnavailable)
+		return
+	}
+
 	ffprobe := manager.GetInstance().FFProbe
 	videoFile, err := ffprobe.NewVideoFile(scene.Path, false)
 	if err != nil {
@@ -127,7 +133,7 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	var str strings.Builder
 
 	urlFormat := rs.getTSURL(r.URL.String())
-	manager.GetInstance().StreamManager.WriteHLSPlaylist(videoFile.Duration, urlFormat, &str)
+	streamManager.WriteHLSPlaylist(videoFile.Duration, urlFormat, &str)
 
 	requestByteRange := utils.CreateByteRange(r.Header.Get("Range"))
 	if requestByteRange.RawString != "" {
@@ -146,11 +152,17 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 func (rs sceneRoutes) StreamTS(w http.ResponseWriter, r *http.Request) {
 	scene := r.Context().Value(sceneKey).(*models.Scene)
 
+	streamManager := manager.GetInstance().StreamManager
+	if streamManager == nil {
+		http.Error(w, "HLS streaming disabled", http.StatusServiceUnavailable)
+		return
+	}
+
 	fileNamingAlgo := config.GetInstance().GetVideoFileNamingAlgorithm()
 	hash := scene.GetHash(fileNamingAlgo)
 
 	segment, _ := strconv.Atoi(chi.URLParam(r, "segment"))
-	handler := manager.GetInstance().StreamManager.StreamTS(scene.Path, hash, segment)
+	handler := streamManager.StreamTS(scene.Path, hash, segment)
 
 	handler(w, r)
 }

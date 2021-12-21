@@ -2,6 +2,7 @@ package ffmpeg
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"os/exec"
@@ -166,4 +167,8 @@ func (e *Encoder) run(sourcePath string, args []string, stdin io.Reader) (string
 
 func (e *Encoder) command(args []string) *exec.Cmd {
 	return exec.Command(string(*e), args...)
+}
+
+func (e *Encoder) commandContext(ctx context.Context, args []string) *exec.Cmd {
+	return exec.CommandContext(ctx, string(*e), args...)
 }
