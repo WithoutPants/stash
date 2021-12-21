@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 
@@ -30,7 +31,7 @@ func (rs sceneRoutes) Routes() chi.Router {
 		r.Get("/stream.mkv", rs.StreamMKV)
 		r.Get("/stream.webm", rs.StreamWebM)
 		r.Get("/stream.m3u8", rs.StreamHLS)
-		r.Get("/stream.ts", rs.StreamTS)
+		r.Get("/stream/{segment}.ts", rs.StreamTS)
 		r.Get("/stream.mp4", rs.StreamMp4)
 
 		r.Get("/screenshot", rs.Screenshot)
@@ -104,6 +105,11 @@ func (rs sceneRoutes) StreamMp4(w http.ResponseWriter, r *http.Request) {
 	rs.streamTranscode(w, r, ffmpeg.CodecH264)
 }
 
+func (rs sceneRoutes) getTSURL(manifestURL string) string {
+	parent := path.Dir(manifestURL)
+	return parent + "/stream/%d.ts"
+}
+
 func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	scene := r.Context().Value(sceneKey).(*models.Scene)
 
@@ -120,7 +126,8 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", ffmpeg.MimeHLS)
 	var str strings.Builder
 
-	ffmpeg.WriteHLSPlaylist(*videoFile, r.URL.String(), &str)
+	urlFormat := rs.getTSURL(r.URL.String())
+	manager.GetInstance().StreamManager.WriteHLSPlaylist(videoFile.Duration, urlFormat, &str)
 
 	requestByteRange := utils.CreateByteRange(r.Header.Get("Range"))
 	if requestByteRange.RawString != "" {
@@ -139,38 +146,13 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 func (rs sceneRoutes) StreamTS(w http.ResponseWriter, r *http.Request) {
 	scene := r.Context().Value(sceneKey).(*models.Scene)
 
-	ffprobe := manager.GetInstance().FFProbe
-	videoFile, err := ffprobe.NewVideoFile(scene.Path, false)
-	if err != nil {
-		logger.Errorf("[stream] error reading video file: %v", err)
-		return
-	}
-
 	fileNamingAlgo := config.GetInstance().GetVideoFileNamingAlgorithm()
+	hash := scene.GetHash(fileNamingAlgo)
 
-	if err = r.ParseForm(); err != nil {
-		logger.Warnf("[stream] error parsing query form: %v", err)
-	}
+	segment, _ := strconv.Atoi(chi.URLParam(r, "segment"))
+	handler := manager.GetInstance().StreamManager.StreamTS(scene.Path, hash, segment)
 
-	startTime := r.Form.Get("start")
-	start := 0.0
-	if startTime != "" {
-		start, err = strconv.ParseFloat(startTime, 64)
-		if err != nil {
-			logger.Errorf("[stream] invalid start time: %v", err)
-			return
-		}
-	}
-
-	hlsStreamer := ffmpeg.HLSStreamer{
-		Encoder:   manager.GetInstance().FFMPEG,
-		CacheDir:  config.GetInstance().GetCachePath(),
-		Hash:      scene.GetHash(fileNamingAlgo),
-		VideoFile: videoFile,
-		Start:     start,
-	}
-
-	hlsStreamer.Serve(w, r)
+	handler(w, r)
 }
 
 func (rs sceneRoutes) streamTranscode(w http.ResponseWriter, r *http.Request, videoCodec ffmpeg.Codec) {

@@ -33,8 +33,9 @@ type singleton struct {
 
 	Paths *paths.Paths
 
-	FFMPEG  ffmpeg.Encoder
-	FFProbe ffmpeg.FFProbe
+	FFMPEG        ffmpeg.Encoder
+	FFProbe       ffmpeg.FFProbe
+	StreamManager *ffmpeg.StreamManager
 
 	SessionStore *session.Store
 
@@ -187,6 +188,7 @@ func initFFMPEG() error {
 
 		instance.FFMPEG = ffmpeg.Encoder(ffmpegPath)
 		instance.FFProbe = ffmpeg.FFProbe(ffprobePath)
+		instance.StreamManager = ffmpeg.NewStreamManager(instance.Config.GetCachePath(), instance.FFMPEG, instance.FFProbe, instance.Config.GetMaxStreamingTranscodeSize())
 	}
 
 	return nil

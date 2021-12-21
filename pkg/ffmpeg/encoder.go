@@ -134,7 +134,7 @@ func (e *Encoder) runTranscode(probeResult VideoFile, args []string) (string, er
 }
 
 func (e *Encoder) run(sourcePath string, args []string, stdin io.Reader) (string, error) {
-	cmd := exec.Command(string(*e), args...)
+	cmd := e.command(args)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -162,4 +162,8 @@ func (e *Encoder) run(sourcePath string, args []string, stdin io.Reader) (string
 	}
 
 	return stdout.String(), nil
+}
+
+func (e *Encoder) command(args []string) *exec.Cmd {
+	return exec.Command(string(*e), args...)
 }
