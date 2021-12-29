@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -105,9 +106,14 @@ func (rs sceneRoutes) StreamMp4(w http.ResponseWriter, r *http.Request) {
 	rs.streamTranscode(w, r, ffmpeg.CodecH264)
 }
 
-func (rs sceneRoutes) getTSURL(manifestURL string) string {
+func (rs sceneRoutes) getTSURL(manifestURL string, params url.Values) string {
 	parent := path.Dir(manifestURL)
-	return parent + "/stream/%d.ts"
+	encoded := params.Encode()
+	ret := parent + "/stream/%d.ts"
+	if encoded != "" {
+		ret += "?" + encoded
+	}
+	return ret
 }
 
 func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +123,11 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	if streamManager == nil {
 		http.Error(w, "HLS streaming disabled", http.StatusServiceUnavailable)
 		return
+	}
+
+	// start stream based on query param, if provided
+	if err := r.ParseForm(); err != nil {
+		logger.Warnf("[stream] error parsing query form: %v", err)
 	}
 
 	ffprobe := manager.GetInstance().FFProbe
@@ -132,7 +143,7 @@ func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", ffmpeg.MimeHLS)
 	var str strings.Builder
 
-	urlFormat := rs.getTSURL(r.URL.String())
+	urlFormat := rs.getTSURL(r.URL.String(), r.Form)
 	streamManager.WriteHLSPlaylist(videoFile.Duration, urlFormat, &str)
 
 	requestByteRange := utils.CreateByteRange(r.Header.Get("Range"))
@@ -158,15 +169,20 @@ func (rs sceneRoutes) StreamTS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := r.ParseForm(); err != nil {
+		logger.Warnf("[stream] error parsing query form: %v", err)
+	}
+
 	fileNamingAlgo := config.GetInstance().GetVideoFileNamingAlgorithm()
 	hash := scene.GetHash(fileNamingAlgo)
 
 	segment, _ := strconv.Atoi(chi.URLParam(r, "segment"))
-	handler := streamManager.StreamTS(scene.Path, hash, segment)
+	handler := streamManager.StreamTS(scene.Path, hash, segment, r.Form.Get("videoCodec"))
 
 	handler(w, r)
 }
 
+// deprecated
 func (rs sceneRoutes) streamTranscode(w http.ResponseWriter, r *http.Request, videoCodec ffmpeg.Codec) {
 	logger.Debugf("Streaming as %s", videoCodec.MimeType)
 	scene := r.Context().Value(sceneKey).(*models.Scene)

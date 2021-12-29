@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/stashapp/stash/pkg/logger"
@@ -46,20 +45,6 @@ type Codec struct {
 	format    string
 	MimeType  string
 	extraArgs []string
-	hls       bool
-}
-
-var CodecHLS = Codec{
-	Codec:    "libx264",
-	format:   "mpegts",
-	MimeType: MimeMpegts,
-	extraArgs: []string{
-		"-acodec", "aac",
-		"-pix_fmt", "yuv420p",
-		"-preset", "veryfast",
-		"-crf", "25",
-	},
-	hls: true,
 }
 
 var CodecH264 = Codec{
@@ -157,11 +142,6 @@ func (o TranscodeStreamOptions) getStreamArgs() []string {
 
 	if o.StartTime != "" {
 		args = append(args, "-ss", o.StartTime)
-	}
-
-	if o.Codec.hls {
-		// we only serve a fixed segment length
-		args = append(args, "-t", strconv.Itoa(int(hlsSegmentLength)))
 	}
 
 	args = append(args,

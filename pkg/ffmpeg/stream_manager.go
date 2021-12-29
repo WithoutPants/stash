@@ -43,6 +43,7 @@ type StreamManagerConfig interface {
 
 type transcodeProcess struct {
 	cmd          *exec.Cmd
+	path         string
 	cancel       context.CancelFunc
 	cancelled    bool
 	hash         string
@@ -223,7 +224,7 @@ func (sm *StreamManager) waitAndStreamTSFunc(hash string, segment int) http.Hand
 // Otherwise, a transcode process will be started for the provided segment. If
 // a transcode process is running already, then it will be killed before the new
 // process is started.
-func (sm *StreamManager) StreamTS(src string, hash string, segment int) http.HandlerFunc {
+func (sm *StreamManager) StreamTS(src string, hash string, segment int, videoCodec string) http.HandlerFunc {
 	if sm.cacheDir == "" {
 		logger.Error("cannot live transcode files because cache dir is empty")
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -264,7 +265,7 @@ func (sm *StreamManager) StreamTS(src string, hash string, segment int) http.Han
 	// if not, start one at the applicable time, wait and return stream
 	if tp == nil {
 		var err error
-		_, err = sm.startTranscode(src, hash, segment)
+		_, err = sm.startTranscode(src, hash, segment, videoCodec)
 		sm.transcodesMutex.Unlock()
 
 		if err != nil {
@@ -289,7 +290,7 @@ func (sm *StreamManager) StreamTS(src string, hash string, segment int) http.Han
 	// wait and return stream
 	sm.stopTranscode(hash)
 
-	_, err := sm.startTranscode(src, hash, segment)
+	_, err := sm.startTranscode(src, hash, segment, videoCodec)
 	sm.transcodesMutex.Unlock()
 
 	if err != nil {
@@ -302,7 +303,7 @@ func (sm *StreamManager) segmentToTime(segment int) string {
 	return fmt.Sprint(segment * hlsSegmentLength)
 }
 
-func (sm *StreamManager) getTranscodeArgs(probeResult *VideoFile, outputPath string, segment int) []string {
+func (sm *StreamManager) getTranscodeArgs(probeResult *VideoFile, outputPath string, segment int, videoCodec string) []string {
 	scale := calculateTranscodeScale(*probeResult, sm.config.GetMaxStreamingTranscodeSize())
 
 	args := []string{
@@ -317,19 +318,26 @@ func (sm *StreamManager) getTranscodeArgs(probeResult *VideoFile, outputPath str
 		)
 	}
 
+	args = append(args, "-i", probeResult.Path)
+
+	if videoCodec == "copy" {
+		args = append(args, "-c:v", "copy")
+	} else {
+		args = append(args,
+			"-c:v", "libx264",
+			"-pix_fmt", "yuv420p",
+			"-profile:v", "high",
+			"-level", "4.2",
+			"-preset", "superfast",
+			"-crf", "23",
+			"-r", "30",
+			"-g", "60",
+			"-x264-params", "no-scenecut=1",
+			"-force_key_frames", "0",
+			"-vf", "scale="+scale)
+	}
+
 	args = append(args,
-		"-i", probeResult.Path,
-		"-c:v", "libx264",
-		"-pix_fmt", "yuv420p",
-		"-profile:v", "high",
-		"-level", "4.2",
-		"-preset", "superfast",
-		"-crf", "23",
-		"-r", "30",
-		"-g", "60",
-		"-x264-params", "no-scenecut=1",
-		"-force_key_frames", "0",
-		"-vf", "scale="+scale,
 		"-c:a", "aac",
 		// this is needed for 5-channel ac3 files
 		"-ac", "2",
@@ -350,7 +358,7 @@ func (sm *StreamManager) getTranscodeArgs(probeResult *VideoFile, outputPath str
 }
 
 // assumes mutex is held
-func (sm *StreamManager) startTranscode(src string, hash string, segment int) (*transcodeProcess, error) {
+func (sm *StreamManager) startTranscode(src string, hash string, segment int, videoCodec string) (*transcodeProcess, error) {
 	probeResult, err := sm.ffprobe.NewVideoFile(src, false)
 	if err != nil {
 		return nil, err
@@ -363,7 +371,7 @@ func (sm *StreamManager) startTranscode(src string, hash string, segment int) (*
 
 	ctx, cancel := context.WithCancel(sm.context)
 
-	args := sm.getTranscodeArgs(probeResult, outputPath, segment)
+	args := sm.getTranscodeArgs(probeResult, outputPath, segment, videoCodec)
 	cmd := sm.encoder.commandContext(ctx, args)
 
 	stderr, err := cmd.StderrPipe()
@@ -382,8 +390,11 @@ func (sm *StreamManager) startTranscode(src string, hash string, segment int) (*
 		return nil, err
 	}
 
+	registerRunningEncoder(probeResult.Path, cmd.Process)
+
 	p := &transcodeProcess{
 		cmd:          cmd,
+		path:         probeResult.Path,
 		cancel:       cancel,
 		hash:         hash,
 		startSegment: segment,
@@ -422,6 +433,8 @@ func (sm *StreamManager) waitAndDeregister(hash string, p *transcodeProcess, std
 
 	// make sure that cancel is called to prevent memory leaks
 	p.cancel()
+
+	deregisterRunningEncoder(p.path, cmd.Process)
 
 	// don't log error if cancelled
 	if !p.cancelled && err != nil {
