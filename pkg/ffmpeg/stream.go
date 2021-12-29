@@ -1,6 +1,7 @@
 package ffmpeg
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"os"
@@ -9,14 +10,14 @@ import (
 	"strings"
 
 	"github.com/stashapp/stash/pkg/logger"
-	"github.com/stashapp/stash/pkg/models"
 )
 
 const CopyStreamCodec = "copy"
 
 type Stream struct {
-	Stdout   io.ReadCloser
-	Process  *os.Process
+	stdout   io.Reader
+	stderr   io.Reader
+	process  *os.Process
 	options  TranscodeStreamOptions
 	mimeType string
 }
@@ -27,16 +28,18 @@ func (s *Stream) Serve(w http.ResponseWriter, r *http.Request) {
 
 	logger.Infof("[stream] transcoding video file to %s", s.mimeType)
 
-	// handle if client closes the connection
-	notify := r.Context().Done()
+	// stderr must be consumed or the process deadlocks
 	go func() {
-		<-notify
-		if err := s.Process.Kill(); err != nil {
-			logger.Warnf("unable to kill os process %v: %v", s.Process.Pid, err)
+		stderrData, _ := io.ReadAll(s.stderr)
+		stderrString := string(stderrData)
+		if len(stderrString) > 0 {
+			logger.Debugf("[stream] ffmpeg stderr: %s", stderrString)
 		}
 	}()
 
-	_, err := io.Copy(w, s.Stdout)
+	// handle if client closes the connection
+	// this is handled automatically using the context
+	_, err := io.Copy(w, s.stdout)
 	if err != nil {
 		logger.Errorf("[stream] error serving transcoded video file: %s", err.Error())
 	}
@@ -129,7 +132,7 @@ type TranscodeStreamOptions struct {
 	ProbeResult      VideoFile
 	Codec            Codec
 	StartTime        string
-	MaxTranscodeSize models.StreamingResolutionEnum
+	MaxTranscodeSize int
 	// transcode the video, remove the audio
 	// in some videos where the audio codec is not supported by ffmpeg
 	// ffmpeg fails if you try to transcode the audio
@@ -199,13 +202,9 @@ func (o TranscodeStreamOptions) getStreamArgs() []string {
 	return args
 }
 
-func (e *Encoder) GetTranscodeStream(options TranscodeStreamOptions) (*Stream, error) {
-	return e.stream(options.ProbeResult, options)
-}
-
-func (e *Encoder) stream(probeResult VideoFile, options TranscodeStreamOptions) (*Stream, error) {
+func (e *Encoder) GetTranscodeStream(ctx context.Context, options TranscodeStreamOptions) (*Stream, error) {
 	args := options.getStreamArgs()
-	cmd := exec.Command(string(*e), args...)
+	cmd := exec.CommandContext(ctx, string(*e), args...)
 	logger.Debugf("Streaming via: %s", strings.Join(cmd.Args, " "))
 
 	stdout, err := cmd.StdoutPipe()
@@ -224,6 +223,7 @@ func (e *Encoder) stream(probeResult VideoFile, options TranscodeStreamOptions) 
 		return nil, err
 	}
 
+	probeResult := options.ProbeResult
 	registerRunningEncoder(probeResult.Path, cmd.Process)
 	go func() {
 		if err := waitAndDeregister(probeResult.Path, cmd); err != nil {
@@ -231,18 +231,10 @@ func (e *Encoder) stream(probeResult VideoFile, options TranscodeStreamOptions) 
 		}
 	}()
 
-	// stderr must be consumed or the process deadlocks
-	go func() {
-		stderrData, _ := io.ReadAll(stderr)
-		stderrString := string(stderrData)
-		if len(stderrString) > 0 {
-			logger.Debugf("[stream] ffmpeg stderr: %s", stderrString)
-		}
-	}()
-
 	ret := &Stream{
-		Stdout:   stdout,
-		Process:  cmd.Process,
+		stdout:   stdout,
+		stderr:   stderr,
+		process:  cmd.Process,
 		options:  options,
 		mimeType: options.Codec.MimeType,
 	}

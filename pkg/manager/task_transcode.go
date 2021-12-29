@@ -67,7 +67,7 @@ func (t *GenerateTranscodeTask) Start(ctc context.Context) {
 	transcodeSize := config.GetInstance().GetMaxTranscodeSize()
 	options := ffmpeg.TranscodeOptions{
 		OutputPath:       outputPath,
-		MaxTranscodeSize: transcodeSize,
+		MaxTranscodeSize: transcodeSize.MaxSize(),
 	}
 	encoder := instance.FFMPEG
 
