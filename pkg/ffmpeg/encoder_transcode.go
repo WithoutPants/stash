@@ -3,30 +3,14 @@ package ffmpeg
 import (
 	"path/filepath"
 	"strconv"
-
-	"github.com/stashapp/stash/pkg/models"
 )
 
 type TranscodeOptions struct {
 	OutputPath       string
-	MaxTranscodeSize models.StreamingResolutionEnum
+	MaxTranscodeSize int
 }
 
-func calculateTranscodeScale(probeResult VideoFile, maxTranscodeSize models.StreamingResolutionEnum) string {
-	maxSize := 0
-	switch maxTranscodeSize {
-	case models.StreamingResolutionEnumLow:
-		maxSize = 240
-	case models.StreamingResolutionEnumStandard:
-		maxSize = 480
-	case models.StreamingResolutionEnumStandardHd:
-		maxSize = 720
-	case models.StreamingResolutionEnumFullHd:
-		maxSize = 1080
-	case models.StreamingResolutionEnumFourK:
-		maxSize = 2160
-	}
-
+func calculateTranscodeScale(probeResult VideoFile, maxTranscodeSize int) string {
 	// get the smaller dimension of the video file
 	videoSize := probeResult.Height
 	if probeResult.Width < videoSize {
@@ -36,7 +20,7 @@ func calculateTranscodeScale(probeResult VideoFile, maxTranscodeSize models.Stre
 	// if our streaming resolution is larger than the video dimension
 	// or we are streaming the original resolution, then just set the
 	// input width
-	if maxSize >= videoSize || maxSize == 0 {
+	if maxTranscodeSize >= videoSize || maxTranscodeSize == 0 {
 		return "iw:-2"
 	}
 
@@ -44,10 +28,10 @@ func calculateTranscodeScale(probeResult VideoFile, maxTranscodeSize models.Stre
 	// we'll set the smaller dimesion
 	if probeResult.Width > probeResult.Height {
 		// set the height
-		return "-2:" + strconv.Itoa(maxSize)
+		return "-2:" + strconv.Itoa(maxTranscodeSize)
 	}
 
-	return strconv.Itoa(maxSize) + ":-2"
+	return strconv.Itoa(maxTranscodeSize) + ":-2"
 }
 
 func (e *Encoder) Transcode(probeResult VideoFile, options TranscodeOptions) {

@@ -212,20 +212,19 @@ func (rs sceneRoutes) streamTranscode(w http.ResponseWriter, r *http.Request, vi
 
 	options := ffmpeg.GetTranscodeStreamOptions(*videoFile, videoCodec, audioCodec)
 	options.StartTime = startTime
-	options.MaxTranscodeSize = config.GetInstance().GetMaxStreamingTranscodeSize()
+	maxTranscodeSize := config.GetInstance().GetMaxStreamingTranscodeSize()
 	if requestedSize != "" {
-		options.MaxTranscodeSize = models.StreamingResolutionEnum(requestedSize)
+		maxTranscodeSize = models.StreamingResolutionEnum(requestedSize)
 	}
 
+	options.MaxTranscodeSize = maxTranscodeSize.MaxSize()
+
 	encoder := manager.GetInstance().FFMPEG
-	stream, err = encoder.GetTranscodeStream(options)
+	stream, err = encoder.GetTranscodeStream(r.Context(), options)
 
 	if err != nil {
 		logger.Errorf("[stream] error transcoding video file: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		if _, err := w.Write([]byte(err.Error())); err != nil {
-			logger.Warnf("[stream] error writing response: %v", err)
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
