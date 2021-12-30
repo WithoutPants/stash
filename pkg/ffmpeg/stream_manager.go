@@ -304,7 +304,7 @@ func (sm *StreamManager) segmentToTime(segment int) string {
 }
 
 func (sm *StreamManager) getTranscodeArgs(probeResult *VideoFile, outputPath string, segment int, videoCodec string) []string {
-	scale := calculateTranscodeScale(*probeResult, sm.config.GetMaxStreamingTranscodeSize())
+	scale := calculateTranscodeScale(*probeResult, sm.config.GetMaxStreamingTranscodeSize().MaxSize())
 
 	args := []string{
 		"-loglevel", "error",
