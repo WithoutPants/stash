@@ -11,6 +11,7 @@ ifdef IS_WIN_SHELL
   SET := set
   RM := del /s /q
   RMDIR := rmdir /s /q
+  PWD := $(shell echo %cd%)
 else
   SEPARATOR := ;
   SET := export
@@ -222,13 +223,13 @@ generate-test-mocks:
 # runs server
 # sets the config file to use the local dev config
 .PHONY: server-start
+server-start: export STASH_CONFIG_FILE=config.yml
 server-start:
 ifndef IS_WIN_SHELL
 	@mkdir -p $(SERVER_DIR)
 else
 	@if not exist "$(SERVER_DIR)" mkdir $(SERVER_DIR)
 endif
-	$(SET) STASH_CONFIG_FILE=config.yml $(SEPARATOR) \
 	cd $(SERVER_DIR) && go run $(PWD)/cmd/stash
 
 # removes local dev config files
