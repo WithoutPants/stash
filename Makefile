@@ -18,6 +18,10 @@ else
   RMDIR := rm -rf
 endif
 
+ifndef SERVER_DIR
+  SERVER_DIR := .local
+endif
+
 # set LDFLAGS environment variable to any extra ldflags required
 # set OUTPUT to generate a specific binary name
 
@@ -216,19 +220,21 @@ generate-test-mocks:
 	go run -mod=vendor github.com/vektra/mockery/v2 --dir ./pkg/models --name '.*ReaderWriter' --outpkg mocks --output ./pkg/models/mocks
 
 # runs server
+# sets the config file to use the local dev config
 .PHONY: server-start
 server-start:
 ifndef IS_WIN_SHELL
-	@mkdir -p .local
+	@mkdir -p $(SERVER_DIR)
 else
-	@if not exist ".local" mkdir .local
+	@if not exist "$(SERVER_DIR)" mkdir $(SERVER_DIR)
 endif
-	cd .local && go run ../cmd/stash
+	$(SET) STASH_CONFIG_FILE=config.yml $(SEPARATOR) \
+	cd $(SERVER_DIR) && go run $(PWD)/cmd/stash
 
 # removes local dev config files
 .PHONY: server-clean
 server-clean:
-	$(RMDIR) .local
+	$(RMDIR) $(SERVER_DIR)
 
 # installs UI dependencies. Run when first cloning repository, or if UI
 # dependencies have changed
