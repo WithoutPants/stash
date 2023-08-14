@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4/database"
 	postgresmig "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source"
 
 	// postgres driver
 	_ "github.com/lib/pq"
@@ -25,4 +26,8 @@ func (d *Driver) Open(path string, disableForeignKeys bool) (*sqlx.DB, error) {
 
 func (d *Driver) MigrateDriver(conn *sqlx.DB) (database.Driver, error) {
 	return postgresmig.WithInstance(conn.DB, &postgresmig.Config{})
+}
+
+func (d *Driver) MigrationSource(src source.Driver) source.Driver {
+	return &sourceDriver{src}
 }

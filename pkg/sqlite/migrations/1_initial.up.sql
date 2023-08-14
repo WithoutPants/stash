@@ -32,12 +32,6 @@ CREATE TABLE "scraped_items" (
   "updated_at" datetime not null,
   foreign key("studio_id") references "studios"("id")
 );
-CREATE TABLE "scenes_tags" (
-  "scene_id" integer,
-  "tag_id" integer,
-  foreign key("scene_id") references "scenes"("id") on delete CASCADE,
-  foreign key("tag_id") references "tags"("id")
-);
 CREATE TABLE "scenes" (
   "id" integer not null primary key autoincrement,
   "path" varchar(510) not null,
@@ -60,10 +54,10 @@ CREATE TABLE "scenes" (
   "updated_at" datetime not null,
   foreign key("studio_id") references "studios"("id") on delete CASCADE
 );
-CREATE TABLE "scene_markers_tags" (
-  "scene_marker_id" integer,
+CREATE TABLE "scenes_tags" (
+  "scene_id" integer,
   "tag_id" integer,
-  foreign key("scene_marker_id") references "scene_markers"("id") on delete CASCADE,
+  foreign key("scene_id") references "scenes"("id") on delete CASCADE,
   foreign key("tag_id") references "tags"("id")
 );
 CREATE TABLE "scene_markers" (
@@ -77,11 +71,11 @@ CREATE TABLE "scene_markers" (
   foreign key("primary_tag_id") references "tags"("id"),
   foreign key("scene_id") references "scenes"("id")
 );
-CREATE TABLE "performers_scenes" (
-  "performer_id" integer,
-  "scene_id" integer,
-  foreign key("performer_id") references "performers"("id"),
-  foreign key("scene_id") references "scenes"("id")
+CREATE TABLE "scene_markers_tags" (
+  "scene_marker_id" integer,
+  "tag_id" integer,
+  foreign key("scene_marker_id") references "scene_markers"("id") on delete CASCADE,
+  foreign key("tag_id") references "tags"("id")
 );
 CREATE TABLE "performers" (
   "id" integer not null primary key autoincrement,
@@ -105,6 +99,12 @@ CREATE TABLE "performers" (
   "favorite" boolean not null default '0',
   "created_at" datetime not null,
   "updated_at" datetime not null
+);
+CREATE TABLE "performers_scenes" (
+  "performer_id" integer,
+  "scene_id" integer,
+  foreign key("performer_id") references "performers"("id"),
+  foreign key("scene_id") references "scenes"("id")
 );
 CREATE TABLE "galleries" (
   "id" integer not null primary key autoincrement,

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"github.com/golang-migrate/migrate/v4/database"
 	sqlite3mig "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -20,4 +21,8 @@ func (d *Driver) Open(path string, disableForeignKeys bool) (*sqlx.DB, error) {
 
 func (d *Driver) MigrateDriver(conn *sqlx.DB) (database.Driver, error) {
 	return sqlite3mig.WithInstance(conn.DB, &sqlite3mig.Config{})
+}
+
+func (d *Driver) MigrationSource(src source.Driver) source.Driver {
+	return src
 }

@@ -372,6 +372,8 @@ func (db *Database) getMigrate() (*migrate.Migrate, error) {
 		return nil, err
 	}
 
+	migrations = db.getDriver().MigrationSource(migrations)
+
 	const disableForeignKeys = true
 	conn, err := db.open(disableForeignKeys)
 	if err != nil {
