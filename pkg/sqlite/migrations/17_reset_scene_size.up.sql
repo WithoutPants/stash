@@ -1,1 +1,1 @@
-UPDATE `scenes` SET `size` = NULL;
+UPDATE "scenes" SET "size" = NULL;
