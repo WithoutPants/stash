@@ -8,15 +8,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	sqlite3mig "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/logger"
+	"github.com/stashapp/stash/pkg/sqlite/postgres"
+	"github.com/stashapp/stash/pkg/sqlite/sqlite"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 const (
@@ -225,7 +229,8 @@ func (db *Database) open(disableForeignKeys bool) (*sqlx.DB, error) {
 		url += "&_fk=true"
 	}
 
-	conn, err := sqlx.Open(sqlite3Driver, url)
+	driver := db.getDriver()
+	conn, err := driver.Open(db.dbPath, disableForeignKeys)
 	conn.SetMaxOpenConns(dbConns)
 	conn.SetMaxIdleConns(dbConns)
 	conn.SetConnMaxIdleTime(dbConnTimeout * time.Second)
@@ -234,6 +239,14 @@ func (db *Database) open(disableForeignKeys bool) (*sqlx.DB, error) {
 	}
 
 	return conn, nil
+}
+
+func (db *Database) getDriver() Driver {
+	if strings.HasPrefix(db.dbPath, "postgres://") {
+		return &postgres.Driver{}
+	}
+
+	return &sqlite.Driver{}
 }
 
 func (db *Database) Remove() error {
@@ -281,12 +294,15 @@ func (db *Database) Reset() error {
 func (db *Database) Backup(backupPath string) error {
 	thisDB := db.db
 	if thisDB == nil {
-		var err error
-		thisDB, err = sqlx.Connect(sqlite3Driver, "file:"+db.dbPath+"?_fk=true")
-		if err != nil {
-			return fmt.Errorf("open database %s failed: %v", db.dbPath, err)
-		}
-		defer thisDB.Close()
+		// var err error
+		// thisDB, err = sqlx.Connect(sqlite3Driver, "file:"+db.dbPath+"?_fk=true")
+		// if err != nil {
+		// 	return fmt.Errorf("open database %s failed: %v", db.dbPath, err)
+		// }
+		// defer thisDB.Close()
+
+		// TODO fix
+		return fmt.Errorf("unsupported")
 	}
 
 	logger.Infof("Backing up database into: %s", backupPath)
@@ -362,7 +378,9 @@ func (db *Database) getMigrate() (*migrate.Migrate, error) {
 		return nil, err
 	}
 
-	driver, err := sqlite3mig.WithInstance(conn.DB, &sqlite3mig.Config{})
+	d := db.getDriver()
+
+	driver, err := d.MigrateDriver(conn)
 	if err != nil {
 		return nil, err
 	}
