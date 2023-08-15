@@ -8,6 +8,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	postgresmig "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 
 	// postgres driver
 	_ "github.com/lib/pq"
@@ -29,5 +30,9 @@ func (d *Driver) MigrateDriver(conn *sqlx.DB) (database.Driver, error) {
 }
 
 func (d *Driver) MigrationSource(src source.Driver) source.Driver {
-	return &sourceDriver{src}
+	localDriver, _ := iofs.New(migrationsBox, "migrations")
+	return &sourceDriver{
+		Driver:      src,
+		localDriver: localDriver,
+	}
 }
