@@ -17,6 +17,7 @@ import (
 	"github.com/stashapp/stash/internal/dlna"
 	"github.com/stashapp/stash/internal/log"
 	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/database"
 	"github.com/stashapp/stash/pkg/ffmpeg"
 	"github.com/stashapp/stash/pkg/file"
 	file_image "github.com/stashapp/stash/pkg/file/image"
@@ -31,12 +32,11 @@ import (
 	"github.com/stashapp/stash/pkg/scene"
 	"github.com/stashapp/stash/pkg/scraper"
 	"github.com/stashapp/stash/pkg/session"
-	"github.com/stashapp/stash/pkg/sqlite"
 	"github.com/stashapp/stash/pkg/utils"
 	"github.com/stashapp/stash/ui"
 
 	// register custom migrations
-	_ "github.com/stashapp/stash/pkg/sqlite/migrations"
+	_ "github.com/stashapp/stash/pkg/database/migrations"
 )
 
 type SystemStatus struct {
@@ -127,7 +127,7 @@ type Manager struct {
 
 	DLNAService *dlna.Service
 
-	Database   *sqlite.Database
+	Database   *database.Database
 	Repository Repository
 
 	SceneService   SceneService
@@ -170,7 +170,7 @@ func initialize() error {
 	l := initLog()
 	initProfiling(cfg.GetCPUProfilePath())
 
-	db := sqlite.NewDatabase()
+	db := database.NewDatabase()
 
 	// start with empty paths
 	emptyPaths := paths.Paths{}
@@ -239,7 +239,7 @@ func initialize() error {
 		}
 
 		if err := instance.PostInit(ctx); err != nil {
-			var migrationNeededErr *sqlite.MigrationNeededError
+			var migrationNeededErr *database.MigrationNeededError
 			if errors.As(err, &migrationNeededErr) {
 				logger.Warn(err.Error())
 			} else {
@@ -290,7 +290,7 @@ func galleryFileFilter(ctx context.Context, f file.File) bool {
 	return isZip(f.Base().Basename)
 }
 
-func makeScanner(db *sqlite.Database, pluginCache *plugin.Cache) *file.Scanner {
+func makeScanner(db *database.Database, pluginCache *plugin.Cache) *file.Scanner {
 	return &file.Scanner{
 		Repository: file.Repository{
 			Manager:          db,
@@ -317,7 +317,7 @@ func makeScanner(db *sqlite.Database, pluginCache *plugin.Cache) *file.Scanner {
 	}
 }
 
-func makeCleaner(db *sqlite.Database, pluginCache *plugin.Cache) *file.Cleaner {
+func makeCleaner(db *database.Database, pluginCache *plugin.Cache) *file.Cleaner {
 	return &file.Cleaner{
 		FS: &file.OsFS{},
 		Repository: file.Repository{
@@ -503,7 +503,7 @@ func (s *Manager) SetBlobStoreOptions() {
 	storageType := s.Config.GetBlobsStorage()
 	blobsPath := s.Config.GetBlobsPath()
 
-	s.Database.SetBlobStoreOptions(sqlite.BlobStoreOptions{
+	s.Database.SetBlobStoreOptions(database.BlobStoreOptions{
 		UseFilesystem: storageType == config.BlobStorageTypeFilesystem,
 		UseDatabase:   storageType == config.BlobStorageTypeDatabase,
 		Path:          blobsPath,
@@ -676,7 +676,7 @@ func (s *Manager) Setup(ctx context.Context, input SetupInput) error {
 
 	// initialise the database
 	if err := s.PostInit(ctx); err != nil {
-		var migrationNeededErr *sqlite.MigrationNeededError
+		var migrationNeededErr *database.MigrationNeededError
 		if errors.As(err, &migrationNeededErr) {
 			logger.Warn(err.Error())
 		} else {

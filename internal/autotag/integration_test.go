@@ -10,16 +10,16 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stashapp/stash/pkg/database"
 	"github.com/stashapp/stash/pkg/file"
 	"github.com/stashapp/stash/pkg/models"
-	"github.com/stashapp/stash/pkg/sqlite"
 	"github.com/stashapp/stash/pkg/txn"
 
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	// necessary to register custom migrations
-	_ "github.com/stashapp/stash/pkg/sqlite/migrations"
+	_ "github.com/stashapp/stash/pkg/database/migrations"
 )
 
 const testName = "Foo's Bar"
@@ -33,7 +33,7 @@ var existingStudioID int
 
 const expectedMatchTitle = "expected match"
 
-var db *sqlite.Database
+var db *database.Database
 var r models.Repository
 
 func testTeardown(databaseFile string) {
@@ -58,7 +58,7 @@ func runTests(m *testing.M) int {
 
 	f.Close()
 	databaseFile := f.Name()
-	db = sqlite.NewDatabase()
+	db = database.NewDatabase()
 	if err := db.Open(databaseFile); err != nil {
 		panic(fmt.Sprintf("Could not initialize database: %s", err.Error()))
 	}
@@ -99,7 +99,7 @@ func createPerformer(ctx context.Context, pqb models.PerformerWriter) error {
 func createStudio(ctx context.Context, qb models.StudioWriter, name string) (*models.Studio, error) {
 	// create the studio
 	studio := models.Studio{
-		Name:     name,
+		Name: name,
 	}
 
 	err := qb.Create(ctx, &studio)
