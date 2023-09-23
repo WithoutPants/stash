@@ -460,6 +460,88 @@ const Header: React.FC<IHeaderProps> = ({
   );
 };
 
+interface IFooterProps {
+  currentImage: ILightboxImage | undefined;
+}
+
+const Footer: React.FC<IFooterProps> = ({ currentImage }) => {
+  const Toast = useToast();
+  const [updateImage] = useImageUpdate();
+
+  function setRating(v: number | null) {
+    if (currentImage?.id) {
+      updateImage({
+        variables: {
+          input: {
+            id: currentImage.id,
+            rating100: v,
+          },
+        },
+      });
+    }
+  }
+
+  async function onIncrementClick() {
+    if (currentImage?.id === undefined) return;
+    try {
+      await mutateImageIncrementO(currentImage.id);
+    } catch (e) {
+      Toast.error(e);
+    }
+  }
+
+  async function onDecrementClick() {
+    if (currentImage?.id === undefined) return;
+    try {
+      await mutateImageDecrementO(currentImage.id);
+    } catch (e) {
+      Toast.error(e);
+    }
+  }
+
+  async function onResetClick() {
+    if (currentImage?.id === undefined) return;
+    try {
+      await mutateImageResetO(currentImage?.id);
+    } catch (e) {
+      Toast.error(e);
+    }
+  }
+
+  return (
+    <div className={CLASSNAME_FOOTER}>
+      <div className={CLASSNAME_FOOTER_LEFT}>
+        {currentImage?.id !== undefined && (
+          <>
+            <div>
+              <OCounterButton
+                onDecrement={onDecrementClick}
+                onIncrement={onIncrementClick}
+                onReset={onResetClick}
+                value={currentImage?.o_counter ?? 0}
+              />
+            </div>
+            <RatingSystem
+              value={currentImage?.rating100 ?? undefined}
+              onSetRating={(v) => {
+                setRating(v ?? null);
+              }}
+            />
+          </>
+        )}
+      </div>
+      <div>
+        {currentImage?.title && (
+          <Link to={`/images/${currentImage.id}`} onClick={() => close()}>
+            {currentImage.title ?? ""}
+          </Link>
+        )}
+      </div>
+      <div></div>
+    </div>
+  )
+}
+
 interface IProps {
   images: ILightboxImage[];
   isVisible: boolean;
@@ -489,8 +571,6 @@ export const LightboxComponent: React.FC<IProps> = ({
   chapters = [],
   hide,
 }) => {
-  const [updateImage] = useImageUpdate();
-
   // zero-based
   const [index, setIndex] = useState<number | null>(null);
   const [movingLeft, setMovingLeft] = useState(false);
@@ -550,8 +630,6 @@ export const LightboxComponent: React.FC<IProps> = ({
   const resetIntervalCallback = useRef<() => void>();
 
   const allowNavigation = images.length > 1 || pageCallback;
-
-  const Toast = useToast();
 
   const { configuration: config } = React.useContext(ConfigurationContext);
   const [interfaceLocalForage, setInterfaceLocalForage] =
@@ -871,45 +949,7 @@ export const LightboxComponent: React.FC<IProps> = ({
 
   const currentImage: ILightboxImage | undefined = images[currentIndex];
 
-  function setRating(v: number | null) {
-    if (currentImage?.id) {
-      updateImage({
-        variables: {
-          input: {
-            id: currentImage.id,
-            rating100: v,
-          },
-        },
-      });
-    }
-  }
-
-  async function onIncrementClick() {
-    if (currentImage?.id === undefined) return;
-    try {
-      await mutateImageIncrementO(currentImage.id);
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  async function onDecrementClick() {
-    if (currentImage?.id === undefined) return;
-    try {
-      await mutateImageDecrementO(currentImage.id);
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  async function onResetClick() {
-    if (currentImage?.id === undefined) return;
-    try {
-      await mutateImageResetO(currentImage?.id);
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
+  
 
   return (
     <div
@@ -1012,36 +1052,7 @@ export const LightboxComponent: React.FC<IProps> = ({
           </Button>
         </div>
       )}
-      <div className={CLASSNAME_FOOTER}>
-        <div className={CLASSNAME_FOOTER_LEFT}>
-          {currentImage?.id !== undefined && (
-            <>
-              <div>
-                <OCounterButton
-                  onDecrement={onDecrementClick}
-                  onIncrement={onIncrementClick}
-                  onReset={onResetClick}
-                  value={currentImage?.o_counter ?? 0}
-                />
-              </div>
-              <RatingSystem
-                value={currentImage?.rating100 ?? undefined}
-                onSetRating={(v) => {
-                  setRating(v ?? null);
-                }}
-              />
-            </>
-          )}
-        </div>
-        <div>
-          {currentImage?.title && (
-            <Link to={`/images/${currentImage.id}`} onClick={() => close()}>
-              {currentImage.title ?? ""}
-            </Link>
-          )}
-        </div>
-        <div></div>
-      </div>
+      <Footer currentImage={currentImage} />
     </div>
   );
 };
