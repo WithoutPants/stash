@@ -539,8 +539,8 @@ const Footer: React.FC<IFooterProps> = ({ currentImage }) => {
       </div>
       <div></div>
     </div>
-  )
-}
+  );
+};
 
 interface IProps {
   images: ILightboxImage[];
@@ -939,17 +939,117 @@ export const LightboxComponent: React.FC<IProps> = ({
     setShowChapters(false);
   }
 
+  function renderBody() {
+    if (images.length === 0 || isLoading || isSwitchingPage) {
+      return <LoadingIndicator />;
+    }
+
+    const currentImage: ILightboxImage | undefined = images[currentIndex];
+
+    return (
+      <>
+        <Header
+          index={currentIndex}
+          total={images.length}
+          page={page}
+          totalPages={pages}
+          chapters={chapters}
+          chapter={currentChapter}
+          slideshowDelay={slideshowDelay}
+          lightboxConfig={lightboxConfig}
+          setLightboxConfig={setLightboxConfig}
+          containerRef={containerRef}
+          gotoImage={gotoPage}
+          onResetZoom={() => setZoom(1)}
+          toggleFullscreen={toggleFullscreen}
+          settings={settings}
+          setSettings={setSettings}
+          onClose={() => close()}
+        />
+        <div className={CLASSNAME_DISPLAY}>
+          {allowNavigation && (
+            <Button
+              variant="link"
+              onClick={handleLeft}
+              className={`${CLASSNAME_NAVBUTTON} d-none d-lg-block`}
+            >
+              <Icon icon={faChevronLeft} />
+            </Button>
+          )}
+
+          <div
+            className={cx(CLASSNAME_CAROUSEL, {
+              [CLASSNAME_INSTANT]: instantTransition,
+            })}
+            style={{ left: `${currentIndex * -100}vw` }}
+            ref={carouselRef}
+          >
+            {images.map((image, i) => (
+              <div className={`${CLASSNAME_IMAGE}`} key={image.paths.image}>
+                {i >= currentIndex - 1 && i <= currentIndex + 1 ? (
+                  <LightboxImage
+                    src={image.paths.image ?? ""}
+                    displayMode={displayMode}
+                    scaleUp={lightboxConfig?.scaleUp ?? false}
+                    scrollMode={
+                      lightboxConfig?.scrollMode ??
+                      GQL.ImageLightboxScrollMode.Zoom
+                    }
+                    resetPosition={resetPosition}
+                    zoom={i === currentIndex ? settings.zoom : 1}
+                    scrollAttemptsBeforeChange={scrollAttemptsBeforeChange}
+                    firstScroll={firstScroll}
+                    inScrollGroup={inScrollGroup}
+                    current={i === currentIndex}
+                    alignBottom={movingLeft}
+                    setZoom={updateZoom}
+                    debouncedScrollReset={debouncedScrollReset}
+                    onLeft={handleLeft}
+                    onRight={handleRight}
+                    isVideo={isVideo(image.visual_files?.[0] ?? {})}
+                  />
+                ) : undefined}
+              </div>
+            ))}
+          </div>
+
+          {allowNavigation && (
+            <Button
+              variant="link"
+              onClick={handleRight}
+              className={`${CLASSNAME_NAVBUTTON} d-none d-lg-block`}
+            >
+              <Icon icon={faChevronRight} />
+            </Button>
+          )}
+        </div>
+        {showNavigation && !isFullscreen && images.length > 1 && (
+          <div className={CLASSNAME_NAV} style={navOffset} ref={navRef}>
+            <Button
+              variant="link"
+              onClick={() => setIndex(images.length - 1)}
+              className={CLASSNAME_NAVBUTTON}
+            >
+              <Icon icon={faArrowLeft} className="mr-4" />
+            </Button>
+            {navItems}
+            <Button
+              variant="link"
+              onClick={() => setIndex(0)}
+              className={CLASSNAME_NAVBUTTON}
+            >
+              <Icon icon={faArrowRight} className="ml-4" />
+            </Button>
+          </div>
+        )}
+        <Footer currentImage={currentImage} />
+      </>
+    );
+  }
+
   if (!isVisible) {
     return <></>;
   }
-
-  if (images.length === 0 || isLoading || isSwitchingPage) {
-    return <LoadingIndicator />;
-  }
-
-  const currentImage: ILightboxImage | undefined = images[currentIndex];
-
-  
 
   return (
     <div
@@ -958,101 +1058,7 @@ export const LightboxComponent: React.FC<IProps> = ({
       ref={containerRef}
       onClick={handleClose}
     >
-      <Header
-        index={currentIndex}
-        total={images.length}
-        page={page}
-        totalPages={pages}
-        chapters={chapters}
-        chapter={currentChapter}
-        slideshowDelay={slideshowDelay}
-        lightboxConfig={lightboxConfig}
-        setLightboxConfig={setLightboxConfig}
-        containerRef={containerRef}
-        gotoImage={gotoPage}
-        onResetZoom={() => setZoom(1)}
-        toggleFullscreen={toggleFullscreen}
-        settings={settings}
-        setSettings={setSettings}
-        onClose={() => close()}
-      />
-      <div className={CLASSNAME_DISPLAY}>
-        {allowNavigation && (
-          <Button
-            variant="link"
-            onClick={handleLeft}
-            className={`${CLASSNAME_NAVBUTTON} d-none d-lg-block`}
-          >
-            <Icon icon={faChevronLeft} />
-          </Button>
-        )}
-
-        <div
-          className={cx(CLASSNAME_CAROUSEL, {
-            [CLASSNAME_INSTANT]: instantTransition,
-          })}
-          style={{ left: `${currentIndex * -100}vw` }}
-          ref={carouselRef}
-        >
-          {images.map((image, i) => (
-            <div className={`${CLASSNAME_IMAGE}`} key={image.paths.image}>
-              {i >= currentIndex - 1 && i <= currentIndex + 1 ? (
-                <LightboxImage
-                  src={image.paths.image ?? ""}
-                  displayMode={displayMode}
-                  scaleUp={lightboxConfig?.scaleUp ?? false}
-                  scrollMode={
-                    lightboxConfig?.scrollMode ??
-                    GQL.ImageLightboxScrollMode.Zoom
-                  }
-                  resetPosition={resetPosition}
-                  zoom={i === currentIndex ? settings.zoom : 1}
-                  scrollAttemptsBeforeChange={scrollAttemptsBeforeChange}
-                  firstScroll={firstScroll}
-                  inScrollGroup={inScrollGroup}
-                  current={i === currentIndex}
-                  alignBottom={movingLeft}
-                  setZoom={updateZoom}
-                  debouncedScrollReset={debouncedScrollReset}
-                  onLeft={handleLeft}
-                  onRight={handleRight}
-                  isVideo={isVideo(image.visual_files?.[0] ?? {})}
-                />
-              ) : undefined}
-            </div>
-          ))}
-        </div>
-
-        {allowNavigation && (
-          <Button
-            variant="link"
-            onClick={handleRight}
-            className={`${CLASSNAME_NAVBUTTON} d-none d-lg-block`}
-          >
-            <Icon icon={faChevronRight} />
-          </Button>
-        )}
-      </div>
-      {showNavigation && !isFullscreen && images.length > 1 && (
-        <div className={CLASSNAME_NAV} style={navOffset} ref={navRef}>
-          <Button
-            variant="link"
-            onClick={() => setIndex(images.length - 1)}
-            className={CLASSNAME_NAVBUTTON}
-          >
-            <Icon icon={faArrowLeft} className="mr-4" />
-          </Button>
-          {navItems}
-          <Button
-            variant="link"
-            onClick={() => setIndex(0)}
-            className={CLASSNAME_NAVBUTTON}
-          >
-            <Icon icon={faArrowRight} className="ml-4" />
-          </Button>
-        </div>
-      )}
-      <Footer currentImage={currentImage} />
+      {renderBody()}
     </div>
   );
 };
