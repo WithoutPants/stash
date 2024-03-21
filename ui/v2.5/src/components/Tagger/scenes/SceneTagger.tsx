@@ -15,7 +15,6 @@ import { SceneSearchResults } from "./StashSearchResult";
 import { ConfigurationContext } from "src/hooks/Config";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { useLightbox } from "src/hooks/Lightbox/hooks";
-import { compareScenesForSort } from "./utils";
 
 const Scene: React.FC<{
   scene: GQL.SlimSceneDataFragment;
