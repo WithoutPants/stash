@@ -22,7 +22,7 @@ import { TruncatedText } from "src/components/Shared/TruncatedText";
 import { OperationButton } from "src/components/Shared/OperationButton";
 import * as FormUtils from "src/utils/form";
 import { stringToGender } from "src/utils/gender";
-import { IScrapedScene, TaggerStateContext } from "../context";
+import { IScrapedScene, useTagger } from "../context";
 import { OptionalField } from "../IncludeButton";
 import { SceneTaggerModalsState } from "./sceneTaggerModals";
 import PerformerResult from "./PerformerResult";
@@ -235,7 +235,7 @@ const StashSearchResult: React.FC<IStashSearchResultProps> = ({
     resolveScene,
     currentSource,
     saveScene,
-  } = React.useContext(TaggerStateContext);
+  } = useTagger();
 
   const performers = useMemo(
     () =>

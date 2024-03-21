@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import * as GQL from "src/core/generated-graphql";
 import { SceneQueue } from "src/models/sceneQueue";
 import { Button, Form } from "react-bootstrap";
@@ -7,7 +7,7 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { Icon } from "src/components/Shared/Icon";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { OperationButton } from "src/components/Shared/OperationButton";
-import { ISceneQueryResult, TaggerStateContext } from "../context";
+import { ISceneQueryResult, useTagger } from "../context";
 import Config from "./Config";
 import { TaggerScene } from "./TaggerScene";
 import { SceneTaggerModals } from "./sceneTaggerModals";
@@ -25,7 +25,7 @@ const Scene: React.FC<{
 }> = ({ scene, searchResult, queue, index, showLightboxImage }) => {
   const intl = useIntl();
   const { currentSource, doSceneQuery, doSceneFragmentScrape, loading } =
-    useContext(TaggerStateContext);
+    useTagger();
   const { configuration } = React.useContext(ConfigurationContext);
 
   const cont = configuration?.interface.continuePlaylistDefault ?? false;
@@ -95,7 +95,7 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
     multiError,
     submitFingerprints,
     pendingFingerprints,
-  } = useContext(TaggerStateContext);
+  } = useTagger();
   const [showConfig, setShowConfig] = useState(false);
   const [hideUnmatched, setHideUnmatched] = useState(false);
 

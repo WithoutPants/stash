@@ -1,9 +1,9 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import * as GQL from "src/core/generated-graphql";
 
 import StudioModal from "./StudioModal";
 import PerformerModal from "../PerformerModal";
-import { TaggerStateContext } from "../context";
+import { useTagger } from "../context";
 import { useIntl } from "react-intl";
 import { faTags } from "@fortawesome/free-solid-svg-icons";
 
@@ -31,7 +31,7 @@ export const SceneTaggerModalsState =
   });
 
 export const SceneTaggerModals: React.FC = ({ children }) => {
-  const { currentSource } = useContext(TaggerStateContext);
+  const { currentSource } = useTagger();
 
   const [performerToCreate, setPerformerToCreate] = useState<
     GQL.ScrapedPerformerDataFragment | undefined

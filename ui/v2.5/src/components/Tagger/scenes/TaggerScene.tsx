@@ -1,4 +1,4 @@
-import React, { useState, useContext, PropsWithChildren, useMemo } from "react";
+import React, { useState, PropsWithChildren, useMemo } from "react";
 import * as GQL from "src/core/generated-graphql";
 import { Link } from "react-router-dom";
 import { Button, Collapse, Form, InputGroup } from "react-bootstrap";
@@ -11,7 +11,7 @@ import { PerformerLink, TagLink } from "src/components/Shared/TagLink";
 import { TruncatedText } from "src/components/Shared/TruncatedText";
 import { parsePath, prepareQueryString } from "src/components/Tagger/utils";
 import { ScenePreview } from "src/components/Scenes/SceneCard";
-import { TaggerStateContext } from "../context";
+import { useTagger } from "../context";
 import {
   faChevronDown,
   faChevronUp,
@@ -103,7 +103,7 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
   children,
   showLightboxImage,
 }) => {
-  const { config } = useContext(TaggerStateContext);
+  const { config } = useTagger();
   const [queryString, setQueryString] = useState<string>("");
   const [queryLoading, setQueryLoading] = useState(false);
 

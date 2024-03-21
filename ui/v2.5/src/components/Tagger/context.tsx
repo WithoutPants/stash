@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   initialConfig,
   ITaggerConfig,
@@ -27,6 +27,12 @@ import { ITaggerSource, SCRAPER_PREFIX, STASH_BOX_PREFIX } from "./constants";
 import { errorToString } from "src/utils";
 import { mergeStudioStashIDs } from "./utils";
 
+export interface IMissingObjects {
+  performers: GQL.ScrapedPerformer[];
+  studios: GQL.ScrapedStudio[];
+  tags: GQL.ScrapedTag[];
+}
+
 export interface ITaggerContextState {
   config: ITaggerConfig;
   setConfig: (c: ITaggerConfig) => void;
@@ -36,6 +42,7 @@ export interface ITaggerContextState {
   sources: ITaggerSource[];
   currentSource?: ITaggerSource;
   searchResults: Record<string, ISceneQueryResult>;
+  missingObjects: IMissingObjects;
   setCurrentSource: (src?: ITaggerSource) => void;
   doSceneQuery: (sceneID: string, searchStr: string) => Promise<void>;
   doSceneFragmentScrape: (sceneID: string) => Promise<void>;
@@ -72,35 +79,18 @@ export interface ITaggerContextState {
   ) => Promise<void>;
 }
 
-const dummyFn = () => {
-  return Promise.resolve();
-};
-const dummyValFn = () => {
-  return Promise.resolve(undefined);
-};
+export const TaggerStateContext =
+  React.createContext<ITaggerContextState | null>(null);
 
-export const TaggerStateContext = React.createContext<ITaggerContextState>({
-  config: initialConfig,
-  setConfig: () => {},
-  loading: false,
-  sources: [],
-  searchResults: {},
-  setCurrentSource: () => {},
-  doSceneQuery: dummyFn,
-  doSceneFragmentScrape: dummyFn,
-  doMultiSceneFragmentScrape: dummyFn,
-  stopMultiScrape: () => {},
-  createNewTag: dummyValFn,
-  createNewPerformer: dummyValFn,
-  linkPerformer: dummyFn,
-  createNewStudio: dummyValFn,
-  updateStudio: dummyFn,
-  linkStudio: dummyFn,
-  resolveScene: dummyFn,
-  submitFingerprints: dummyFn,
-  pendingFingerprints: [],
-  saveScene: dummyFn,
-});
+export const useTagger = () => {
+  const context = React.useContext(TaggerStateContext);
+
+  if (context === null) {
+    throw new Error("useTagger must be used within a SettingsContext");
+  }
+
+  return context;
+};
 
 export type IScrapedScene = GQL.ScrapedScene & { resolved?: boolean };
 
@@ -189,6 +179,45 @@ export const TaggerContext: React.FC = ({ children }) => {
   useEffect(() => {
     setSearchResults({});
   }, [currentSource]);
+
+  const missingObjects = useMemo(() => {
+    const performers: GQL.ScrapedPerformer[] = [];
+    const studios: GQL.ScrapedStudio[] = [];
+    const tags: GQL.ScrapedTag[] = [];
+
+    Object.values(searchResults).forEach((result) => {
+      result.results?.forEach((scene) => {
+        scene.performers?.forEach((performer) => {
+          if (!performer.stored_id) {
+            if (!performers.some((p) => p.name === performer.name)) {
+              performers.push(performer);
+            }
+          }
+        });
+
+        if (scene.studio && !scene.studio.stored_id) {
+          const { name } = scene.studio;
+          if (!studios.some((s) => s.name === name)) {
+            studios.push(scene.studio);
+          }
+        }
+
+        scene.tags?.forEach((tag) => {
+          if (!tag.stored_id) {
+            if (!tags.some((t) => t.name === tag.name)) {
+              tags.push(tag);
+            }
+          }
+        });
+      });
+    });
+
+    return {
+      performers,
+      studios,
+      tags,
+    };
+  }, [searchResults]);
 
   function getPendingFingerprints() {
     const endpoint = currentSource?.sourceInput.stash_box_endpoint;
@@ -831,6 +860,7 @@ export const TaggerContext: React.FC = ({ children }) => {
         sources,
         currentSource,
         searchResults,
+        missingObjects,
         setCurrentSource: (src) => {
           setCurrentSource(src);
         },

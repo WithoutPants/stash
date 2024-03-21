@@ -1,5 +1,5 @@
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import React, { useRef, useContext } from "react";
+import React, { useRef } from "react";
 import {
   Badge,
   Button,
@@ -12,14 +12,14 @@ import { FormattedMessage, useIntl } from "react-intl";
 
 import { Icon } from "src/components/Shared/Icon";
 import { ParseMode, TagOperation } from "../constants";
-import { TaggerStateContext } from "../context";
+import { useTagger } from "../context";
 
 interface IConfigProps {
   show: boolean;
 }
 
 const Config: React.FC<IConfigProps> = ({ show }) => {
-  const { config, setConfig } = useContext(TaggerStateContext);
+  const { config, setConfig } = useTagger();
   const intl = useIntl();
   const blacklistRef = useRef<HTMLInputElement | null>(null);
 
