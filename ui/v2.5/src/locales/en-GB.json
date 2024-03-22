@@ -202,6 +202,7 @@
       "phash_matches": "{count} PHashes match",
       "unnamed": "Unnamed"
     },
+    "verb_create_missing": "Create missing objects",
     "verb_match_fp": "Match Fingerprints",
     "verb_matched": "Matched",
     "verb_scrape_all": "Scrape All",

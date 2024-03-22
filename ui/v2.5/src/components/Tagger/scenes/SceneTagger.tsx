@@ -15,6 +15,7 @@ import { SceneSearchResults } from "./StashSearchResult";
 import { ConfigurationContext } from "src/hooks/Config";
 import { faCog } from "@fortawesome/free-solid-svg-icons";
 import { useLightbox } from "src/hooks/Lightbox/hooks";
+import MissingObjectsPanel from "./MissingObjectsPanel";
 
 const Scene: React.FC<{
   scene: GQL.SlimSceneDataFragment;
@@ -95,8 +96,10 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
     multiError,
     submitFingerprints,
     pendingFingerprints,
+    missingObjects,
   } = useTagger();
   const [showConfig, setShowConfig] = useState(false);
+  const [showMissingObjects, setShowMissingObjects] = useState(false);
   const [hideUnmatched, setHideUnmatched] = useState(false);
 
   const intl = useIntl();
@@ -185,6 +188,22 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
     }
   }
 
+  function maybeRenderCreateMissingObjectsButton() {
+    const { performers, studios, tags } = missingObjects;
+    if (!performers.length && !studios.length && !tags.length) {
+      return;
+    }
+
+    return (
+      <Button
+        className="ml-1"
+        onClick={() => setShowMissingObjects(!showMissingObjects)}
+      >
+        <FormattedMessage id="component_tagger.verb_create_missing" />
+      </Button>
+    );
+  }
+
   function maybeRenderSubmitFingerprintsButton() {
     if (pendingFingerprints.length) {
       return (
@@ -254,12 +273,17 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
             <div className="w-auto">{renderSourceSelector()}</div>
             <div className="d-flex">
               {maybeRenderShowHideUnmatchedButton()}
+              {maybeRenderCreateMissingObjectsButton()}
               {maybeRenderSubmitFingerprintsButton()}
               {renderFragmentScrapeButton()}
               {renderConfigButton()}
             </div>
           </div>
           <Config show={showConfig} />
+          <MissingObjectsPanel
+            show={showMissingObjects}
+            onHide={() => setShowMissingObjects(false)}
+          />
         </div>
         <div>
           {filteredScenes.map((s, i) => (

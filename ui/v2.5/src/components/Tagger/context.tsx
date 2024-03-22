@@ -181,6 +181,17 @@ export const TaggerContext: React.FC = ({ children }) => {
   }, [currentSource]);
 
   const missingObjects = useMemo(() => {
+    function byName(name: string) {
+      return (v: { name?: GQL.Maybe<string> }) => v.name === name;
+    }
+
+    function nameCompare(
+      a: { name?: GQL.Maybe<string> },
+      b: { name?: GQL.Maybe<string> }
+    ) {
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    }
+
     const performers: GQL.ScrapedPerformer[] = [];
     const studios: GQL.ScrapedStudio[] = [];
     const tags: GQL.ScrapedTag[] = [];
@@ -188,29 +199,33 @@ export const TaggerContext: React.FC = ({ children }) => {
     Object.values(searchResults).forEach((result) => {
       result.results?.forEach((scene) => {
         scene.performers?.forEach((performer) => {
-          if (!performer.stored_id) {
-            if (!performers.some((p) => p.name === performer.name)) {
-              performers.push(performer);
-            }
+          if (
+            !performer.stored_id &&
+            performer.name &&
+            !performers.some(byName(performer.name))
+          ) {
+            performers.push(performer);
           }
         });
 
         if (scene.studio && !scene.studio.stored_id) {
           const { name } = scene.studio;
-          if (!studios.some((s) => s.name === name)) {
+          if (name && !studios.some(byName(name))) {
             studios.push(scene.studio);
           }
         }
 
         scene.tags?.forEach((tag) => {
-          if (!tag.stored_id) {
-            if (!tags.some((t) => t.name === tag.name)) {
-              tags.push(tag);
-            }
+          if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
+            tags.push(tag);
           }
         });
       });
     });
+
+    performers.sort(nameCompare);
+    studios.sort(nameCompare);
+    tags.sort(nameCompare);
 
     return {
       performers,

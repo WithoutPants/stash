@@ -424,3 +424,34 @@ li.active .optional-field.excluded .scene-link {
   display: inline-block;
   text-decoration: underline dotted;
 }
+
+.missing-objects-panel .row {
+  row-gap: 0.5rem;
+}
+
+.missing-objects-panel-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.missing-objects-table {
+  max-height: 300px;
+  overflow-y: auto;
+
+  thead th {
+    background-color: #30404d;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    &:last-child {
+      text-align: right;
+    }
+  }
+
+  td:first-child {
+    width: 2rem;
+  }
+}

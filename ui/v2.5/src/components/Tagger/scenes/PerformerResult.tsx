@@ -20,7 +20,7 @@ interface IPerformerName {
   baseURL: string | undefined;
 }
 
-const PerformerName: React.FC<IPerformerName> = ({
+export const PerformerName: React.FC<IPerformerName> = ({
   performer,
   id,
   baseURL,

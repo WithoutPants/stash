@@ -19,7 +19,7 @@ interface IStudioName {
   baseURL: string | undefined;
 }
 
-const StudioName: React.FC<IStudioName> = ({ studio, id, baseURL }) => {
+export const StudioName: React.FC<IStudioName> = ({ studio, id, baseURL }) => {
   const name =
     baseURL && id ? (
       <ExternalLink href={`${baseURL}${id}`}>{studio.name}</ExternalLink>
