@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -45,6 +45,14 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
   const [checkedItems, setCheckedItems] = useState<T[]>([]);
   const allChecked =
     !!missingObjects.length && missingObjects.length === checkedItems.length;
+
+  useEffect(() => {
+    setCheckedItems((current) => {
+      return current.filter((item) =>
+        missingObjects.find((obj) => obj.name === item.name)
+      );
+    });
+  }, [missingObjects]);
 
   function toggleAllChecked() {
     if (allChecked) {
@@ -108,6 +116,8 @@ const LoadingModal: React.FC<{
   currentlyCreating?: string;
   onStop: () => void;
 }> = ({ total = 0, currentIndex, currentlyCreating, onStop }) => {
+  const [stopping, setStopping] = useState(false);
+
   if (!total) return null;
 
   const progress =
@@ -139,7 +149,14 @@ const LoadingModal: React.FC<{
           )}
         </div>
         <div className="btn-toolbar">
-          <Button variant="danger" onClick={() => onStop()}>
+          <Button
+            variant="danger"
+            disabled={stopping}
+            onClick={() => {
+              setStopping(true);
+              onStop();
+            }}
+          >
             <FormattedMessage id="actions.stop" />
           </Button>
         </div>
@@ -160,7 +177,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
   const [createTotal, setCreateTotal] = useState<number>();
   const [currentIndex, setCurrentIndex] = useState<number>();
   const [creating, setCreating] = useState<string>();
-  const [stopping, setStopping] = useState(false);
+  const stopping = useRef(false);
 
   const {
     missingObjects,
@@ -191,7 +208,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
     setCreateTotal(n);
     setCurrentIndex(undefined);
     setCreating(undefined);
-    setStopping(false);
+    stopping.current = false;
   }
 
   async function onCreateStudios(selected: ScrapedStudio[]) {
@@ -214,7 +231,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
       } catch (e) {
         // TODO - handle errors
       } finally {
-        if (stopping) {
+        if (stopping.current) {
           break;
         }
       }
@@ -244,7 +261,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
       } catch (e) {
         // TODO - handle errors
       } finally {
-        if (stopping) {
+        if (stopping.current) {
           break;
         }
       }
@@ -260,6 +277,10 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
     resetLoading(selected.length);
 
     for (let i = 0; i < selected.length; i++) {
+      if (stopping.current) {
+        break;
+      }
+
       const tag = selected[i];
       setCurrentIndex(i);
       setCreating(tag.name ?? "");
@@ -273,10 +294,6 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
         }
       } catch (e) {
         // TODO - handle errors
-      } finally {
-        if (stopping) {
-          break;
-        }
       }
     }
 
@@ -291,7 +308,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
           total={createTotal}
           currentIndex={currentIndex}
           currentlyCreating={creating}
-          onStop={() => setStopping(true)}
+          onStop={() => (stopping.current = true)}
         />
 
         <div className="missing-objects-panel-header">
