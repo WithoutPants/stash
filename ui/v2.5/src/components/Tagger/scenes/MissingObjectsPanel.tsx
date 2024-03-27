@@ -43,7 +43,8 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
   const { missingObjects, renderName, header, onCreateSelected } = props;
 
   const [checkedItems, setCheckedItems] = useState<T[]>([]);
-  const allChecked = missingObjects.length === checkedItems.length;
+  const allChecked =
+    !!missingObjects.length && missingObjects.length === checkedItems.length;
 
   function toggleAllChecked() {
     if (allChecked) {
@@ -69,7 +70,7 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
             <Form.Check
               checked={allChecked ?? false}
               onChange={toggleAllChecked}
-              disabled={missingObjects.length > 0}
+              disabled={missingObjects.length === 0}
             />
           </th>
           <th>{header}</th>
