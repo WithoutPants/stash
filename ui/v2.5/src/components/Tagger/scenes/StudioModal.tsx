@@ -16,6 +16,7 @@ import { Button, Form } from "react-bootstrap";
 import { TruncatedText } from "src/components/Shared/TruncatedText";
 import { excludeFields } from "src/utils/data";
 import { ExternalLink } from "src/components/Shared/ExternalLink";
+import { studioCreateInputFromScraped } from "../utils";
 
 interface IStudioDetailsProps {
   studio: GQL.ScrapedSceneStudioDataFragment;
@@ -189,50 +190,19 @@ const StudioModal: React.FC<IStudioModalProps> = ({
       throw new Error("studio name must set");
     }
 
-    const studioData: GQL.StudioCreateInput = {
-      name: studio.name,
-      url: studio.url,
-      image: studio.image,
-      parent_id: studio.parent?.stored_id,
-    };
-
-    // stashid handling code
-    const remoteSiteID = studio.remote_site_id;
-    if (remoteSiteID && endpoint) {
-      studioData.stash_ids = [
-        {
-          endpoint,
-          stash_id: remoteSiteID,
-        },
-      ];
-    }
+    const studioData = studioCreateInputFromScraped(studio, endpoint);
 
     // handle exclusions
     excludeFields(studioData, excluded);
 
     let parentData: GQL.StudioCreateInput | undefined = undefined;
 
-    if (createParentStudio && sendParentStudio) {
+    if (createParentStudio && sendParentStudio && studio.parent) {
       if (!studio.parent?.name) {
         throw new Error("parent studio name must set");
       }
 
-      parentData = {
-        name: studio.parent?.name,
-        url: studio.parent?.url,
-        image: studio.parent?.image,
-      };
-
-      // stashid handling code
-      const parentRemoteSiteID = studio.parent?.remote_site_id;
-      if (parentRemoteSiteID && endpoint) {
-        parentData.stash_ids = [
-          {
-            endpoint,
-            stash_id: parentRemoteSiteID,
-          },
-        ];
-      }
+      parentData = studioCreateInputFromScraped(studio.parent, endpoint);
 
       // handle exclusions
       // Can't exclude parent studio name when creating a new one

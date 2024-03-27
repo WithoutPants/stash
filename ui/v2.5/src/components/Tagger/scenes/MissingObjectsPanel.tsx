@@ -1,13 +1,34 @@
 import React, { useState } from "react";
-import { Button, Card, Col, Collapse, Form, Row, Table } from "react-bootstrap";
+import {
+  Button,
+  Card,
+  Col,
+  Collapse,
+  Form,
+  Modal,
+  ProgressBar,
+  Row,
+  Table,
+} from "react-bootstrap";
 import { FormattedMessage } from "react-intl";
-import { useTagger } from "../context";
-import { Maybe } from "src/core/generated-graphql";
+import { CreatedObject, useTagger } from "../context";
+import {
+  Maybe,
+  ScrapedPerformer,
+  ScrapedStudio,
+  ScrapedTag,
+} from "src/core/generated-graphql";
 import { PerformerName } from "./PerformerResult";
 import { getStashboxBase } from "src/utils/stashbox";
 import { StudioName } from "./StudioResult";
 import { Icon } from "src/components/Shared/Icon";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  performerCreateInputFromScraped,
+  studioCreateInputFromScraped,
+  tagCreateInputFromScraped,
+} from "../utils";
+import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 
 interface IMissingObject {
   name?: Maybe<string> | undefined;
@@ -17,8 +38,9 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
   missingObjects: T[];
   renderName: (obj: T) => React.ReactNode;
   header: React.ReactNode;
+  onCreateSelected: (selected: T[]) => void;
 }) => {
-  const { missingObjects, renderName, header } = props;
+  const { missingObjects, renderName, header, onCreateSelected } = props;
 
   const [checkedItems, setCheckedItems] = useState<T[]>([]);
   const allChecked = missingObjects.length === checkedItems.length;
@@ -47,12 +69,16 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
             <Form.Check
               checked={allChecked ?? false}
               onChange={toggleAllChecked}
-              // disabled={loading && packages.length > 0}
+              disabled={missingObjects.length > 0}
             />
           </th>
           <th>{header}</th>
           <th>
-            <Button size="sm" disabled={!checkedItems.length}>
+            <Button
+              size="sm"
+              disabled={!checkedItems.length}
+              onClick={() => onCreateSelected(checkedItems)}
+            >
               Create Selected
             </Button>
           </th>
@@ -64,7 +90,6 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
                 <Form.Check
                   checked={checkedItems.includes(obj)}
                   onChange={() => toggleCheckedItem(obj)}
-                  // disabled={loading && packages.length > 0}
                 />
               </td>
               <td colSpan={2}>{renderName(obj)}</td>
@@ -73,6 +98,39 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
         })}
       </Table>
     </div>
+  );
+};
+
+const LoadingModal: React.FC<{
+  total?: number;
+  currentIndex?: number;
+  currentlyCreating?: string;
+  onStop: () => void;
+}> = ({ total = 0, currentIndex, currentlyCreating, onStop }) => {
+  if (!total) return null;
+
+  const progress =
+    currentIndex !== undefined ? (currentIndex / total) * 100 : undefined;
+
+  return (
+    <Modal show className="loading-modal">
+      <div className="modal-body">
+        <div>
+          <LoadingIndicator
+            small
+            inline
+            message="Creating missing objects..."
+          />
+          <ProgressBar animated now={progress} />
+          {currentlyCreating && <span>Creating {currentlyCreating}...</span>}
+        </div>
+        <div className="btn-toolbar">
+          <Button variant="danger" onClick={() => onStop()}>
+            Stop
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 };
 
@@ -85,7 +143,21 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
   show,
   onHide,
 }) => {
-  const { missingObjects, currentSource } = useTagger();
+  const [createTotal, setCreateTotal] = useState<number>();
+  const [currentIndex, setCurrentIndex] = useState<number>();
+  const [creating, setCreating] = useState<string>();
+  const [stopping, setStopping] = useState(false);
+
+  const {
+    missingObjects,
+    currentSource,
+    createNewPerformer,
+    postCreateNewPerformers,
+    createNewStudio,
+    postCreateNewStudios,
+    createNewTag,
+    postCreateNewTags,
+  } = useTagger();
 
   const { performers, studios, tags } = missingObjects;
 
@@ -101,9 +173,113 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
     ? `${stashboxBase}studios/`
     : undefined;
 
+  function resetLoading(n?: number) {
+    setCreateTotal(n);
+    setCurrentIndex(undefined);
+    setCreating(undefined);
+    setStopping(false);
+  }
+
+  async function onCreateStudios(selected: ScrapedStudio[]) {
+    const toRemap: CreatedObject<ScrapedStudio>[] = [];
+
+    resetLoading(selected.length);
+
+    for (let i = 0; i < selected.length; i++) {
+      const studio = selected[i];
+      setCurrentIndex(i);
+      setCreating(studio.name ?? "");
+
+      const input = studioCreateInputFromScraped(studio, endpoint);
+      const remap = false;
+      try {
+        const studioID = await createNewStudio(studio, input, remap);
+        if (studioID) {
+          toRemap.push({ obj: studio, id: studioID });
+        }
+      } catch (e) {
+        // TODO - handle errors
+      } finally {
+        if (stopping) {
+          break;
+        }
+      }
+    }
+
+    resetLoading();
+    postCreateNewStudios(toRemap);
+  }
+
+  async function onCreatePerformers(selected: ScrapedPerformer[]) {
+    const toRemap: CreatedObject<ScrapedPerformer>[] = [];
+
+    resetLoading(selected.length);
+
+    for (let i = 0; i < selected.length; i++) {
+      const performer = selected[i];
+      setCurrentIndex(i);
+      setCreating(performer.name ?? "");
+
+      const input = performerCreateInputFromScraped(performer, 0, endpoint);
+      const remap = false;
+      try {
+        const performerID = await createNewPerformer(performer, input, remap);
+        if (performerID) {
+          toRemap.push({ obj: performer, id: performerID });
+        }
+      } catch (e) {
+        // TODO - handle errors
+      } finally {
+        if (stopping) {
+          break;
+        }
+      }
+    }
+
+    resetLoading();
+    postCreateNewPerformers(toRemap);
+  }
+
+  async function onCreateTags(selected: ScrapedTag[]) {
+    const toRemap: CreatedObject<ScrapedTag>[] = [];
+
+    resetLoading(selected.length);
+
+    for (let i = 0; i < selected.length; i++) {
+      const tag = selected[i];
+      setCurrentIndex(i);
+      setCreating(tag.name ?? "");
+
+      const input = tagCreateInputFromScraped(tag); // , endpoint
+      const remap = false;
+      try {
+        const tagID = await createNewTag(tag, input, remap);
+        if (tagID) {
+          toRemap.push({ obj: tag, id: tagID });
+        }
+      } catch (e) {
+        // TODO - handle errors
+      } finally {
+        if (stopping) {
+          break;
+        }
+      }
+    }
+
+    resetLoading();
+    postCreateNewTags(toRemap);
+  }
+
   return (
     <Collapse in={show}>
       <Card className="missing-objects-panel">
+        <LoadingModal
+          total={createTotal}
+          currentIndex={currentIndex}
+          currentlyCreating={creating}
+          onStop={() => setStopping(true)}
+        />
+
         <div className="missing-objects-panel-header">
           <h4>
             <FormattedMessage id="component_tagger.verb_create_missing" />
@@ -125,6 +301,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
                 />
               )}
               header={<FormattedMessage id="studio" />}
+              onCreateSelected={onCreateStudios}
             />
           </Col>
           <Col lg={4} md={6}>
@@ -138,6 +315,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
                 />
               )}
               header={<FormattedMessage id="performer" />}
+              onCreateSelected={onCreatePerformers}
             />
           </Col>
           <Col lg={4} md={6}>
@@ -145,6 +323,7 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
               missingObjects={tags}
               renderName={(t) => <span>{t.name}</span>}
               header={<FormattedMessage id="tag" />}
+              onCreateSelected={onCreateTags}
             />
           </Col>
         </Row>

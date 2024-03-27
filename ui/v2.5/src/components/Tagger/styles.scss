@@ -455,3 +455,46 @@ li.active .optional-field.excluded .scene-link {
     width: 2rem;
   }
 }
+
+.loading-modal {
+  align-items: center;
+
+  // modal uses style: display: block
+  // stylelint-disable-next-line declaration-no-important
+  display: flex !important;
+
+  flex-direction: column;
+  height: 70vh;
+  justify-content: center;
+  width: 100%;
+
+  .modal-dialog {
+    width: 100%;
+  }
+
+  .modal-body {
+    padding: 2rem;
+  }
+
+  .LoadingIndicator {
+    margin-left: 0;
+
+    h4 {
+      font-size: 1.25rem;
+      margin-left: 0.5rem;
+    }
+  }
+
+  .LoadingIndicator-message {
+    display: inline;
+  }
+
+  .progress {
+    margin-bottom: 0.25rem;
+  }
+
+  .btn-toolbar {
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+}

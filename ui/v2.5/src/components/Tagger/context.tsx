@@ -33,6 +33,12 @@ export interface IMissingObjects {
   tags: GQL.ScrapedTag[];
 }
 
+interface IHasName {
+  name?: GQL.Maybe<string> | undefined;
+}
+
+export type CreatedObject<T extends IHasName> = { obj: T; id: string };
+
 export interface ITaggerContextState {
   config: ITaggerConfig;
   setConfig: (c: ITaggerConfig) => void;
@@ -50,20 +56,28 @@ export interface ITaggerContextState {
   stopMultiScrape: () => void;
   createNewTag: (
     tag: GQL.ScrapedTag,
-    toCreate: GQL.TagCreateInput
+    toCreate: GQL.TagCreateInput,
+    remap?: boolean
   ) => Promise<string | undefined>;
+  postCreateNewTags(tags: CreatedObject<GQL.ScrapedTag>[]): void;
   createNewPerformer: (
     performer: GQL.ScrapedPerformer,
-    toCreate: GQL.PerformerCreateInput
+    toCreate: GQL.PerformerCreateInput,
+    remap?: boolean
   ) => Promise<string | undefined>;
+  postCreateNewPerformers(
+    performers: CreatedObject<GQL.ScrapedPerformer>[]
+  ): void;
   linkPerformer: (
     performer: GQL.ScrapedPerformer,
     performerID: string
   ) => Promise<void>;
   createNewStudio: (
     studio: GQL.ScrapedStudio,
-    toCreate: GQL.StudioCreateInput
+    toCreate: GQL.StudioCreateInput,
+    remap?: boolean
   ) => Promise<string | undefined>;
+  postCreateNewStudios(studios: CreatedObject<GQL.ScrapedStudio>[]): void;
   updateStudio: (studio: GQL.StudioUpdateInput) => Promise<void>;
   linkStudio: (studio: GQL.ScrapedStudio, studioID: string) => Promise<void>;
   resolveScene: (
@@ -549,9 +563,35 @@ export const TaggerContext: React.FC = ({ children }) => {
     return newSearchResults;
   }
 
+  function postCreateNewTags(tags: CreatedObject<GQL.ScrapedTag>[]) {
+    const newSearchResults = mapResults((r) => {
+      if (!r.tags) {
+        return r;
+      }
+
+      return {
+        ...r,
+        tags: r.tags.map((p) => {
+          const tag = tags.find((e) => e.obj.name === p.name);
+          if (tag) {
+            return {
+              ...p,
+              stored_id: tag.id,
+            };
+          }
+
+          return p;
+        }),
+      };
+    });
+
+    setSearchResults(newSearchResults);
+  }
+
   async function createNewTag(
     tag: GQL.ScrapedTag,
-    toCreate: GQL.TagCreateInput
+    toCreate: GQL.TagCreateInput,
+    remap?: boolean
   ) {
     try {
       const result = await createTag({
@@ -563,27 +603,9 @@ export const TaggerContext: React.FC = ({ children }) => {
       const tagID = result.data?.tagCreate?.id;
       if (tagID === undefined) return undefined;
 
-      const newSearchResults = mapResults((r) => {
-        if (!r.tags) {
-          return r;
-        }
-
-        return {
-          ...r,
-          tags: r.tags.map((t) => {
-            if (t.name === tag.name) {
-              return {
-                ...t,
-                stored_id: tagID,
-              };
-            }
-
-            return t;
-          }),
-        };
-      });
-
-      setSearchResults(newSearchResults);
+      if (remap && tag.name !== undefined && tag.name !== null) {
+        postCreateNewTags([{ obj: tag, id: tagID }]);
+      }
 
       Toast.success(
         <span>
@@ -597,9 +619,37 @@ export const TaggerContext: React.FC = ({ children }) => {
     }
   }
 
+  function postCreateNewPerformers(
+    performers: CreatedObject<GQL.ScrapedPerformer>[]
+  ) {
+    const newSearchResults = mapResults((r) => {
+      if (!r.performers) {
+        return r;
+      }
+
+      return {
+        ...r,
+        performers: r.performers.map((p) => {
+          const performer = performers.find((e) => e.obj.name === p.name);
+          if (performer) {
+            return {
+              ...p,
+              stored_id: performer.id,
+            };
+          }
+
+          return p;
+        }),
+      };
+    });
+
+    setSearchResults(newSearchResults);
+  }
+
   async function createNewPerformer(
     performer: GQL.ScrapedPerformer,
-    toCreate: GQL.PerformerCreateInput
+    toCreate: GQL.PerformerCreateInput,
+    remap: boolean = true
   ) {
     try {
       const result = await createPerformer({
@@ -611,27 +661,9 @@ export const TaggerContext: React.FC = ({ children }) => {
       const performerID = result.data?.performerCreate?.id;
       if (performerID === undefined) return undefined;
 
-      const newSearchResults = mapResults((r) => {
-        if (!r.performers) {
-          return r;
-        }
-
-        return {
-          ...r,
-          performers: r.performers.map((p) => {
-            if (p.name === performer.name) {
-              return {
-                ...p,
-                stored_id: performerID,
-              };
-            }
-
-            return p;
-          }),
-        };
-      });
-
-      setSearchResults(newSearchResults);
+      if (remap && performer.name !== undefined && performer.name !== null) {
+        postCreateNewPerformers([{ obj: performer, id: performerID }]);
+      }
 
       Toast.success(
         <span>
@@ -710,9 +742,32 @@ export const TaggerContext: React.FC = ({ children }) => {
     }
   }
 
+  function postCreateNewStudios(studios: CreatedObject<GQL.ScrapedStudio>[]) {
+    const newSearchResults = mapResults((r) => {
+      if (!r.studio) {
+        return r;
+      }
+
+      const studio = studios.find((e) => e.obj.name === r.studio!.name);
+
+      return {
+        ...r,
+        studio: studio
+          ? {
+              ...r.studio,
+              stored_id: studio.id,
+            }
+          : r.studio,
+      };
+    });
+
+    setSearchResults(newSearchResults);
+  }
+
   async function createNewStudio(
     studio: GQL.ScrapedStudio,
-    toCreate: GQL.StudioCreateInput
+    toCreate: GQL.StudioCreateInput,
+    remap?: boolean
   ) {
     try {
       const result = await createStudio({
@@ -724,24 +779,9 @@ export const TaggerContext: React.FC = ({ children }) => {
       const studioID = result.data?.studioCreate?.id;
       if (studioID === undefined) return undefined;
 
-      const newSearchResults = mapResults((r) => {
-        if (!r.studio) {
-          return r;
-        }
-
-        return {
-          ...r,
-          studio:
-            r.studio.name === studio.name
-              ? {
-                  ...r.studio,
-                  stored_id: studioID,
-                }
-              : r.studio,
-        };
-      });
-
-      setSearchResults(newSearchResults);
+      if (remap && studio.name !== undefined && studio.name !== null) {
+        postCreateNewStudios([{ obj: studio, id: studioID }]);
+      }
 
       Toast.success(
         <span>
@@ -884,7 +924,10 @@ export const TaggerContext: React.FC = ({ children }) => {
         doMultiSceneFragmentScrape,
         stopMultiScrape,
         createNewTag,
+        postCreateNewTags,
+        postCreateNewStudios,
         createNewPerformer,
+        postCreateNewPerformers,
         linkPerformer,
         createNewStudio,
         updateStudio: updateExistingStudio,

@@ -9,7 +9,6 @@ import { Icon } from "../Shared/Icon";
 import { ModalComponent } from "../Shared/Modal";
 import { TruncatedText } from "../Shared/TruncatedText";
 import * as GQL from "src/core/generated-graphql";
-import { stringToGender } from "src/utils/gender";
 import { getCountryByISO } from "src/utils/country";
 import {
   faArrowLeft,
@@ -19,6 +18,7 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { ExternalLink } from "../Shared/ExternalLink";
+import { performerCreateInputFromScraped } from "./utils";
 
 interface IPerformerModalProps {
   performer: GQL.ScrapedScenePerformerDataFragment;
@@ -227,54 +227,7 @@ const PerformerModal: React.FC<IPerformerModalProps> = ({
 
     const performerData: GQL.PerformerCreateInput & {
       [index: string]: unknown;
-    } = {
-      name: performer.name ?? "",
-      disambiguation: performer.disambiguation ?? "",
-      alias_list:
-        performer.aliases?.split(",").map((a) => a.trim()) ?? undefined,
-      gender: stringToGender(performer.gender ?? undefined, true),
-      birthdate: performer.birthdate,
-      ethnicity: performer.ethnicity,
-      eye_color: performer.eye_color,
-      country: performer.country,
-      height_cm: Number.parseFloat(performer.height ?? "") ?? undefined,
-      measurements: performer.measurements,
-      fake_tits: performer.fake_tits,
-      career_length: performer.career_length,
-      tattoos: performer.tattoos,
-      piercings: performer.piercings,
-      urls: performer.urls,
-      image: images.length > imageIndex ? images[imageIndex] : undefined,
-      details: performer.details,
-      death_date: performer.death_date,
-      hair_color: performer.hair_color,
-      weight: Number.parseFloat(performer.weight ?? "") ?? undefined,
-    };
-
-    if (Number.isNaN(performerData.weight ?? 0)) {
-      performerData.weight = undefined;
-    }
-
-    if (Number.isNaN(performerData.height ?? 0)) {
-      performerData.height = undefined;
-    }
-
-    if (performer.tags) {
-      performerData.tag_ids = performer.tags
-        .map((t) => t.stored_id)
-        .filter((t) => t) as string[];
-    }
-
-    // stashid handling code
-    const remoteSiteID = performer.remote_site_id;
-    if (remoteSiteID && endpoint) {
-      performerData.stash_ids = [
-        {
-          endpoint,
-          stash_id: remoteSiteID,
-        },
-      ];
-    }
+    } = performerCreateInputFromScraped(performer, imageIndex, endpoint);
 
     // handle exclusions
     Object.keys(performerData).forEach((k) => {

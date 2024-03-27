@@ -2,6 +2,7 @@ import * as GQL from "src/core/generated-graphql";
 import { ParseMode } from "./constants";
 import { queryFindStudio } from "src/core/StashService";
 import { mergeStashIDs } from "src/utils/stashbox";
+import { stringToGender } from "src/utils/gender";
 
 const months = [
   "jan",
@@ -155,4 +156,110 @@ export async function mergeStudioStashIDs(
   }
 
   return newStashIDs;
+}
+
+export function performerCreateInputFromScraped(
+  performer: GQL.ScrapedPerformer,
+  imageIndex: number | undefined,
+  endpoint?: string
+) {
+  const performerData: GQL.PerformerCreateInput & {
+    [index: string]: unknown;
+  } = {
+    name: performer.name ?? "",
+    disambiguation: performer.disambiguation ?? "",
+    alias_list: performer.aliases?.split(",").map((a) => a.trim()) ?? undefined,
+    gender: stringToGender(performer.gender ?? undefined, true),
+    birthdate: performer.birthdate,
+    ethnicity: performer.ethnicity,
+    eye_color: performer.eye_color,
+    country: performer.country,
+    height_cm: Number.parseFloat(performer.height ?? "") ?? undefined,
+    measurements: performer.measurements,
+    fake_tits: performer.fake_tits,
+    career_length: performer.career_length,
+    tattoos: performer.tattoos,
+    piercings: performer.piercings,
+    urls: performer.urls,
+    image:
+      imageIndex !== undefined && (performer.images?.length ?? 0) > imageIndex
+        ? performer.images?.[imageIndex]
+        : undefined,
+    details: performer.details,
+    death_date: performer.death_date,
+    hair_color: performer.hair_color,
+    weight: Number.parseFloat(performer.weight ?? "") ?? undefined,
+  };
+
+  if (Number.isNaN(performerData.weight ?? 0)) {
+    performerData.weight = undefined;
+  }
+
+  if (Number.isNaN(performerData.height ?? 0)) {
+    performerData.height = undefined;
+  }
+
+  if (performer.tags) {
+    performerData.tag_ids = performer.tags
+      .map((t) => t.stored_id)
+      .filter((t) => t) as string[];
+  }
+
+  // stashid handling code
+  const remoteSiteID = performer.remote_site_id;
+  if (remoteSiteID && endpoint) {
+    performerData.stash_ids = [
+      {
+        endpoint,
+        stash_id: remoteSiteID,
+      },
+    ];
+  }
+
+  return performerData;
+}
+
+export function studioCreateInputFromScraped(
+  studio: GQL.ScrapedStudio,
+  endpoint?: string
+) {
+  const studioData: GQL.StudioCreateInput = {
+    name: studio.name,
+    url: studio.url,
+    image: studio.image,
+    parent_id: studio.parent?.stored_id,
+  };
+
+  // stashid handling code
+  const remoteSiteID = studio.remote_site_id;
+  if (remoteSiteID && endpoint) {
+    studioData.stash_ids = [
+      {
+        endpoint,
+        stash_id: remoteSiteID,
+      },
+    ];
+  }
+
+  return studioData;
+}
+
+export function tagCreateInputFromScraped(
+  tag: GQL.ScrapedTag
+  /* endpoint?: string */
+) {
+  const tagData: GQL.TagCreateInput = { name: tag.name };
+
+  // stashid handling code
+  // const remoteSiteID = tag.remote_site_id;
+  // if (remoteSiteID && endpoint) {
+  //   tagData.stash_ids = [
+  //     {
+  //       endpoint,
+  //       stash_id: remoteSiteID,
+  //     },
+  //   ];
+  // }
+
+  return tagData;
 }
