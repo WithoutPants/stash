@@ -26,6 +26,7 @@ import { ConfigurationContext } from "src/hooks/Config";
 import { ITaggerSource, SCRAPER_PREFIX, STASH_BOX_PREFIX } from "./constants";
 import { errorToString } from "src/utils";
 import { mergeStudioStashIDs } from "./utils";
+import { compareScenesForSort } from "./scenes/utils";
 
 export interface IMissingObjects {
   performers: GQL.ScrapedPerformer[];
@@ -50,9 +51,14 @@ export interface ITaggerContextState {
   searchResults: Record<string, ISceneQueryResult>;
   missingObjects: IMissingObjects;
   setCurrentSource: (src?: ITaggerSource) => void;
-  doSceneQuery: (sceneID: string, searchStr: string) => Promise<void>;
-  doSceneFragmentScrape: (sceneID: string) => Promise<void>;
-  doMultiSceneFragmentScrape: (sceneIDs: string[]) => Promise<void>;
+  doSceneQuery: (
+    scene: GQL.SlimSceneDataFragment,
+    searchStr: string
+  ) => Promise<void>;
+  doSceneFragmentScrape: (scene: GQL.SlimSceneDataFragment) => Promise<void>;
+  doMultiSceneFragmentScrape: (
+    scenes: GQL.SlimSceneDataFragment[]
+  ) => Promise<void>;
   stopMultiScrape: () => void;
   createNewTag: (
     tag: GQL.ScrapedTag,
@@ -316,10 +322,32 @@ export const TaggerContext: React.FC = ({ children }) => {
     });
   }
 
-  async function doSceneQuery(sceneID: string, searchVal: string) {
+  function sortResults(
+    target: GQL.SlimSceneDataFragment,
+    unsortedScenes: IScrapedScene[]
+  ) {
+    return unsortedScenes
+      .slice()
+      .sort((scrapedSceneA, scrapedSceneB) =>
+        compareScenesForSort(target, scrapedSceneA, scrapedSceneB)
+      );
+  }
+
+  function setResolved(value: boolean) {
+    return (scene: IScrapedScene) => {
+      return { ...scene, resolved: value };
+    };
+  }
+
+  async function doSceneQuery(
+    scene: GQL.SlimSceneDataFragment,
+    searchVal: string
+  ) {
     if (!currentSource) {
       return;
     }
+
+    const sceneID = scene.id;
 
     try {
       setLoading(true);
@@ -339,11 +367,12 @@ export const TaggerContext: React.FC = ({ children }) => {
       } else if (results.errors) {
         newResult = { error: results.errors.toString() };
       } else {
+        const unsortedResults = results.data.scrapeSingleScene.map(
+          setResolved(resolved)
+        );
+
         newResult = {
-          results: results.data.scrapeSingleScene.map((r) => ({
-            ...r,
-            resolved,
-          })),
+          results: sortResults(scene, unsortedResults),
         };
       }
 
@@ -355,10 +384,12 @@ export const TaggerContext: React.FC = ({ children }) => {
     }
   }
 
-  async function sceneFragmentScrape(sceneID: string) {
+  async function sceneFragmentScrape(scene: GQL.SlimSceneDataFragment) {
     if (!currentSource) {
       return;
     }
+
+    const sceneID = scene.id;
 
     clearSearchResults(sceneID);
 
@@ -375,12 +406,14 @@ export const TaggerContext: React.FC = ({ children }) => {
       } else if (results.errors) {
         newResult = { error: results.errors.toString() };
       } else {
+        // scenes are already resolved if they are scraped via fragment
+        const resolved = true;
+        const unsortedResults = results.data.scrapeSingleScene.map(
+          setResolved(resolved)
+        );
+
         newResult = {
-          results: results.data.scrapeSingleScene.map((r) => ({
-            ...r,
-            // scenes are already resolved if they are scraped via fragment
-            resolved: true,
-          })),
+          results: sortResults(scene, unsortedResults),
         };
       }
     } catch (err: unknown) {
@@ -392,16 +425,18 @@ export const TaggerContext: React.FC = ({ children }) => {
     });
   }
 
-  async function doSceneFragmentScrape(sceneID: string) {
+  async function doSceneFragmentScrape(scene: GQL.SlimSceneDataFragment) {
     if (!currentSource) {
       return;
     }
+
+    const sceneID = scene.id;
 
     clearSearchResults(sceneID);
 
     try {
       setLoading(true);
-      await sceneFragmentScrape(sceneID);
+      await sceneFragmentScrape(scene);
     } catch (err) {
       Toast.error(err);
     } finally {
@@ -409,10 +444,14 @@ export const TaggerContext: React.FC = ({ children }) => {
     }
   }
 
-  async function doMultiSceneFragmentScrape(sceneIDs: string[]) {
+  async function doMultiSceneFragmentScrape(
+    scenes: GQL.SlimSceneDataFragment[]
+  ) {
     if (!currentSource) {
       return;
     }
+
+    const sceneIDs = scenes.map((s) => s.id);
 
     setSearchResults({});
 
@@ -439,15 +478,13 @@ export const TaggerContext: React.FC = ({ children }) => {
         } else {
           const newSearchResults = { ...searchResults };
           sceneIDs.forEach((sceneID, index) => {
-            const newResults = results.data.scrapeMultiScenes[index].map(
-              (r) => ({
-                ...r,
-                resolved: true,
-              })
+            const resolved = true;
+            const unsortedResults = results.data.scrapeMultiScenes[index].map(
+              setResolved(resolved)
             );
 
             newSearchResults[sceneID] = {
-              results: newResults,
+              results: sortResults(scenes[index], unsortedResults),
             };
           });
 
@@ -457,10 +494,10 @@ export const TaggerContext: React.FC = ({ children }) => {
         setLoadingMulti(true);
 
         // do singular calls
-        await sceneIDs.reduce(async (promise, id) => {
+        await scenes.reduce(async (promise, scene) => {
           await promise;
           if (!stopping.current) {
-            await sceneFragmentScrape(id);
+            await sceneFragmentScrape(scene);
           }
         }, Promise.resolve());
       }

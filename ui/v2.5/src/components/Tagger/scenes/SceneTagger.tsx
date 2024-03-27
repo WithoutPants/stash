@@ -58,14 +58,14 @@ const Scene: React.FC<{
       doSceneQuery={
         currentSource?.supportSceneQuery
           ? async (v) => {
-              await doSceneQuery(scene.id, v);
+              await doSceneQuery(scene, v);
             }
           : undefined
       }
       scrapeSceneFragment={
         currentSource?.supportSceneFragment
           ? async () => {
-              await doSceneFragmentScrape(scene.id);
+              await doSceneFragmentScrape(scene);
             }
           : undefined
       }
@@ -250,7 +250,7 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
         <OperationButton
           disabled={loading}
           operation={async () => {
-            await doMultiSceneFragmentScrape(scenes.map((s) => s.id));
+            await doMultiSceneFragmentScrape(scenes);
           }}
         >
           {intl.formatMessage({ id: "component_tagger.verb_scrape_all" })}
