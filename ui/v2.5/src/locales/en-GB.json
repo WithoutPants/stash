@@ -163,6 +163,8 @@
     "UNCUT": "Uncut"
   },
   "component_tagger": {
+    "creating_missing_objects": "Creating missing objects",
+    "creating_object": "Creating {name}",
     "config": {
       "active_instance": "Active stash-box instance:",
       "blacklist_desc": "Blacklist items are excluded from queries. Note that they are regular expressions and also case-insensitive. Certain characters must be escaped with a backslash: {chars_require_escape}",

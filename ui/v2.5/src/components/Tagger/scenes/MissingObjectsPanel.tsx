@@ -120,14 +120,27 @@ const LoadingModal: React.FC<{
           <LoadingIndicator
             small
             inline
-            message="Creating missing objects..."
+            message={
+              <span>
+                <FormattedMessage id="component_tagger.creating_missing_objects" />
+                …
+              </span>
+            }
           />
           <ProgressBar animated now={progress} />
-          {currentlyCreating && <span>Creating {currentlyCreating}...</span>}
+          {currentlyCreating && (
+            <span>
+              <FormattedMessage
+                id="component_tagger.creating_object"
+                values={{ name: currentlyCreating }}
+              />
+              …
+            </span>
+          )}
         </div>
         <div className="btn-toolbar">
           <Button variant="danger" onClick={() => onStop()}>
-            Stop
+            <FormattedMessage id="actions.stop" />
           </Button>
         </div>
       </div>
