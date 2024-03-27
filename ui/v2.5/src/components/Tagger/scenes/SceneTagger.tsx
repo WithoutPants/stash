@@ -25,8 +25,14 @@ const Scene: React.FC<{
   showLightboxImage: (imagePath: string) => void;
 }> = ({ scene, searchResult, queue, index, showLightboxImage }) => {
   const intl = useIntl();
-  const { currentSource, doSceneQuery, doSceneFragmentScrape, loading } =
-    useTagger();
+  const {
+    currentSource,
+    doSceneQuery,
+    doSceneFragmentScrape,
+    loading,
+    selectedResults,
+    selectResult,
+  } = useTagger();
   const { configuration } = React.useContext(ConfigurationContext);
 
   const cont = configuration?.interface.continuePlaylistDefault ?? false;
@@ -48,6 +54,8 @@ const Scene: React.FC<{
       });
     }
   }, [intl, searchResult]);
+
+  const selected = selectedResults[scene.id];
 
   return (
     <TaggerScene
@@ -72,7 +80,12 @@ const Scene: React.FC<{
       showLightboxImage={showLightboxImage}
     >
       {searchResult && searchResult.results?.length ? (
-        <SceneSearchResults scenes={searchResult.results} target={scene} />
+        <SceneSearchResults
+          scenes={searchResult.results}
+          target={scene}
+          selected={selected}
+          setSelected={(i) => selectResult(scene.id, i)}
+        />
       ) : undefined}
     </TaggerScene>
   );

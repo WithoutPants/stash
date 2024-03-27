@@ -812,28 +812,19 @@ const StashSearchResult: React.FC<IStashSearchResultProps> = ({
 export interface ISceneSearchResults {
   target: GQL.SlimSceneDataFragment;
   scenes: IScrapedScene[];
+  selected: number | undefined;
+  setSelected: (i: number) => void;
 }
 
 export const SceneSearchResults: React.FC<ISceneSearchResults> = ({
   target,
   scenes,
+  selected,
+  setSelected,
 }) => {
-  const [selectedResult, setSelectedResult] = useState<number | undefined>();
-
-  useEffect(() => {
-    // #3198 - if the selected result is no longer in the list, reset it
-    if (!selectedResult || scenes?.length <= selectedResult) {
-      if (!scenes) {
-        setSelectedResult(undefined);
-      } else if (scenes.length > 0 && scenes[0].resolved) {
-        setSelectedResult(0);
-      }
-    }
-  }, [scenes, selectedResult]);
-
   function getClassName(i: number) {
     return cx("row mx-0 mt-2 search-result", {
-      "selected-result active": i === selectedResult,
+      "selected-result active": i === selected,
     });
   }
 
@@ -844,12 +835,12 @@ export const SceneSearchResults: React.FC<ISceneSearchResults> = ({
         <li
           // eslint-disable-next-line react/no-array-index-key
           key={i}
-          onClick={() => setSelectedResult(i)}
+          onClick={() => setSelected(i)}
           className={getClassName(i)}
         >
           <StashSearchResult
             index={i}
-            isActive={i === selectedResult}
+            isActive={i === selected}
             scene={s}
             stashScene={target}
           />

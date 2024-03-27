@@ -49,6 +49,8 @@ export interface ITaggerContextState {
   sources: ITaggerSource[];
   currentSource?: ITaggerSource;
   searchResults: Record<string, ISceneQueryResult>;
+  selectedResults: Record<string, number>;
+  selectResult: (sceneID: string, index: number) => void;
   missingObjects: IMissingObjects;
   setCurrentSource: (src?: ITaggerSource) => void;
   doSceneQuery: (
@@ -133,6 +135,9 @@ export const TaggerContext: React.FC = ({ children }) => {
   const [searchResults, setSearchResults] = useState<
     Record<string, ISceneQueryResult>
   >({});
+  const [selectedResults, setSelectedResults] = useState<
+    Record<string, number>
+  >({});
 
   const stopping = useRef(false);
 
@@ -200,6 +205,36 @@ export const TaggerContext: React.FC = ({ children }) => {
     setSearchResults({});
   }, [currentSource]);
 
+  useEffect(() => {
+    setSelectedResults((current) => {
+      const newSelectedResults = { ...current };
+
+      // #3198 - if the selected result is no longer in the list, reset it
+      Object.keys(current).forEach((k) => {
+        if ((searchResults[k]?.results?.length ?? 0) <= current[k]) {
+          delete newSelectedResults[k];
+        }
+      });
+
+      Object.keys(searchResults).forEach((k) => {
+        if (
+          newSelectedResults[k] === undefined &&
+          searchResults[k]?.results?.length
+        ) {
+          newSelectedResults[k] = 0;
+        }
+      });
+
+      return newSelectedResults;
+    });
+  }, [searchResults]);
+
+  function selectResult(sceneID: string, index: number) {
+    setSelectedResults((current) => {
+      return { ...current, [sceneID]: index };
+    });
+  }
+
   const missingObjects = useMemo(() => {
     function byName(name: string) {
       return (v: { name?: GQL.Maybe<string> }) => v.name === name;
@@ -216,30 +251,31 @@ export const TaggerContext: React.FC = ({ children }) => {
     const studios: GQL.ScrapedStudio[] = [];
     const tags: GQL.ScrapedTag[] = [];
 
-    Object.values(searchResults).forEach((result) => {
-      result.results?.forEach((scene) => {
-        scene.performers?.forEach((performer) => {
-          if (
-            !performer.stored_id &&
-            performer.name &&
-            !performers.some(byName(performer.name))
-          ) {
-            performers.push(performer);
-          }
-        });
+    Object.keys(selectedResults).forEach((result) => {
+      const scene = searchResults[result]?.results?.[selectedResults[result]];
+      if (!scene) return;
 
-        if (scene.studio && !scene.studio.stored_id) {
-          const { name } = scene.studio;
-          if (name && !studios.some(byName(name))) {
-            studios.push(scene.studio);
-          }
+      scene.performers?.forEach((performer) => {
+        if (
+          !performer.stored_id &&
+          performer.name &&
+          !performers.some(byName(performer.name))
+        ) {
+          performers.push(performer);
         }
+      });
 
-        scene.tags?.forEach((tag) => {
-          if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
-            tags.push(tag);
-          }
-        });
+      if (scene.studio && !scene.studio.stored_id) {
+        const { name } = scene.studio;
+        if (name && !studios.some(byName(name))) {
+          studios.push(scene.studio);
+        }
+      }
+
+      scene.tags?.forEach((tag) => {
+        if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
+          tags.push(tag);
+        }
       });
     });
 
@@ -252,7 +288,7 @@ export const TaggerContext: React.FC = ({ children }) => {
       studios,
       tags,
     };
-  }, [searchResults]);
+  }, [selectedResults, searchResults]);
 
   function getPendingFingerprints() {
     const endpoint = currentSource?.sourceInput.stash_box_endpoint;
@@ -952,6 +988,8 @@ export const TaggerContext: React.FC = ({ children }) => {
         sources,
         currentSource,
         searchResults,
+        selectedResults,
+        selectResult,
         missingObjects,
         setCurrentSource: (src) => {
           setCurrentSource(src);
