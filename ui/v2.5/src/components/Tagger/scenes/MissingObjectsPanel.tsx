@@ -74,37 +74,41 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
     <div className="missing-objects-table">
       <Table striped>
         <thead>
-          <th>
-            <Form.Check
-              checked={allChecked ?? false}
-              onChange={toggleAllChecked}
-              disabled={missingObjects.length === 0}
-            />
-          </th>
-          <th>{header}</th>
-          <th>
-            <Button
-              size="sm"
-              disabled={!checkedItems.length}
-              onClick={() => onCreateSelected(checkedItems)}
-            >
-              Create Selected
-            </Button>
-          </th>
+          <tr>
+            <th>
+              <Form.Check
+                checked={allChecked ?? false}
+                onChange={toggleAllChecked}
+                disabled={missingObjects.length === 0}
+              />
+            </th>
+            <th>{header}</th>
+            <th>
+              <Button
+                size="sm"
+                disabled={!checkedItems.length}
+                onClick={() => onCreateSelected(checkedItems)}
+              >
+                Create Selected
+              </Button>
+            </th>
+          </tr>
         </thead>
-        {missingObjects.map((obj) => {
-          return (
-            <tr key={obj.name}>
-              <td>
-                <Form.Check
-                  checked={checkedItems.includes(obj)}
-                  onChange={() => toggleCheckedItem(obj)}
-                />
-              </td>
-              <td colSpan={2}>{renderName(obj)}</td>
-            </tr>
-          );
-        })}
+        <tbody>
+          {missingObjects.map((obj) => {
+            return (
+              <tr key={obj.name}>
+                <td>
+                  <Form.Check
+                    checked={checkedItems.includes(obj)}
+                    onChange={() => toggleCheckedItem(obj)}
+                  />
+                </td>
+                <td colSpan={2}>{renderName(obj)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
       </Table>
     </div>
   );
