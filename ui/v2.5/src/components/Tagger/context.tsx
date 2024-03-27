@@ -256,6 +256,10 @@ export const TaggerContext: React.FC = ({ children }) => {
       if (!scene) return;
 
       scene.performers?.forEach((performer) => {
+        if (!config?.showMales && performer.gender === GQL.GenderEnum.Male) {
+          return;
+        }
+
         if (
           !performer.stored_id &&
           performer.name &&
@@ -272,11 +276,13 @@ export const TaggerContext: React.FC = ({ children }) => {
         }
       }
 
-      scene.tags?.forEach((tag) => {
-        if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
-          tags.push(tag);
-        }
-      });
+      if (config?.setTags) {
+        scene.tags?.forEach((tag) => {
+          if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
+            tags.push(tag);
+          }
+        });
+      }
     });
 
     performers.sort(nameCompare);
@@ -288,7 +294,7 @@ export const TaggerContext: React.FC = ({ children }) => {
       studios,
       tags,
     };
-  }, [selectedResults, searchResults]);
+  }, [selectedResults, searchResults, config?.showMales, config?.setTags]);
 
   function getPendingFingerprints() {
     const endpoint = currentSource?.sourceInput.stash_box_endpoint;
