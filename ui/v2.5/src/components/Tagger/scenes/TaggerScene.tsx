@@ -30,7 +30,7 @@ const TaggerSceneDetails: React.FC<ITaggerSceneDetails> = ({ scene }) => {
 
   return (
     <div className="original-scene-details">
-      <Collapse in={open}>
+      <Collapse in={open} mountOnEnter>
         <div className="row">
           <div className="col col-lg-6">
             <h4>{objectTitle(scene)}</h4>
