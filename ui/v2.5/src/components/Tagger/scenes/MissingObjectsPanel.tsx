@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -37,10 +37,10 @@ interface IMissingObject {
 const MissingObjectsTable = <T extends IMissingObject>(props: {
   missingObjects: T[];
   renderName: (obj: T) => React.ReactNode;
-  header: React.ReactNode;
+  headerID: string;
   onCreateSelected: (selected: T[]) => void;
 }) => {
-  const { missingObjects, renderName, header, onCreateSelected } = props;
+  const { missingObjects, renderName, headerID, onCreateSelected } = props;
 
   const [checkedItems, setCheckedItems] = useState<T[]>([]);
   const allChecked =
@@ -82,7 +82,9 @@ const MissingObjectsTable = <T extends IMissingObject>(props: {
                 disabled={missingObjects.length === 0}
               />
             </th>
-            <th>{header}</th>
+            <th>
+              <FormattedMessage id={headerID} />
+            </th>
             <th>
               <Button
                 size="sm"
@@ -169,6 +171,8 @@ const LoadingModal: React.FC<{
   );
 };
 
+const renderTagName = (t: ScrapedTag) => <span>{t.name}</span>;
+
 interface IMissingObjectsPanelProps {
   show: boolean;
   onHide: () => void;
@@ -208,105 +212,143 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
     ? `${stashboxBase}studios/`
     : undefined;
 
-  function resetLoading(n?: number) {
+  const resetLoading = useCallback((n?: number) => {
     setCreateTotal(n);
     setCurrentIndex(undefined);
     setCreating(undefined);
     stopping.current = false;
-  }
+  }, []);
 
-  async function onCreateStudios(selected: ScrapedStudio[]) {
-    const toRemap: CreatedObject<ScrapedStudio>[] = [];
+  const onCreateStudios = useCallback(
+    async (selected: ScrapedStudio[]) => {
+      const toRemap: CreatedObject<ScrapedStudio>[] = [];
 
-    resetLoading(selected.length);
+      resetLoading(selected.length);
 
-    for (let i = 0; i < selected.length; i++) {
-      const studio = selected[i];
-      setCurrentIndex(i);
-      setCreating(studio.name ?? "");
+      for (let i = 0; i < selected.length; i++) {
+        const studio = selected[i];
+        setCurrentIndex(i);
+        setCreating(studio.name ?? "");
 
-      const input = studioCreateInputFromScraped(studio, endpoint);
-      const remap = false;
-      try {
-        const studioID = await createNewStudio(studio, input, remap);
-        if (studioID) {
-          toRemap.push({ obj: studio, id: studioID });
+        const input = studioCreateInputFromScraped(
+          studio,
+          endpoint ?? undefined
+        );
+        const remap = false;
+        try {
+          const studioID = await createNewStudio(studio, input, remap);
+          if (studioID) {
+            toRemap.push({ obj: studio, id: studioID });
+          }
+        } catch (e) {
+          // TODO - handle errors
+        } finally {
+          if (stopping.current) {
+            break;
+          }
         }
-      } catch (e) {
-        // TODO - handle errors
-      } finally {
+      }
+
+      resetLoading();
+      postCreateNewStudios(toRemap);
+    },
+    [createNewStudio, endpoint, postCreateNewStudios, resetLoading]
+  );
+
+  const onCreatePerformers = useCallback(
+    async (selected: ScrapedPerformer[]) => {
+      const toRemap: CreatedObject<ScrapedPerformer>[] = [];
+
+      resetLoading(selected.length);
+
+      for (let i = 0; i < selected.length; i++) {
+        const performer = selected[i];
+        setCurrentIndex(i);
+        setCreating(performer.name ?? "");
+
+        const input = performerCreateInputFromScraped(
+          performer,
+          0,
+          endpoint ?? undefined
+        );
+        const remap = false;
+        try {
+          const performerID = await createNewPerformer(performer, input, remap);
+          if (performerID) {
+            toRemap.push({ obj: performer, id: performerID });
+          }
+        } catch (e) {
+          // TODO - handle errors
+        } finally {
+          if (stopping.current) {
+            break;
+          }
+        }
+      }
+
+      resetLoading();
+      postCreateNewPerformers(toRemap);
+    },
+    [createNewPerformer, endpoint, postCreateNewPerformers, resetLoading]
+  );
+
+  const onCreateTags = useCallback(
+    async (selected: ScrapedTag[]) => {
+      const toRemap: CreatedObject<ScrapedTag>[] = [];
+
+      resetLoading(selected.length);
+
+      for (let i = 0; i < selected.length; i++) {
         if (stopping.current) {
           break;
         }
-      }
-    }
 
-    resetLoading();
-    postCreateNewStudios(toRemap);
-  }
+        const tag = selected[i];
+        setCurrentIndex(i);
+        setCreating(tag.name ?? "");
 
-  async function onCreatePerformers(selected: ScrapedPerformer[]) {
-    const toRemap: CreatedObject<ScrapedPerformer>[] = [];
-
-    resetLoading(selected.length);
-
-    for (let i = 0; i < selected.length; i++) {
-      const performer = selected[i];
-      setCurrentIndex(i);
-      setCreating(performer.name ?? "");
-
-      const input = performerCreateInputFromScraped(performer, 0, endpoint);
-      const remap = false;
-      try {
-        const performerID = await createNewPerformer(performer, input, remap);
-        if (performerID) {
-          toRemap.push({ obj: performer, id: performerID });
-        }
-      } catch (e) {
-        // TODO - handle errors
-      } finally {
-        if (stopping.current) {
-          break;
+        const input = tagCreateInputFromScraped(tag); // , endpoint
+        const remap = false;
+        try {
+          const tagID = await createNewTag(tag, input, remap);
+          if (tagID) {
+            toRemap.push({ obj: tag, id: tagID });
+          }
+        } catch (e) {
+          // TODO - handle errors
         }
       }
-    }
 
-    resetLoading();
-    postCreateNewPerformers(toRemap);
-  }
+      resetLoading();
+      postCreateNewTags(toRemap);
+    },
+    [createNewTag, postCreateNewTags, resetLoading]
+  );
 
-  async function onCreateTags(selected: ScrapedTag[]) {
-    const toRemap: CreatedObject<ScrapedTag>[] = [];
+  const renderPerformerName = useCallback(
+    (p: ScrapedPerformer) => (
+      <PerformerName
+        performer={p}
+        id={p.remote_site_id}
+        baseURL={stashboxPerformerPrefix}
+      />
+    ),
+    [stashboxPerformerPrefix]
+  );
 
-    resetLoading(selected.length);
-
-    for (let i = 0; i < selected.length; i++) {
-      if (stopping.current) {
-        break;
-      }
-
-      const tag = selected[i];
-      setCurrentIndex(i);
-      setCreating(tag.name ?? "");
-
-      const input = tagCreateInputFromScraped(tag); // , endpoint
-      const remap = false;
-      try {
-        const tagID = await createNewTag(tag, input, remap);
-        if (tagID) {
-          toRemap.push({ obj: tag, id: tagID });
-        }
-      } catch (e) {
-        // TODO - handle errors
-      }
-    }
-
-    resetLoading();
-    postCreateNewTags(toRemap);
-  }
+  const renderStudioName = useCallback(
+    (s: ScrapedStudio) => (
+      <StudioName
+        studio={s}
+        id={s.remote_site_id}
+        baseURL={stashboxStudioPrefix}
+      />
+    ),
+    [stashboxStudioPrefix]
+  );
 
   return (
-    <Collapse in={show}>
+    <Collapse in={show} mountOnEnter unmountOnExit>
       <Card className="missing-objects-panel">
         <LoadingModal
           total={createTotal}
@@ -328,36 +370,24 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
           <Col lg={4} md={6}>
             <MissingObjectsTable
               missingObjects={studios}
-              renderName={(s) => (
-                <StudioName
-                  studio={s}
-                  id={s.remote_site_id}
-                  baseURL={stashboxStudioPrefix}
-                />
-              )}
-              header={<FormattedMessage id="studio" />}
+              renderName={renderStudioName}
+              headerID="studio"
               onCreateSelected={onCreateStudios}
             />
           </Col>
           <Col lg={4} md={6}>
             <MissingObjectsTable
               missingObjects={performers}
-              renderName={(p) => (
-                <PerformerName
-                  performer={p}
-                  id={p.remote_site_id}
-                  baseURL={stashboxPerformerPrefix}
-                />
-              )}
-              header={<FormattedMessage id="performer" />}
+              renderName={renderPerformerName}
+              headerID="performer"
               onCreateSelected={onCreatePerformers}
             />
           </Col>
           <Col lg={4} md={6}>
             <MissingObjectsTable
               missingObjects={tags}
-              renderName={(t) => <span>{t.name}</span>}
-              header={<FormattedMessage id="tag" />}
+              renderName={renderTagName}
+              headerID="tag"
               onCreateSelected={onCreateTags}
             />
           </Col>

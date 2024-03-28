@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   initialConfig,
   ITaggerConfig,
@@ -121,6 +127,27 @@ export interface ISceneQueryResult {
   error?: string;
 }
 
+function mapResults(
+  searchResults: Record<string, ISceneQueryResult>,
+  fn: (r: IScrapedScene) => IScrapedScene
+) {
+  const newSearchResults = { ...searchResults };
+
+  Object.keys(newSearchResults).forEach((k) => {
+    const searchResult = searchResults[k];
+    if (!searchResult.results) {
+      return;
+    }
+
+    newSearchResults[k] = {
+      ...searchResults[k],
+      results: searchResult.results.map(fn),
+    };
+  });
+
+  return newSearchResults;
+}
+
 export const TaggerContext: React.FC = ({ children }) => {
   const [{ data: config }, setConfig] = useLocalForage<ITaggerConfig>(
     LOCAL_FORAGE_KEY,
@@ -229,11 +256,11 @@ export const TaggerContext: React.FC = ({ children }) => {
     });
   }, [searchResults]);
 
-  function selectResult(sceneID: string, index: number) {
+  const selectResult = useCallback((sceneID: string, index: number) => {
     setSelectedResults((current) => {
       return { ...current, [sceneID]: index };
     });
-  }
+  }, []);
 
   const missingObjects = useMemo(() => {
     function byName(name: string) {
@@ -343,37 +370,47 @@ export const TaggerContext: React.FC = ({ children }) => {
     }
   }
 
-  function queueFingerprintSubmission(sceneId: string) {
-    const endpoint = currentSource?.sourceInput.stash_box_endpoint;
-    if (!config || !endpoint) return;
+  const queueFingerprintSubmission = useCallback(
+    (sceneId: string) => {
+      const endpoint = currentSource?.sourceInput.stash_box_endpoint;
+      if (!endpoint) return;
 
-    setConfig({
-      ...config,
-      fingerprintQueue: {
-        ...config.fingerprintQueue,
-        [endpoint]: [...(config.fingerprintQueue[endpoint] ?? []), sceneId],
-      },
-    });
-  }
+      setConfig((current) => {
+        if (!current) return current;
 
-  function clearSearchResults(sceneID: string) {
+        return {
+          ...current,
+          fingerprintQueue: {
+            ...current.fingerprintQueue,
+            [endpoint]: [
+              ...(current.fingerprintQueue[endpoint] ?? []),
+              sceneId,
+            ],
+          },
+        };
+      });
+    },
+    [currentSource?.sourceInput.stash_box_endpoint, setConfig]
+  );
+
+  const clearSearchResults = useCallback((sceneID: string) => {
     setSearchResults((current) => {
       const newSearchResults = { ...current };
       delete newSearchResults[sceneID];
       return newSearchResults;
     });
-  }
+  }, []);
 
-  function sortResults(
-    target: GQL.SlimSceneDataFragment,
-    unsortedScenes: IScrapedScene[]
-  ) {
-    return unsortedScenes
-      .slice()
-      .sort((scrapedSceneA, scrapedSceneB) =>
-        compareScenesForSort(target, scrapedSceneA, scrapedSceneB)
-      );
-  }
+  const sortResults = useCallback(
+    (target: GQL.SlimSceneDataFragment, unsortedScenes: IScrapedScene[]) => {
+      return unsortedScenes
+        .slice()
+        .sort((scrapedSceneA, scrapedSceneB) =>
+          compareScenesForSort(target, scrapedSceneA, scrapedSceneB)
+        );
+    },
+    []
+  );
 
   function setResolved(value: boolean) {
     return (scene: IScrapedScene) => {
@@ -381,429 +418,289 @@ export const TaggerContext: React.FC = ({ children }) => {
     };
   }
 
-  async function doSceneQuery(
-    scene: GQL.SlimSceneDataFragment,
-    searchVal: string
-  ) {
-    if (!currentSource) {
-      return;
-    }
+  const doSceneQuery = useCallback(
+    async (scene: GQL.SlimSceneDataFragment, searchVal: string) => {
+      if (!currentSource) {
+        return;
+      }
 
-    const sceneID = scene.id;
+      const sceneID = scene.id;
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
+        clearSearchResults(sceneID);
+
+        const results = await queryScrapeSceneQuery(
+          currentSource.sourceInput,
+          searchVal
+        );
+        let newResult: ISceneQueryResult;
+        // scenes are already resolved if they come from stash-box
+        const resolved =
+          currentSource.sourceInput.stash_box_endpoint !== undefined;
+
+        if (results.error) {
+          newResult = { error: results.error.message };
+        } else if (results.errors) {
+          newResult = { error: results.errors.toString() };
+        } else {
+          const unsortedResults = results.data.scrapeSingleScene.map(
+            setResolved(resolved)
+          );
+
+          newResult = {
+            results: sortResults(scene, unsortedResults),
+          };
+        }
+
+        setSearchResults((current) => ({ ...current, [sceneID]: newResult }));
+      } catch (err) {
+        Toast.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [Toast, currentSource, clearSearchResults, sortResults]
+  );
+
+  const sceneFragmentScrape = useCallback(
+    async (scene: GQL.SlimSceneDataFragment) => {
+      if (!currentSource) {
+        return;
+      }
+
+      const sceneID = scene.id;
+
       clearSearchResults(sceneID);
 
-      const results = await queryScrapeSceneQuery(
-        currentSource.sourceInput,
-        searchVal
-      );
       let newResult: ISceneQueryResult;
-      // scenes are already resolved if they come from stash-box
-      const resolved =
-        currentSource.sourceInput.stash_box_endpoint !== undefined;
 
-      if (results.error) {
-        newResult = { error: results.error.message };
-      } else if (results.errors) {
-        newResult = { error: results.errors.toString() };
-      } else {
-        const unsortedResults = results.data.scrapeSingleScene.map(
-          setResolved(resolved)
-        );
-
-        newResult = {
-          results: sortResults(scene, unsortedResults),
-        };
-      }
-
-      setSearchResults({ ...searchResults, [sceneID]: newResult });
-    } catch (err) {
-      Toast.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function sceneFragmentScrape(scene: GQL.SlimSceneDataFragment) {
-    if (!currentSource) {
-      return;
-    }
-
-    const sceneID = scene.id;
-
-    clearSearchResults(sceneID);
-
-    let newResult: ISceneQueryResult;
-
-    try {
-      const results = await queryScrapeScene(
-        currentSource.sourceInput,
-        sceneID
-      );
-
-      if (results.error) {
-        newResult = { error: results.error.message };
-      } else if (results.errors) {
-        newResult = { error: results.errors.toString() };
-      } else {
-        // scenes are already resolved if they are scraped via fragment
-        const resolved = true;
-        const unsortedResults = results.data.scrapeSingleScene.map(
-          setResolved(resolved)
-        );
-
-        newResult = {
-          results: sortResults(scene, unsortedResults),
-        };
-      }
-    } catch (err: unknown) {
-      newResult = { error: errorToString(err) };
-    }
-
-    setSearchResults((current) => {
-      return { ...current, [sceneID]: newResult };
-    });
-  }
-
-  async function doSceneFragmentScrape(scene: GQL.SlimSceneDataFragment) {
-    if (!currentSource) {
-      return;
-    }
-
-    const sceneID = scene.id;
-
-    clearSearchResults(sceneID);
-
-    try {
-      setLoading(true);
-      await sceneFragmentScrape(scene);
-    } catch (err) {
-      Toast.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function doMultiSceneFragmentScrape(
-    scenes: GQL.SlimSceneDataFragment[]
-  ) {
-    if (!currentSource) {
-      return;
-    }
-
-    const sceneIDs = scenes.map((s) => s.id);
-
-    setSearchResults({});
-
-    try {
-      stopping.current = false;
-      setLoading(true);
-      setMultiError(undefined);
-
-      const stashBoxEndpoint =
-        currentSource.sourceInput.stash_box_endpoint ?? undefined;
-
-      // if current source is stash-box, we can use the multi-scene
-      // interface
-      if (stashBoxEndpoint !== undefined) {
-        const results = await stashBoxSceneBatchQuery(
-          sceneIDs,
-          stashBoxEndpoint
+      try {
+        const results = await queryScrapeScene(
+          currentSource.sourceInput,
+          sceneID
         );
 
         if (results.error) {
-          setMultiError(results.error.message);
+          newResult = { error: results.error.message };
         } else if (results.errors) {
-          setMultiError(results.errors.toString());
+          newResult = { error: results.errors.toString() };
         } else {
-          const newSearchResults = { ...searchResults };
-          sceneIDs.forEach((sceneID, index) => {
-            const resolved = true;
-            const unsortedResults = results.data.scrapeMultiScenes[index].map(
-              setResolved(resolved)
-            );
+          // scenes are already resolved if they are scraped via fragment
+          const resolved = true;
+          const unsortedResults = results.data.scrapeSingleScene.map(
+            setResolved(resolved)
+          );
 
-            newSearchResults[sceneID] = {
-              results: sortResults(scenes[index], unsortedResults),
-            };
-          });
-
-          setSearchResults(newSearchResults);
+          newResult = {
+            results: sortResults(scene, unsortedResults),
+          };
         }
-      } else {
-        setLoadingMulti(true);
-
-        // do singular calls
-        await scenes.reduce(async (promise, scene) => {
-          await promise;
-          if (!stopping.current) {
-            await sceneFragmentScrape(scene);
-          }
-        }, Promise.resolve());
+      } catch (err: unknown) {
+        newResult = { error: errorToString(err) };
       }
-    } catch (err) {
-      Toast.error(err);
-    } finally {
-      setLoading(false);
-      setLoadingMulti(false);
-    }
-  }
+
+      setSearchResults((current) => {
+        return { ...current, [sceneID]: newResult };
+      });
+    },
+    [currentSource, clearSearchResults, sortResults]
+  );
+
+  const doSceneFragmentScrape = useCallback(
+    async (scene: GQL.SlimSceneDataFragment) => {
+      if (!currentSource) {
+        return;
+      }
+
+      const sceneID = scene.id;
+
+      clearSearchResults(sceneID);
+
+      try {
+        setLoading(true);
+        await sceneFragmentScrape(scene);
+      } catch (err) {
+        Toast.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [Toast, currentSource, sceneFragmentScrape, clearSearchResults]
+  );
+
+  const doMultiSceneFragmentScrape = useCallback(
+    async (scenes: GQL.SlimSceneDataFragment[]) => {
+      if (!currentSource) {
+        return;
+      }
+
+      const sceneIDs = scenes.map((s) => s.id);
+
+      setSearchResults({});
+
+      try {
+        stopping.current = false;
+        setLoading(true);
+        setMultiError(undefined);
+
+        const stashBoxIndex =
+          currentSource?.sourceInput.stash_box_endpoint ?? undefined;
+
+        // if current source is stash-box, we can use the multi-scene
+        // interface
+        if (stashBoxIndex !== undefined) {
+          const results = await stashBoxSceneBatchQuery(
+            sceneIDs,
+            stashBoxIndex
+          );
+
+          if (results.error) {
+            setMultiError(results.error.message);
+          } else if (results.errors) {
+            setMultiError(results.errors.toString());
+          } else {
+            setSearchResults((current) => {
+              const newSearchResults = { ...current };
+              sceneIDs.forEach((sceneID, index) => {
+                const resolved = true;
+                const unsortedResults = results.data.scrapeMultiScenes[
+                  index
+                ].map(setResolved(resolved));
+
+                newSearchResults[sceneID] = {
+                  results: sortResults(scenes[index], unsortedResults),
+                };
+              });
+
+              return newSearchResults;
+            });
+          }
+        } else {
+          setLoadingMulti(true);
+
+          // do singular calls
+          await scenes.reduce(async (promise, scene) => {
+            await promise;
+            if (!stopping.current) {
+              await sceneFragmentScrape(scene);
+            }
+          }, Promise.resolve());
+        }
+      } catch (err) {
+        Toast.error(err);
+      } finally {
+        setLoading(false);
+        setLoadingMulti(false);
+      }
+    },
+    [Toast, currentSource, sceneFragmentScrape, sortResults]
+  );
 
   function stopMultiScrape() {
     stopping.current = true;
   }
 
-  async function resolveScene(
-    sceneID: string,
-    index: number,
-    scene: IScrapedScene
-  ) {
-    if (!currentSource || scene.resolved || !searchResults[sceneID].results) {
-      return Promise.resolve();
-    }
-
-    try {
-      const sceneInput: GQL.ScrapedSceneInput = {
-        date: scene.date,
-        details: scene.details,
-        remote_site_id: scene.remote_site_id,
-        title: scene.title,
-        urls: scene.urls,
-      };
-
-      const result = await queryScrapeSceneQueryFragment(
-        currentSource.sourceInput,
-        sceneInput
-      );
-
-      if (result.data.scrapeSingleScene.length) {
-        const resolvedScene = result.data.scrapeSingleScene[0];
-
-        // set the scene in the results and mark as resolved
-        const newResult = [...searchResults[sceneID].results!];
-        newResult[index] = { ...resolvedScene, resolved: true };
-        setSearchResults({
-          ...searchResults,
-          [sceneID]: { ...searchResults[sceneID], results: newResult },
-        });
-      }
-    } catch (err) {
-      Toast.error(err);
-
-      const newResult = [...searchResults[sceneID].results!];
-      newResult[index] = { ...newResult[index], resolved: true };
-      setSearchResults({
-        ...searchResults,
-        [sceneID]: { ...searchResults[sceneID], results: newResult },
-      });
-    }
-  }
-
-  async function saveScene(
-    sceneCreateInput: GQL.SceneUpdateInput,
-    queueFingerprint: boolean
-  ) {
-    try {
-      await updateScene({
-        variables: {
-          input: {
-            ...sceneCreateInput,
-            // only set organized if it is enabled in the config
-            organized: config?.markSceneAsOrganizedOnSave || undefined,
-          },
-        },
-      });
-
-      if (queueFingerprint) {
-        queueFingerprintSubmission(sceneCreateInput.id);
-      }
-      clearSearchResults(sceneCreateInput.id);
-    } catch (err) {
-      Toast.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function mapResults(fn: (r: IScrapedScene) => IScrapedScene) {
-    const newSearchResults = { ...searchResults };
-
-    Object.keys(newSearchResults).forEach((k) => {
-      const searchResult = searchResults[k];
-      if (!searchResult.results) {
-        return;
+  const resolveScene = useCallback(
+    async (sceneID: string, index: number, scene: IScrapedScene) => {
+      if (!currentSource || scene.resolved || !searchResults[sceneID].results) {
+        return Promise.resolve();
       }
 
-      newSearchResults[k].results = searchResult.results.map(fn);
-    });
+      try {
+        const sceneInput: GQL.ScrapedSceneInput = {
+          date: scene.date,
+          details: scene.details,
+          remote_site_id: scene.remote_site_id,
+          title: scene.title,
+          urls: scene.urls,
+        };
 
-    return newSearchResults;
-  }
+        const result = await queryScrapeSceneQueryFragment(
+          currentSource.sourceInput,
+          sceneInput
+        );
 
-  function postCreateNewTags(tags: CreatedObject<GQL.ScrapedTag>[]) {
-    const newSearchResults = mapResults((r) => {
-      if (!r.tags) {
-        return r;
-      }
+        if (result.data.scrapeSingleScene.length) {
+          const resolvedScene = result.data.scrapeSingleScene[0];
 
-      return {
-        ...r,
-        tags: r.tags.map((p) => {
-          const tag = tags.find((e) => e.obj.name === p.name);
-          if (tag) {
+          // set the scene in the results and mark as resolved
+          setSearchResults((current) => {
+            const newResult = [...current[sceneID].results!];
+            newResult[index] = { ...resolvedScene, resolved: true };
             return {
-              ...p,
-              stored_id: tag.id,
+              ...current,
+              [sceneID]: { ...current[sceneID], results: newResult },
             };
-          }
+          });
+        }
+      } catch (err) {
+        Toast.error(err);
 
-          return p;
-        }),
-      };
-    });
-
-    setSearchResults(newSearchResults);
-  }
-
-  async function createNewTag(
-    tag: GQL.ScrapedTag,
-    toCreate: GQL.TagCreateInput,
-    remap?: boolean
-  ) {
-    try {
-      const result = await createTag({
-        variables: {
-          input: toCreate,
-        },
-      });
-
-      const tagID = result.data?.tagCreate?.id;
-      if (tagID === undefined) return undefined;
-
-      if (remap && tag.name !== undefined && tag.name !== null) {
-        postCreateNewTags([{ obj: tag, id: tagID }]);
-      }
-
-      Toast.success(
-        <span>
-          Created tag: <b>{toCreate.name}</b>
-        </span>
-      );
-
-      return tagID;
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  function postCreateNewPerformers(
-    performers: CreatedObject<GQL.ScrapedPerformer>[]
-  ) {
-    const newSearchResults = mapResults((r) => {
-      if (!r.performers) {
-        return r;
-      }
-
-      return {
-        ...r,
-        performers: r.performers.map((p) => {
-          const performer = performers.find((e) => e.obj.name === p.name);
-          if (performer) {
-            return {
-              ...p,
-              stored_id: performer.id,
-            };
-          }
-
-          return p;
-        }),
-      };
-    });
-
-    setSearchResults(newSearchResults);
-  }
-
-  async function createNewPerformer(
-    performer: GQL.ScrapedPerformer,
-    toCreate: GQL.PerformerCreateInput,
-    remap: boolean = true
-  ) {
-    try {
-      const result = await createPerformer({
-        variables: {
-          input: toCreate,
-        },
-      });
-
-      const performerID = result.data?.performerCreate?.id;
-      if (performerID === undefined) return undefined;
-
-      if (remap && performer.name !== undefined && performer.name !== null) {
-        postCreateNewPerformers([{ obj: performer, id: performerID }]);
-      }
-
-      Toast.success(
-        <span>
-          Created performer: <b>{toCreate.name}</b>
-        </span>
-      );
-
-      return performerID;
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  async function linkPerformer(
-    performer: GQL.ScrapedPerformer,
-    performerID: string
-  ) {
-    if (
-      !performer.remote_site_id ||
-      !currentSource?.sourceInput.stash_box_endpoint
-    )
-      return;
-
-    try {
-      const queryResult = await queryFindPerformer(performerID);
-      if (queryResult.data.findPerformer) {
-        const target = queryResult.data.findPerformer;
-
-        const stashIDs: GQL.StashIdInput[] = target.stash_ids.map((e) => {
+        setSearchResults((current) => {
+          const newResult = [...current[sceneID].results!];
+          newResult[index] = { ...newResult[index], resolved: true };
           return {
-            endpoint: e.endpoint,
-            stash_id: e.stash_id,
+            ...current,
+            [sceneID]: { ...current[sceneID], results: newResult },
           };
         });
+      }
+    },
+    [Toast, currentSource, searchResults]
+  );
 
-        stashIDs.push({
-          stash_id: performer.remote_site_id,
-          endpoint: currentSource?.sourceInput.stash_box_endpoint,
-        });
-
-        await updatePerformer({
+  const saveScene = useCallback(
+    async (
+      sceneCreateInput: GQL.SceneUpdateInput,
+      queueFingerprint: boolean
+    ) => {
+      try {
+        await updateScene({
           variables: {
             input: {
-              id: performerID,
-              stash_ids: stashIDs,
+              ...sceneCreateInput,
+              // only set organized if it is enabled in the config
+              organized: config?.markSceneAsOrganizedOnSave || undefined,
             },
           },
         });
 
-        const newSearchResults = mapResults((r) => {
-          if (!r.performers) {
+        if (queueFingerprint) {
+          queueFingerprintSubmission(sceneCreateInput.id);
+        }
+        clearSearchResults(sceneCreateInput.id);
+      } catch (err) {
+        Toast.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      queueFingerprintSubmission,
+      clearSearchResults,
+      Toast,
+      config?.markSceneAsOrganizedOnSave,
+      updateScene,
+    ]
+  );
+
+  const postCreateNewTags = useCallback(
+    (tags: CreatedObject<GQL.ScrapedTag>[]) => {
+      setSearchResults((current) => {
+        return mapResults(current, (r) => {
+          if (!r.tags) {
             return r;
           }
 
           return {
             ...r,
-            performers: r.performers.map((p) => {
-              if (p.remote_site_id === performer.remote_site_id) {
+            tags: r.tags.map((p) => {
+              const tag = tags.find((e) => e.obj.name === p.name);
+              if (tag) {
                 return {
                   ...p,
-                  stored_id: performerID,
+                  stored_id: tag.id,
                 };
               }
 
@@ -811,177 +708,345 @@ export const TaggerContext: React.FC = ({ children }) => {
             }),
           };
         });
-
-        setSearchResults(newSearchResults);
-
-        Toast.success(<span>Added stash-id to performer</span>);
-      }
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  function postCreateNewStudios(studios: CreatedObject<GQL.ScrapedStudio>[]) {
-    const newSearchResults = mapResults((r) => {
-      if (!r.studio) {
-        return r;
-      }
-
-      const studio = studios.find((e) => e.obj.name === r.studio!.name);
-
-      return {
-        ...r,
-        studio: studio
-          ? {
-              ...r.studio,
-              stored_id: studio.id,
-            }
-          : r.studio,
-      };
-    });
-
-    setSearchResults(newSearchResults);
-  }
-
-  async function createNewStudio(
-    studio: GQL.ScrapedStudio,
-    toCreate: GQL.StudioCreateInput,
-    remap?: boolean
-  ) {
-    try {
-      const result = await createStudio({
-        variables: {
-          input: toCreate,
-        },
       });
+    },
+    []
+  );
 
-      const studioID = result.data?.studioCreate?.id;
-      if (studioID === undefined) return undefined;
-
-      if (remap && studio.name !== undefined && studio.name !== null) {
-        postCreateNewStudios([{ obj: studio, id: studioID }]);
-      }
-
-      Toast.success(
-        <span>
-          Created studio: <b>{toCreate.name}</b>
-        </span>
-      );
-
-      return studioID;
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  async function updateExistingStudio(input: GQL.StudioUpdateInput) {
-    try {
-      const inputCopy = { ...input };
-      inputCopy.stash_ids = await mergeStudioStashIDs(
-        input.id,
-        input.stash_ids ?? []
-      );
-      const result = await updateStudio({
-        variables: {
-          input: input,
-        },
-      });
-
-      const studioID = result.data?.studioUpdate?.id;
-
-      const stashID = input.stash_ids?.find((e) => {
-        return e.endpoint === currentSource?.sourceInput.stash_box_endpoint;
-      })?.stash_id;
-
-      if (stashID) {
-        const newSearchResults = mapResults((r) => {
-          if (!r.studio) {
-            return r;
-          }
-
-          return {
-            ...r,
-            studio:
-              r.remote_site_id === stashID
-                ? {
-                    ...r.studio,
-                    stored_id: studioID,
-                  }
-                : r.studio,
-          };
-        });
-
-        setSearchResults(newSearchResults);
-      }
-
-      Toast.success(
-        <span>
-          Created studio: <b>{input.name}</b>
-        </span>
-      );
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
-
-  async function linkStudio(studio: GQL.ScrapedStudio, studioID: string) {
-    if (
-      !studio.remote_site_id ||
-      !currentSource?.sourceInput.stash_box_endpoint
-    )
-      return;
-
-    try {
-      const queryResult = await queryFindStudio(studioID);
-      if (queryResult.data.findStudio) {
-        const target = queryResult.data.findStudio;
-
-        const stashIDs: GQL.StashIdInput[] = target.stash_ids.map((e) => {
-          return {
-            endpoint: e.endpoint,
-            stash_id: e.stash_id,
-          };
-        });
-
-        stashIDs.push({
-          stash_id: studio.remote_site_id,
-          endpoint: currentSource?.sourceInput.stash_box_endpoint,
-        });
-
-        await updateStudio({
+  const createNewTag = useCallback(
+    async (
+      tag: GQL.ScrapedTag,
+      toCreate: GQL.TagCreateInput,
+      remap?: boolean
+    ) => {
+      try {
+        const result = await createTag({
           variables: {
-            input: {
-              id: studioID,
-              stash_ids: stashIDs,
-            },
+            input: toCreate,
           },
         });
 
-        const newSearchResults = mapResults((r) => {
-          if (!r.studio) {
+        const tagID = result.data?.tagCreate?.id;
+        if (tagID === undefined) return undefined;
+
+        if (remap && tag.name !== undefined && tag.name !== null) {
+          postCreateNewTags([{ obj: tag, id: tagID }]);
+        }
+
+        Toast.success(
+          <span>
+            Created tag: <b>{toCreate.name}</b>
+          </span>
+        );
+
+        return tagID;
+      } catch (e) {
+        Toast.error(e);
+      }
+    },
+    [Toast, createTag, postCreateNewTags]
+  );
+
+  const postCreateNewPerformers = useCallback(
+    (performers: CreatedObject<GQL.ScrapedPerformer>[]) => {
+      setSearchResults((current) => {
+        return mapResults(current, (r) => {
+          if (!r.performers) {
             return r;
           }
 
           return {
             ...r,
-            studio:
-              r.studio.remote_site_id === studio.remote_site_id
-                ? {
-                    ...r.studio,
-                    stored_id: studioID,
-                  }
-                : r.studio,
+            performers: r.performers.map((p) => {
+              const performer = performers.find((e) => e.obj.name === p.name);
+              if (performer) {
+                return {
+                  ...p,
+                  stored_id: performer.id,
+                };
+              }
+
+              return p;
+            }),
           };
         });
+      });
+    },
+    []
+  );
 
-        setSearchResults(newSearchResults);
+  const createNewPerformer = useCallback(
+    async (
+      performer: GQL.ScrapedPerformer,
+      toCreate: GQL.PerformerCreateInput,
+      remap: boolean = true
+    ) => {
+      try {
+        const result = await createPerformer({
+          variables: {
+            input: toCreate,
+          },
+        });
 
-        Toast.success(<span>Added stash-id to studio</span>);
+        const performerID = result.data?.performerCreate?.id;
+        if (performerID === undefined) return undefined;
+
+        if (remap && performer.name !== undefined && performer.name !== null) {
+          postCreateNewPerformers([{ obj: performer, id: performerID }]);
+        }
+
+        Toast.success(
+          <span>
+            Created performer: <b>{toCreate.name}</b>
+          </span>
+        );
+
+        return performerID;
+      } catch (e) {
+        Toast.error(e);
       }
-    } catch (e) {
-      Toast.error(e);
-    }
-  }
+    },
+    [Toast, createPerformer, postCreateNewPerformers]
+  );
+
+  const linkPerformer = useCallback(
+    async (performer: GQL.ScrapedPerformer, performerID: string) => {
+      if (
+        !performer.remote_site_id ||
+        !currentSource?.sourceInput.stash_box_endpoint
+      )
+        return;
+
+      try {
+        const queryResult = await queryFindPerformer(performerID);
+        if (queryResult.data.findPerformer) {
+          const target = queryResult.data.findPerformer;
+
+          const stashIDs: GQL.StashIdInput[] = target.stash_ids.map((e) => {
+            return {
+              endpoint: e.endpoint,
+              stash_id: e.stash_id,
+            };
+          });
+
+          stashIDs.push({
+            stash_id: performer.remote_site_id,
+            endpoint: currentSource?.sourceInput.stash_box_endpoint,
+          });
+
+          await updatePerformer({
+            variables: {
+              input: {
+                id: performerID,
+                stash_ids: stashIDs,
+              },
+            },
+          });
+
+          setSearchResults((current) => {
+            return mapResults(current, (r) => {
+              if (!r.performers) {
+                return r;
+              }
+
+              return {
+                ...r,
+                performers: r.performers.map((p) => {
+                  if (p.remote_site_id === performer.remote_site_id) {
+                    return {
+                      ...p,
+                      stored_id: performerID,
+                    };
+                  }
+
+                  return p;
+                }),
+              };
+            });
+          });
+
+          Toast.success(<span>Added stash-id to performer</span>);
+        }
+      } catch (e) {
+        Toast.error(e);
+      }
+    },
+    [Toast, currentSource?.sourceInput.stash_box_endpoint, updatePerformer]
+  );
+
+  const postCreateNewStudios = useCallback(
+    (studios: CreatedObject<GQL.ScrapedStudio>[]) => {
+      setSearchResults((current) => {
+        return mapResults(current, (r) => {
+          if (!r.studio) {
+            return r;
+          }
+
+          const studio = studios.find((e) => e.obj.name === r.studio!.name);
+
+          return {
+            ...r,
+            studio: studio
+              ? {
+                  ...r.studio,
+                  stored_id: studio.id,
+                }
+              : r.studio,
+          };
+        });
+      });
+    },
+    []
+  );
+
+  const createNewStudio = useCallback(
+    async (
+      studio: GQL.ScrapedStudio,
+      toCreate: GQL.StudioCreateInput,
+      remap?: boolean
+    ) => {
+      try {
+        const result = await createStudio({
+          variables: {
+            input: toCreate,
+          },
+        });
+
+        const studioID = result.data?.studioCreate?.id;
+        if (studioID === undefined) return undefined;
+
+        if (remap && studio.name !== undefined && studio.name !== null) {
+          postCreateNewStudios([{ obj: studio, id: studioID }]);
+        }
+
+        Toast.success(
+          <span>
+            Created studio: <b>{toCreate.name}</b>
+          </span>
+        );
+
+        return studioID;
+      } catch (e) {
+        Toast.error(e);
+      }
+    },
+    [Toast, createStudio, postCreateNewStudios]
+  );
+
+  const updateExistingStudio = useCallback(
+    async (input: GQL.StudioUpdateInput) => {
+      try {
+        const inputCopy = { ...input };
+        inputCopy.stash_ids = await mergeStudioStashIDs(
+          input.id,
+          input.stash_ids ?? []
+        );
+        const result = await updateStudio({
+          variables: {
+            input: input,
+          },
+        });
+
+        const studioID = result.data?.studioUpdate?.id;
+
+        const stashID = input.stash_ids?.find((e) => {
+          return e.endpoint === currentSource?.sourceInput.stash_box_endpoint;
+        })?.stash_id;
+
+        if (stashID) {
+          setSearchResults((current) => {
+            return mapResults(current, (r) => {
+              if (!r.studio) {
+                return r;
+              }
+
+              return {
+                ...r,
+                studio:
+                  r.remote_site_id === stashID
+                    ? {
+                        ...r.studio,
+                        stored_id: studioID,
+                      }
+                    : r.studio,
+              };
+            });
+          });
+        }
+
+        Toast.success(
+          <span>
+            Created studio: <b>{input.name}</b>
+          </span>
+        );
+      } catch (e) {
+        Toast.error(e);
+      }
+    },
+    [Toast, currentSource?.sourceInput.stash_box_endpoint, updateStudio]
+  );
+
+  const linkStudio = useCallback(
+    async (studio: GQL.ScrapedStudio, studioID: string) => {
+      if (
+        !studio.remote_site_id ||
+        !currentSource?.sourceInput.stash_box_endpoint
+      )
+        return;
+
+      try {
+        const queryResult = await queryFindStudio(studioID);
+        if (queryResult.data.findStudio) {
+          const target = queryResult.data.findStudio;
+
+          const stashIDs: GQL.StashIdInput[] = target.stash_ids.map((e) => {
+            return {
+              endpoint: e.endpoint,
+              stash_id: e.stash_id,
+            };
+          });
+
+          stashIDs.push({
+            stash_id: studio.remote_site_id,
+            endpoint: currentSource?.sourceInput.stash_box_endpoint,
+          });
+
+          await updateStudio({
+            variables: {
+              input: {
+                id: studioID,
+                stash_ids: stashIDs,
+              },
+            },
+          });
+
+          setSearchResults((current) => {
+            return mapResults(current, (r) => {
+              if (!r.studio) {
+                return r;
+              }
+
+              return {
+                ...r,
+                studio:
+                  r.studio.remote_site_id === studio.remote_site_id
+                    ? {
+                        ...r.studio,
+                        stored_id: studioID,
+                      }
+                    : r.studio,
+              };
+            });
+          });
+
+          Toast.success(<span>Added stash-id to studio</span>);
+        }
+      } catch (e) {
+        Toast.error(e);
+      }
+    },
+    [Toast, currentSource?.sourceInput.stash_box_endpoint, updateStudio]
+  );
 
   return (
     <TaggerStateContext.Provider

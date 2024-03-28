@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import * as GQL from "src/core/generated-graphql";
 import { SceneQueue } from "src/models/sceneQueue";
 import { Button, Form } from "react-bootstrap";
@@ -55,7 +55,47 @@ const Scene: React.FC<{
     }
   }, [intl, searchResult]);
 
+  const sceneQuery = useMemo(
+    () =>
+      currentSource?.supportSceneQuery
+        ? async (v: string) => {
+            await doSceneQuery(scene, v);
+          }
+        : undefined,
+    [currentSource?.supportSceneQuery, doSceneQuery, scene]
+  );
+
+  const scrapeSceneFragment = useMemo(
+    () =>
+      currentSource?.supportSceneFragment
+        ? async () => {
+            await doSceneFragmentScrape(scene);
+          }
+        : undefined,
+    [currentSource?.supportSceneFragment, doSceneFragmentScrape, scene]
+  );
+
   const selected = selectedResults[scene.id];
+
+  const setSelected = useCallback(
+    (i: number) => {
+      selectResult(scene.id, i);
+    },
+    [scene.id, selectResult]
+  );
+
+  const searchResults = useMemo(() => {
+    if (searchResult && searchResult.results?.length) {
+      return (
+        <SceneSearchResults
+          scenes={searchResult.results}
+          target={scene}
+          selected={selected}
+          setSelected={setSelected}
+        />
+      );
+    }
+  }, [searchResult, selected, scene, setSelected]);
 
   return (
     <TaggerScene
@@ -63,30 +103,11 @@ const Scene: React.FC<{
       scene={scene}
       url={sceneLink}
       errorMessage={errorMessage}
-      doSceneQuery={
-        currentSource?.supportSceneQuery
-          ? async (v) => {
-              await doSceneQuery(scene, v);
-            }
-          : undefined
-      }
-      scrapeSceneFragment={
-        currentSource?.supportSceneFragment
-          ? async () => {
-              await doSceneFragmentScrape(scene);
-            }
-          : undefined
-      }
+      doSceneQuery={sceneQuery}
+      scrapeSceneFragment={scrapeSceneFragment}
       showLightboxImage={showLightboxImage}
     >
-      {searchResult && searchResult.results?.length ? (
-        <SceneSearchResults
-          scenes={searchResult.results}
-          target={scene}
-          selected={selected}
-          setSelected={(i) => selectResult(scene.id, i)}
-        />
-      ) : undefined}
+      {searchResults}
     </TaggerScene>
   );
 };
@@ -165,10 +186,14 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
   const showLightbox = useLightbox({
     images: lightboxImage,
   });
-  function showLightboxImage(imagePath: string) {
-    setSpriteImage(imagePath);
-    showLightbox();
-  }
+
+  const showLightboxImage = useCallback(
+    (imagePath: string) => {
+      setSpriteImage(imagePath);
+      showLightbox();
+    },
+    [showLightbox]
+  );
 
   const filteredScenes = useMemo(
     () =>
@@ -278,6 +303,11 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
     );
   }
 
+  const hideMissingObjectsPanel = useCallback(
+    () => setShowMissingObjects(false),
+    []
+  );
+
   return (
     <SceneTaggerModals>
       <div className="tagger-container mx-md-auto">
@@ -295,7 +325,7 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
           <Config show={showConfig} />
           <MissingObjectsPanel
             show={showMissingObjects}
-            onHide={() => setShowMissingObjects(false)}
+            onHide={hideMissingObjectsPanel}
           />
         </div>
         <div>

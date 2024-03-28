@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import * as GQL from "src/core/generated-graphql";
 
 import StudioModal from "./StudioModal";
@@ -67,14 +67,17 @@ export const SceneTaggerModals: React.FC = ({ children }) => {
     setPerformerCallback(undefined);
   }
 
-  function createPerformerModal(
-    performer: GQL.ScrapedPerformerDataFragment,
-    callback: PerformerModalCallback
-  ) {
-    setPerformerToCreate(performer);
-    // can't set the function directly - needs to be via a wrapping function
-    setPerformerCallback(() => callback);
-  }
+  const createPerformerModal = useCallback(
+    (
+      performer: GQL.ScrapedPerformerDataFragment,
+      callback: PerformerModalCallback
+    ) => {
+      setPerformerToCreate(performer);
+      // can't set the function directly - needs to be via a wrapping function
+      setPerformerCallback(() => callback);
+    },
+    []
+  );
 
   function handleStudioSave(
     toCreate: GQL.StudioCreateInput,
@@ -97,14 +100,17 @@ export const SceneTaggerModals: React.FC = ({ children }) => {
     setStudioCallback(undefined);
   }
 
-  function createStudioModal(
-    studio: GQL.ScrapedSceneStudioDataFragment,
-    callback: StudioModalCallback
-  ) {
-    setStudioToCreate(studio);
-    // can't set the function directly - needs to be via a wrapping function
-    setStudioCallback(() => callback);
-  }
+  const createStudioModal = useCallback(
+    (
+      studio: GQL.ScrapedSceneStudioDataFragment,
+      callback: StudioModalCallback
+    ) => {
+      setStudioToCreate(studio);
+      // can't set the function directly - needs to be via a wrapping function
+      setStudioCallback(() => callback);
+    },
+    []
+  );
 
   const endpoint = currentSource?.sourceInput.stash_box_endpoint ?? undefined;
 

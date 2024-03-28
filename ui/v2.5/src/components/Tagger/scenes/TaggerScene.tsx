@@ -125,19 +125,19 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
   const height = file?.height ? file.height : 0;
   const isPortrait = height > width;
 
-  async function query() {
-    if (!doSceneQuery) return;
+  const queryForm = useMemo(() => {
+    if (!doSceneQuery) return null;
 
-    try {
-      setQueryLoading(true);
-      await doSceneQuery(queryString || defaultQueryString);
-    } finally {
-      setQueryLoading(false);
+    async function query() {
+      if (!doSceneQuery) return;
+
+      try {
+        setQueryLoading(true);
+        await doSceneQuery(queryString || defaultQueryString);
+      } finally {
+        setQueryLoading(false);
+      }
     }
-  }
-
-  function renderQueryForm() {
-    if (!doSceneQuery) return;
 
     return (
       <InputGroup>
@@ -168,11 +168,11 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
         </InputGroup.Append>
       </InputGroup>
     );
-  }
+  }, [doSceneQuery, queryString, defaultQueryString, loading, queryLoading]);
 
-  function maybeRenderStashLinks() {
+  const stashLinks = useMemo(() => {
     if (scene.stash_ids.length > 0) {
-      const stashLinks = scene.stash_ids.map((stashID) => {
+      const links = scene.stash_ids.map((stashID) => {
         const base = stashID.endpoint.match(/https?:\/\/.*?\//)?.[0];
         const link = base ? (
           <ExternalLink
@@ -188,16 +188,16 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
 
         return link;
       });
-      return <div className="mt-2 sub-content text-right">{stashLinks}</div>;
+      return <div className="mt-2 sub-content text-right">{links}</div>;
     }
-  }
+  }, [scene.stash_ids]);
 
-  function onSpriteClick(ev: React.MouseEvent<HTMLElement>) {
-    ev.preventDefault();
-    showLightboxImage(scene.paths.sprite ?? "");
-  }
+  const spriteIcon = useMemo(() => {
+    function onSpriteClick(ev: React.MouseEvent<HTMLElement>) {
+      ev.preventDefault();
+      showLightboxImage(scene.paths.sprite ?? "");
+    }
 
-  function maybeRenderSpriteIcon() {
     // If a scene doesn't have any files, or doesn't have a sprite generated, the
     // path will be http://localhost:9999/scene/_sprite.jpg
     if (scene.files.length > 0) {
@@ -211,7 +211,7 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
         </Button>
       );
     }
-  }
+  }, [scene.files.length, scene.paths.sprite, showLightboxImage]);
 
   return (
     <div key={scene.id} className="mt-3 search-item">
@@ -225,7 +225,7 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
                 isPortrait={isPortrait}
                 soundActive={false}
               />
-              {maybeRenderSpriteIcon()}
+              {spriteIcon}
             </Link>
           </div>
           <Link to={url} className="scene-link overflow-hidden">
@@ -234,7 +234,7 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
         </div>
         <div className="col-md-6 my-1">
           <div>
-            {renderQueryForm()}
+            {queryForm}
             {scrapeSceneFragment ? (
               <div className="mt-2 text-right">
                 <OperationButton
@@ -251,7 +251,7 @@ export const TaggerScene: React.FC<PropsWithChildren<ITaggerScene>> = ({
           {errorMessage ? (
             <div className="text-danger font-weight-bold">{errorMessage}</div>
           ) : undefined}
-          {maybeRenderStashLinks()}
+          {stashLinks}
         </div>
         <TaggerSceneDetails scene={scene} />
       </div>
