@@ -3,9 +3,11 @@ import * as GQL from "src/core/generated-graphql";
 import { IState, useLightboxContext } from "./context";
 import { IChapter } from "./types";
 
+const defaultChapters: IChapter[] = [];
+
 export const useLightbox = (
   state: Partial<Omit<IState, "isVisible">>,
-  chapters: IChapter[] = []
+  chapters: IChapter[] = defaultChapters
 ) => {
   const { setLightboxState } = useLightboxContext();
 
@@ -46,6 +48,7 @@ export const useLightbox = (
     },
     [setLightboxState, state.page, state.pages, state.pageSize, chapters]
   );
+
   return show;
 };
 
