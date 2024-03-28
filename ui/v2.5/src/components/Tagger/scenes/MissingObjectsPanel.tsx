@@ -1,4 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Button,
   Card,
@@ -346,6 +351,10 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
     ),
     [stashboxStudioPrefix]
   );
+
+  if (!performers.length && !studios.length && !tags.length) {
+    return null;
+  }
 
   return (
     <Collapse in={show} mountOnEnter unmountOnExit>
