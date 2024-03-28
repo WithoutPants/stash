@@ -7,7 +7,12 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { Icon } from "src/components/Shared/Icon";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { OperationButton } from "src/components/Shared/OperationButton";
-import { ISceneQueryResult, useTagger } from "../context";
+import {
+  ISceneQueryResult,
+  TaggerSelectContext,
+  useTagger,
+  useTaggerSelect,
+} from "../context";
 import Config from "./Config";
 import { TaggerScene } from "./TaggerScene";
 import { SceneTaggerModals } from "./sceneTaggerModals";
@@ -25,14 +30,11 @@ const Scene: React.FC<{
   showLightboxImage: (imagePath: string) => void;
 }> = ({ scene, searchResult, queue, index, showLightboxImage }) => {
   const intl = useIntl();
-  const {
-    currentSource,
-    doSceneQuery,
-    doSceneFragmentScrape,
-    loading,
-    selectedResults,
-    selectResult,
-  } = useTagger();
+  const { currentSource, doSceneQuery, doSceneFragmentScrape, loading } =
+    useTagger();
+
+  const { selectResult, selectedResults } = useTaggerSelect();
+
   const { configuration } = React.useContext(ConfigurationContext);
 
   const cont = configuration?.interface.continuePlaylistDefault ?? false;
@@ -130,7 +132,6 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
     multiError,
     submitFingerprints,
     pendingFingerprints,
-    missingObjects,
   } = useTagger();
   const [showConfig, setShowConfig] = useState(false);
   const [showMissingObjects, setShowMissingObjects] = useState(false);
@@ -226,10 +227,11 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
     }
   }
 
-  function maybeRenderCreateMissingObjectsButton() {
+  function MissingObjectsButton() {
+    const { missingObjects } = useTaggerSelect();
     const { performers, studios, tags } = missingObjects;
     if (!performers.length && !studios.length && !tags.length) {
-      return;
+      return null;
     }
 
     return (
@@ -309,38 +311,40 @@ export const Tagger: React.FC<ITaggerProps> = ({ scenes, queue }) => {
   );
 
   return (
-    <SceneTaggerModals>
-      <div className="tagger-container mx-md-auto">
-        <div className="tagger-container-header">
-          <div className="d-flex justify-content-between align-items-center flex-wrap">
-            <div className="w-auto">{renderSourceSelector()}</div>
-            <div className="d-flex">
-              {maybeRenderShowHideUnmatchedButton()}
-              {maybeRenderCreateMissingObjectsButton()}
-              {maybeRenderSubmitFingerprintsButton()}
-              {renderFragmentScrapeButton()}
-              {renderConfigButton()}
+    <TaggerSelectContext scenes={scenes}>
+      <SceneTaggerModals>
+        <div className="tagger-container mx-md-auto">
+          <div className="tagger-container-header">
+            <div className="d-flex justify-content-between align-items-center flex-wrap">
+              <div className="w-auto">{renderSourceSelector()}</div>
+              <div className="d-flex">
+                {maybeRenderShowHideUnmatchedButton()}
+                <MissingObjectsButton />
+                {maybeRenderSubmitFingerprintsButton()}
+                {renderFragmentScrapeButton()}
+                {renderConfigButton()}
+              </div>
             </div>
-          </div>
-          <Config show={showConfig} />
-          <MissingObjectsPanel
-            show={showMissingObjects}
-            onHide={hideMissingObjectsPanel}
-          />
-        </div>
-        <div>
-          {filteredScenes.map((s, i) => (
-            <Scene
-              key={s.id}
-              scene={s}
-              searchResult={searchResults[s.id]}
-              index={i}
-              showLightboxImage={showLightboxImage}
-              queue={queue}
+            <Config show={showConfig} />
+            <MissingObjectsPanel
+              show={showMissingObjects}
+              onHide={hideMissingObjectsPanel}
             />
-          ))}
+          </div>
+          <div>
+            {filteredScenes.map((s, i) => (
+              <Scene
+                key={s.id}
+                scene={s}
+                searchResult={searchResults[s.id]}
+                index={i}
+                showLightboxImage={showLightboxImage}
+                queue={queue}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-    </SceneTaggerModals>
+      </SceneTaggerModals>
+    </TaggerSelectContext>
   );
 };

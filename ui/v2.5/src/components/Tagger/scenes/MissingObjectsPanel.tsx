@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -16,7 +11,7 @@ import {
   Table,
 } from "react-bootstrap";
 import { FormattedMessage } from "react-intl";
-import { CreatedObject, useTagger } from "../context";
+import { CreatedObject, useTagger, useTaggerSelect } from "../context";
 import {
   Maybe,
   ScrapedPerformer,
@@ -193,7 +188,6 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
   const stopping = useRef(false);
 
   const {
-    missingObjects,
     currentSource,
     createNewPerformer,
     postCreateNewPerformers,
@@ -202,6 +196,8 @@ const MissingObjectsPanel: React.FC<IMissingObjectsPanelProps> = ({
     createNewTag,
     postCreateNewTags,
   } = useTagger();
+
+  const { missingObjects } = useTaggerSelect();
 
   const { performers, studios, tags } = missingObjects;
 

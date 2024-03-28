@@ -34,12 +34,6 @@ import { errorToString } from "src/utils";
 import { mergeStudioStashIDs } from "./utils";
 import { compareScenesForSort } from "./scenes/utils";
 
-export interface IMissingObjects {
-  performers: GQL.ScrapedPerformer[];
-  studios: GQL.ScrapedStudio[];
-  tags: GQL.ScrapedTag[];
-}
-
 interface IHasName {
   name?: GQL.Maybe<string> | undefined;
 }
@@ -55,9 +49,6 @@ export interface ITaggerContextState {
   sources: ITaggerSource[];
   currentSource?: ITaggerSource;
   searchResults: Record<string, ISceneQueryResult>;
-  selectedResults: Record<string, number>;
-  selectResult: (sceneID: string, index: number) => void;
-  missingObjects: IMissingObjects;
   setCurrentSource: (src?: ITaggerSource) => void;
   doSceneQuery: (
     scene: GQL.SlimSceneDataFragment,
@@ -114,7 +105,7 @@ export const useTagger = () => {
   const context = React.useContext(TaggerStateContext);
 
   if (context === null) {
-    throw new Error("useTagger must be used within a SettingsContext");
+    throw new Error("useTagger must be used within a TaggerContext");
   }
 
   return context;
@@ -161,9 +152,6 @@ export const TaggerContext: React.FC = ({ children }) => {
   const [multiError, setMultiError] = useState<string | undefined>();
   const [searchResults, setSearchResults] = useState<
     Record<string, ISceneQueryResult>
-  >({});
-  const [selectedResults, setSelectedResults] = useState<
-    Record<string, number>
   >({});
 
   const stopping = useRef(false);
@@ -231,97 +219,6 @@ export const TaggerContext: React.FC = ({ children }) => {
   useEffect(() => {
     setSearchResults({});
   }, [currentSource]);
-
-  useEffect(() => {
-    setSelectedResults((current) => {
-      const newSelectedResults = { ...current };
-
-      // #3198 - if the selected result is no longer in the list, reset it
-      Object.keys(current).forEach((k) => {
-        if ((searchResults[k]?.results?.length ?? 0) <= current[k]) {
-          delete newSelectedResults[k];
-        }
-      });
-
-      Object.keys(searchResults).forEach((k) => {
-        if (
-          newSelectedResults[k] === undefined &&
-          searchResults[k]?.results?.length
-        ) {
-          newSelectedResults[k] = 0;
-        }
-      });
-
-      return newSelectedResults;
-    });
-  }, [searchResults]);
-
-  const selectResult = useCallback((sceneID: string, index: number) => {
-    setSelectedResults((current) => {
-      return { ...current, [sceneID]: index };
-    });
-  }, []);
-
-  const missingObjects = useMemo(() => {
-    function byName(name: string) {
-      return (v: { name?: GQL.Maybe<string> }) => v.name === name;
-    }
-
-    function nameCompare(
-      a: { name?: GQL.Maybe<string> },
-      b: { name?: GQL.Maybe<string> }
-    ) {
-      return (a.name ?? "").localeCompare(b.name ?? "");
-    }
-
-    const performers: GQL.ScrapedPerformer[] = [];
-    const studios: GQL.ScrapedStudio[] = [];
-    const tags: GQL.ScrapedTag[] = [];
-
-    Object.keys(selectedResults).forEach((result) => {
-      const scene = searchResults[result]?.results?.[selectedResults[result]];
-      if (!scene) return;
-
-      scene.performers?.forEach((performer) => {
-        if (!config?.showMales && performer.gender === GQL.GenderEnum.Male) {
-          return;
-        }
-
-        if (
-          !performer.stored_id &&
-          performer.name &&
-          !performers.some(byName(performer.name))
-        ) {
-          performers.push(performer);
-        }
-      });
-
-      if (scene.studio && !scene.studio.stored_id) {
-        const { name } = scene.studio;
-        if (name && !studios.some(byName(name))) {
-          studios.push(scene.studio);
-        }
-      }
-
-      if (config?.setTags) {
-        scene.tags?.forEach((tag) => {
-          if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
-            tags.push(tag);
-          }
-        });
-      }
-    });
-
-    performers.sort(nameCompare);
-    studios.sort(nameCompare);
-    tags.sort(nameCompare);
-
-    return {
-      performers,
-      studios,
-      tags,
-    };
-  }, [selectedResults, searchResults, config?.showMales, config?.setTags]);
 
   function getPendingFingerprints() {
     const endpoint = currentSource?.sourceInput.stash_box_endpoint;
@@ -1059,9 +956,6 @@ export const TaggerContext: React.FC = ({ children }) => {
         sources,
         currentSource,
         searchResults,
-        selectedResults,
-        selectResult,
-        missingObjects,
         setCurrentSource: (src) => {
           setCurrentSource(src);
         },
@@ -1086,5 +980,148 @@ export const TaggerContext: React.FC = ({ children }) => {
     >
       {children}
     </TaggerStateContext.Provider>
+  );
+};
+
+export interface IMissingObjects {
+  performers: GQL.ScrapedPerformer[];
+  studios: GQL.ScrapedStudio[];
+  tags: GQL.ScrapedTag[];
+}
+
+export interface ITaggerSelectContextState {
+  selectedResults: Record<string, number>;
+  selectResult: (sceneID: string, index: number) => void;
+  missingObjects: IMissingObjects;
+}
+
+export const TaggerSelectStateContext =
+  React.createContext<ITaggerSelectContextState | null>(null);
+
+export const useTaggerSelect = () => {
+  const context = React.useContext(TaggerSelectStateContext);
+
+  if (context === null) {
+    throw new Error("useTagger must be used within a TaggerSelectContext");
+  }
+
+  return context;
+};
+
+export const TaggerSelectContext: React.FC<{
+  scenes: GQL.SlimSceneDataFragment[];
+}> = ({ scenes, children }) => {
+  const [selectedResults, setSelectedResults] = useState<
+    Record<string, number>
+  >({});
+
+  const { searchResults, config } = useTagger();
+
+  useEffect(() => {
+    setSelectedResults((current) => {
+      const newSelectedResults = { ...current };
+
+      // #3198 - if the selected result is no longer in the list, reset it
+      // also filter out results that are not in the scenes list
+      Object.keys(current).forEach((k) => {
+        if (
+          !scenes.find((s) => s.id === k) ||
+          (searchResults[k]?.results?.length ?? 0) <= current[k]
+        ) {
+          delete newSelectedResults[k];
+        }
+      });
+
+      scenes.forEach((s) => {
+        const k = s.id;
+        if (
+          newSelectedResults[k] === undefined &&
+          searchResults[k]?.results?.length
+        ) {
+          newSelectedResults[k] = 0;
+        }
+      });
+
+      return newSelectedResults;
+    });
+  }, [scenes, searchResults]);
+
+  const selectResult = useCallback((sceneID: string, index: number) => {
+    setSelectedResults((current) => {
+      return { ...current, [sceneID]: index };
+    });
+  }, []);
+
+  const missingObjects = useMemo(() => {
+    function byName(name: string) {
+      return (v: { name?: GQL.Maybe<string> }) => v.name === name;
+    }
+
+    function nameCompare(
+      a: { name?: GQL.Maybe<string> },
+      b: { name?: GQL.Maybe<string> }
+    ) {
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    }
+
+    const performers: GQL.ScrapedPerformer[] = [];
+    const studios: GQL.ScrapedStudio[] = [];
+    const tags: GQL.ScrapedTag[] = [];
+
+    Object.keys(selectedResults).forEach((result) => {
+      const scene = searchResults[result]?.results?.[selectedResults[result]];
+      if (!scene) return;
+
+      scene.performers?.forEach((performer) => {
+        if (!config?.showMales && performer.gender === GQL.GenderEnum.Male) {
+          return;
+        }
+
+        if (
+          !performer.stored_id &&
+          performer.name &&
+          !performers.some(byName(performer.name))
+        ) {
+          performers.push(performer);
+        }
+      });
+
+      if (scene.studio && !scene.studio.stored_id) {
+        const { name } = scene.studio;
+        if (name && !studios.some(byName(name))) {
+          studios.push(scene.studio);
+        }
+      }
+
+      if (config?.setTags) {
+        scene.tags?.forEach((tag) => {
+          if (!tag.stored_id && tag.name && !tags.some(byName(tag.name))) {
+            tags.push(tag);
+          }
+        });
+      }
+    });
+
+    performers.sort(nameCompare);
+    studios.sort(nameCompare);
+    tags.sort(nameCompare);
+
+    return {
+      performers,
+      studios,
+      tags,
+    };
+  }, [selectedResults, searchResults, config?.showMales, config?.setTags]);
+
+  return (
+    <TaggerSelectStateContext.Provider
+      value={{
+        selectedResults,
+        selectResult,
+        missingObjects,
+      }}
+    >
+      {children}
+    </TaggerSelectStateContext.Provider>
   );
 };
