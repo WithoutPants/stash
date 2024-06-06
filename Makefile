@@ -32,6 +32,9 @@ endif
 ifdef PHASHER_OUTPUT
   PHASHER_OUTPUT := -o $(PHASHER_OUTPUT)
 endif
+ifdef STREAM_SERVER_OUTPUT 
+  STREAM_SERVER_OUTPUT := -o $(STREAM_SERVER_OUTPUT)
+endif
 
 # set GO_BUILD_FLAGS environment variable to any extra build flags required
 GO_BUILD_FLAGS := $(GO_BUILD_FLAGS)
@@ -126,6 +129,10 @@ stash: build-flags
 .PHONY: phasher
 phasher: build-flags
 	go build $(PHASHER_OUTPUT) $(BUILD_FLAGS) ./cmd/phasher
+
+.PHONY: stream-server
+stream-server: build-flags
+	go build $(STREAM_SERVER_OUTPUT) $(BUILD_FLAGS) ./cmd/stash-stream-server
 
 # builds dynamically-linked debug binaries
 .PHONY: build
