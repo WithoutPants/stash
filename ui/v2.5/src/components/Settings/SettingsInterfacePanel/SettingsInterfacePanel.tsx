@@ -185,6 +185,36 @@ export const SettingsInterfacePanel: React.FC = PatchComponent(
       }
     }
 
+    const streamingServerHostPort = useMemo(() => {
+      if (!ui.streamingServer?.host) {
+        return "";
+      }
+
+      if (!ui.streamingServer.port) {
+        return ui.streamingServer.host;
+      }
+
+      return `${ui.streamingServer.host}:${ui.streamingServer.port}`;
+    }, [ui.streamingServer]);
+
+    function setStreamingServerHostPort(hostPort: string) {
+      if (!hostPort) {
+        saveUI({
+          streamingServer: { host: "", port: "" },
+        });
+        return;
+      }
+
+      const [host, port] = hostPort.split(":");
+
+      saveUI({
+        streamingServer: {
+          host,
+          port,
+        },
+      });
+    }
+
     if (error) return <h1>{error.message}</h1>;
     if (loading) return <LoadingIndicator />;
 
@@ -338,6 +368,13 @@ export const SettingsInterfacePanel: React.FC = PatchComponent(
             headingID="config.ui.scene_player.options.enable_chromecast"
             checked={ui.enableChromecast ?? undefined}
             onChange={(v) => saveUI({ enableChromecast: v })}
+          />
+          <StringSetting
+            id="streaming-server-host-port"
+            headingID="config.ui.scene_player.options.streaming_server.host_port.heading"
+            subHeadingID="config.ui.scene_player.options.streaming_server.host_port.description"
+            value={streamingServerHostPort}
+            onChange={(v) => setStreamingServerHostPort(v)}
           />
           <BooleanSetting
             id="disable-mobile-media-auto-rotate"

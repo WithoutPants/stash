@@ -45,6 +45,7 @@ import airplay from "@silvermine/videojs-airplay";
 import chromecast from "@silvermine/videojs-chromecast";
 import abLoopPlugin from "videojs-abloop";
 import ScreenUtils from "src/utils/screen";
+import { IUIConfig } from "src/core/config";
 
 // register videojs plugins
 airplay(videojs);
@@ -222,7 +223,10 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
 }) => {
   const { configuration } = useContext(ConfigurationContext);
   const interfaceConfig = configuration?.interface;
-  const uiConfig = configuration?.ui;
+  const uiConfig = configuration?.ui ?? ({} as IUIConfig);
+  const apiKey = configuration?.general.apiKey;
+  const { host: streamingServerHost, port: streamingServerPort = "9999" } =
+    uiConfig.streamingServer ?? {};
   const videoRef = useRef<HTMLDivElement>(null);
   const [_player, setPlayer] = useState<VideoJsPlayer>();
   const sceneId = useRef<string>();
@@ -585,9 +589,20 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
         })
         .map((stream) => {
           const src = new URL(stream.url);
+          let dest = new URL(src);
+
+          // only use streaming server for non-direct links
+          if (streamingServerHost && !src.pathname.endsWith("/stream")) {
+            dest.host = streamingServerHost;
+            dest.port = streamingServerPort;
+            // add apikey parameter if applicable
+            if (apiKey) {
+              dest.searchParams.set("apikey", apiKey);
+            }
+          }
 
           return {
-            src: stream.url,
+            src: dest.toString(),
             type: stream.mime_type ?? undefined,
             label: stream.label ?? undefined,
             offset: !isDirect(src),
@@ -677,6 +692,9 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
     getPlayer,
     file,
     scene,
+    apiKey,
+    streamingServerHost,
+    streamingServerPort,
     interactiveClient,
     autoplay,
     interfaceConfig?.autostartVideo,

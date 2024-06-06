@@ -100,6 +100,8 @@ export interface IUIConfig {
   defaultFilters?: DefaultFilters;
 
   taggerConfig?: ITaggerConfig;
+
+  streamingServer?: { host?: string; port?: string };
 }
 
 export function getFrontPageContent(
