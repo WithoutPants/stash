@@ -48,6 +48,7 @@ interface IURLField {
   target?: string;
   // an internal link (uses <Link to={url}>)
   internal?: boolean;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
 export const URLField: React.FC<IURLField> = ({
@@ -59,6 +60,7 @@ export const URLField: React.FC<IURLField> = ({
   truncate,
   target = "_blank",
   internal,
+  onClick,
 }) => {
   if (!value) {
     return null;
@@ -75,13 +77,13 @@ export const URLField: React.FC<IURLField> = ({
 
     if (internal) {
       return (
-        <Link to={url} target={target}>
+        <Link to={url} target={target} onClick={onClick}>
           {children}
         </Link>
       );
     } else {
       return (
-        <ExternalLink href={url} target={target}>
+        <ExternalLink href={url} target={target} onClick={onClick}>
           {children}
         </ExternalLink>
       );

@@ -40,9 +40,12 @@ const FileInfoPanel: React.FC<IFileInfoPanelProps> = (
         <TextField id="media_info.checksum" value={checksum?.value} truncate />
         <URLField
           id={id}
-          url={`file://${path}`}
-          value={`file://${path}`}
+          url={path}
+          value={path}
           truncate
+          onClick={(e) => {
+            e.preventDefault();
+          }}
         />
         {props.file && (
           <TextField id="file_mod_time">

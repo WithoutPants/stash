@@ -90,9 +90,12 @@ const FileInfoPanel: React.FC<IFileInfoPanelProps> = (
         />
         <URLField
           id="path"
-          url={`file://${props.file.path}`}
-          value={`file://${props.file.path}`}
+          url={props.file.path}
+          value={props.file.path}
           truncate
+          onClick={(e) => {
+            e.preventDefault();
+          }}
         />
         {renderFileSize()}
         <TextField id="file_mod_time">
