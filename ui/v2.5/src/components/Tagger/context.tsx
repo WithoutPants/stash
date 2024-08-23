@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   initialConfig,
   ITaggerConfig,
@@ -26,6 +26,8 @@ import { ConfigurationContext } from "src/hooks/Config";
 import { ITaggerSource, SCRAPER_PREFIX, STASH_BOX_PREFIX } from "./constants";
 import { errorToString } from "src/utils";
 import { mergeStudioStashIDs } from "./utils";
+
+type SaveSceneFn = () => Promise<void>;
 
 export interface ITaggerContextState {
   config: ITaggerConfig;
@@ -70,6 +72,7 @@ export interface ITaggerContextState {
     sceneCreateInput: GQL.SceneUpdateInput,
     queueFingerprint: boolean
   ) => Promise<void>;
+  registerSaveFn: (id: string, fn: SaveSceneFn | undefined) => void;
 }
 
 const dummyFn = () => {
@@ -100,6 +103,7 @@ export const TaggerStateContext = React.createContext<ITaggerContextState>({
   submitFingerprints: dummyFn,
   pendingFingerprints: [],
   saveScene: dummyFn,
+  registerSaveFn: () => {},
 });
 
 export type IScrapedScene = GQL.ScrapedScene & { resolved?: boolean };
@@ -123,6 +127,7 @@ export const TaggerContext: React.FC = ({ children }) => {
   const [searchResults, setSearchResults] = useState<
     Record<string, ISceneQueryResult>
   >({});
+  const [saveFns, setSaveFns] = useState<Record<string, SaveSceneFn>>({});
 
   const stopping = useRef(false);
 
@@ -189,6 +194,32 @@ export const TaggerContext: React.FC = ({ children }) => {
   useEffect(() => {
     setSearchResults({});
   }, [currentSource]);
+
+  const registerSaveFn = useCallback((id: string, fn: SaveSceneFn | undefined) => {
+    setSaveFns((current) => {
+      if (!fn) {
+        const newSaveFns = { ...current };
+        delete(newSaveFns[id]);
+        return newSaveFns;
+      }
+      
+      return {
+        ...current,
+        [id]: fn,
+      };
+    });
+  }, []);
+
+  const saveAll = useCallback(async () => {
+    // TODO - this will not run in order
+    const fns = Object.entries(saveFns).map( ([_, fn]) => {
+      return fn;
+    });
+
+    for (const fn of fns) {
+      await fn();
+    }
+  }, [saveFns]);
 
   function getPendingFingerprints() {
     const endpoint = currentSource?.sourceInput.stash_box_endpoint;
@@ -846,6 +877,7 @@ export const TaggerContext: React.FC = ({ children }) => {
         linkStudio,
         resolveScene,
         saveScene,
+        registerSaveFn,
         submitFingerprints,
         pendingFingerprints: getPendingFingerprints(),
       }}

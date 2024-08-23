@@ -235,6 +235,7 @@ const StashSearchResult: React.FC<IStashSearchResultProps> = ({
     resolveScene,
     currentSource,
     saveScene,
+    registerSaveFn,
   } = React.useContext(TaggerStateContext);
 
   const performers = useMemo(
@@ -342,7 +343,7 @@ const StashSearchResult: React.FC<IStashSearchResultProps> = ({
       [name]: value,
     });
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     const excludedFieldList = Object.keys(excludedFields).filter(
       (f) => excludedFields[f]
     );
@@ -429,7 +430,18 @@ const StashSearchResult: React.FC<IStashSearchResultProps> = ({
     }
 
     await saveScene(sceneCreateInput, includeStashID);
-  }
+  }, []);
+
+  // register the save function with the tagger context to work with the save all functionality
+  useEffect(() => {
+    if (!isActive) return;
+
+    registerSaveFn(stashScene.id, handleSave);
+
+    return () => {
+      registerSaveFn(stashScene.id, undefined);
+    };
+  }, [isActive, stashScene.id, handleSave, registerSaveFn]);
 
   function showPerformerModal(t: GQL.ScrapedPerformer) {
     createPerformerModal(t, (toCreate) => {
