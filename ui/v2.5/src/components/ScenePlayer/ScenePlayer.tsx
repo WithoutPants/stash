@@ -599,6 +599,8 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = ({
             if (apiKey) {
               dest.searchParams.set("apikey", apiKey);
             }
+
+            dest.searchParams.set("origin", src.origin);
           }
 
           return {
