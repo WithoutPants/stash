@@ -18,17 +18,15 @@ import (
 	"github.com/stashapp/stash/pkg/models"
 )
 
-var streamRE = regexp.MustCompile(`\/stream\..+`)
 var encoder *ffmpeg.FFMpeg
 var ffprobe ffmpeg.FFProbe
 var streamManager *ffmpeg.StreamManager
 
 func openLogFile(fn string) (*os.File, error) {
-	return os.OpenFile("log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	return os.OpenFile(fn, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 }
 
 type streamConfigType struct {
-	loaded                        bool
 	maxStreamingTranscodeSize     models.StreamingResolutionEnum
 	liveTranscodeInputArgs        []string
 	liveTranscodeOutputArgs       []string
@@ -49,9 +47,14 @@ func (c streamConfigType) GetTranscodeHardwareAcceleration() bool {
 }
 
 var streamConfig = streamConfigType{
-	maxStreamingTranscodeSize:     models.StreamingResolutionEnumOriginal,
-	liveTranscodeInputArgs:        nil,
-	liveTranscodeOutputArgs:       nil,
+	// TODO - this should be configurable. We could get these from the server,
+	// but that would require a call to the server to get the user's settings,
+	// and to keep them in sync (or check the settings on every request which is
+	// not ideal)
+	maxStreamingTranscodeSize: models.StreamingResolutionEnumOriginal,
+	liveTranscodeInputArgs:    nil,
+	liveTranscodeOutputArgs:   nil,
+	// TODO - add this to the config
 	transcodeHardwareAcceleration: false,
 }
 
@@ -61,6 +64,7 @@ func main() {
 		panic(err)
 	}
 
+	// TODO - logging should just use the internal/log package
 	if c.LogFile != "" {
 		f, err := openLogFile(c.LogFile)
 		if err != nil {
@@ -70,6 +74,7 @@ func main() {
 		defer f.Close()
 		log.SetOutput(f)
 	}
+
 	logger.Logger = &logger.BasicLogger{}
 
 	if err := ffmpeg.ValidateFFMpeg(c.FFmpegPath); err != nil {
@@ -99,17 +104,15 @@ func main() {
 	select {}
 }
 
+var streamRE = regexp.MustCompile(`\/stream\..+`)
+
 // Given a request send it to the appropriate url
 func handleRequestAndRedirect(c *config) http.Handler {
 	h := cors.AllowAll().Handler
 	return h(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if !streamConfig.loaded {
-			// apikey := res.Header().Get("ApiKey")
-			// TODO request the config from the server
-		}
+		// TODO - handle /version - return the version of the server
 
-		// TODO - test endpoint
-
+		// /stream handler
 		if streamRE.MatchString(req.URL.Path) {
 			localStream(c, res, req)
 			return
@@ -127,17 +130,20 @@ func localStream(c *config, res http.ResponseWriter, req *http.Request) {
 	} else if strings.HasSuffix(req.URL.Path, "/stream.webm") {
 		streamType = ffmpeg.StreamTypeWEBM
 	} else {
+		// TODO - handle other types
+
 		// TODO - this could be direct stream, which we should either not handle
 		// (and expect the UI to do this)
 		// or redirect
 		// for now, just assume mp4
 	}
 
-	req.URL.Path = streamRE.ReplaceAllString(req.URL.Path, "/stream")
-
 	query := req.URL.Query()
 
-	resolution := req.Form.Get("resolution")
+	origin := query.Get("origin")
+	query.Del("origin")
+
+	resolution := query.Get("resolution")
 	query.Del("resolution")
 
 	start := query.Get("start")
@@ -145,15 +151,14 @@ func localStream(c *config, res http.ResponseWriter, req *http.Request) {
 
 	req.URL.RawQuery = query.Encode()
 
-	remoteURL, _ := url.Parse(c.ServerURL)
+	remoteURL, _ := url.Parse(origin)
 	req.URL.Scheme = remoteURL.Scheme
-	req.URL.Host = remoteURL.Host
+	req.URL.Host = remoteURL.Host // Host includes the port
 
 	startTime, _ := strconv.ParseFloat(start, 64)
 
 	streamManager.ServeTranscode(res, req, ffmpeg.TranscodeOptions{
 		VideoFile: &models.VideoFile{
-			// TODO actually get this info
 			BaseFile: &models.BaseFile{
 				Path: req.URL.String(),
 			},

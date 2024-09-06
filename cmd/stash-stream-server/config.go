@@ -9,7 +9,6 @@ import (
 type config struct {
 	Host        string `yaml:"host"`
 	Port        int    `yaml:"port"`
-	ServerURL   string `yaml:"server_url"`
 	FFmpegPath  string `yaml:"ffmpeg_path"`
 	FFprobePath string `yaml:"ffprobe_path"`
 	LogFile     string `yaml:"log_file"`

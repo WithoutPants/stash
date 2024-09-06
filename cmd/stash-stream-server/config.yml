@@ -2,8 +2,6 @@
 host: ""
 # port for local server
 port: 9998
-# stash server
-server_url: http://192.168.1.66:9999
 # path to ffmpeg on local machine
 ffmpeg_path: D:\dev\stash_data\sfw\ffmpeg.exe
 ffprobe_path: D:\dev\stash_data\sfw\ffprobe.exe
