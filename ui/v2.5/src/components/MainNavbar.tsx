@@ -393,7 +393,7 @@ export const MainNavbar: React.FC = () => {
 
         <Navbar.Brand as="div" onClick={handleDismiss}>
           <Link to="/">
-            <Button className="minimal brand-link d-inline-block">Stash</Button>
+            <Button className="minimal brand-link d-inline-block">Treasury</Button>
           </Link>
         </Navbar.Brand>
 

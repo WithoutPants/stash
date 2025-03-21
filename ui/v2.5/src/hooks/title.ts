@@ -1,6 +1,6 @@
 import { MessageDescriptor, useIntl } from "react-intl";
 
-export const TITLE = "Stash";
+export const TITLE = "Treasury";
 export const TITLE_SEPARATOR = " | ";
 
 export function useTitleProps(...messages: (string | MessageDescriptor)[]) {

@@ -229,9 +229,9 @@
       "new_version_notice": "[NEW]",
       "release_date": "Release date:",
       "stash_discord": "Join our {url} channel",
-      "stash_home": "Stash home at {url}",
+      "stash_home": "Treasury home at {url}",
       "stash_open_collective": "Support us through {url}",
-      "stash_wiki": "Stash {url} page",
+      "stash_wiki": "Treasury {url} page",
       "version": "Version"
     },
     "advanced_mode": "Advanced Mode",
@@ -281,7 +281,7 @@
         "authentication": "Authentication",
         "clear_api_key": "Clear API key",
         "credentials": {
-          "description": "Credentials to restrict access to stash.",
+          "description": "Credentials to restrict access to treasury.",
           "heading": "Credentials"
         },
         "generate_api_key": "Generate API key",
@@ -294,10 +294,10 @@
         "maximum_session_age": "Maximum Session Age",
         "maximum_session_age_desc": "Maximum idle time before a login session is expired, in seconds. Requires restart.",
         "password": "Password",
-        "password_desc": "Password to access Stash. Leave blank to disable user authentication",
+        "password_desc": "Password to access Treasury. Leave blank to disable user authentication",
         "stash-box_integration": "Stash-box integration",
         "username": "Username",
-        "username_desc": "Username to access Stash. Leave blank to disable user authentication"
+        "username_desc": "Username to access Treasury. Leave blank to disable user authentication"
       },
       "backup_directory_path": {
         "description": "Directory location for SQLite database file backups",
@@ -410,7 +410,7 @@
         "heading": "Scrapers Path"
       },
       "scraping": "Scraping",
-      "sqlite_location": "File location for the SQLite database (requires restart). WARNING: storing the database on a different system to where the Stash server is run from (i.e. over the network) is unsupported!",
+      "sqlite_location": "File location for the SQLite database (requires restart). WARNING: storing the database on a different system to where the Treasury server is run from (i.e. over the network) is unsupported!",
       "video_ext_desc": "Comma-delimited list of file extensions that will be identified as videos.",
       "video_ext_head": "Video Extensions",
       "video_head": "Video"
@@ -584,12 +584,12 @@
       },
       "basic_settings": "Basic Settings",
       "custom_css": {
-        "description": "Page must be reloaded for changes to take effect. There is no guarantee of compatibility between custom CSS and future releases of Stash.",
+        "description": "Page must be reloaded for changes to take effect. There is no guarantee of compatibility between custom CSS and future releases of Treasury.",
         "heading": "Custom CSS",
         "option_label": "Custom CSS enabled"
       },
       "custom_javascript": {
-        "description": "Page must be reloaded for changes to take effect. There is no guarantee of compatibility between custom Javascript and future releases of Stash.",
+        "description": "Page must be reloaded for changes to take effect. There is no guarantee of compatibility between custom Javascript and future releases of Treasury.",
         "heading": "Custom Javascript",
         "option_label": "Custom Javascript enabled"
       },
@@ -671,7 +671,7 @@
         "sync": "Sync"
       },
       "handy_connection_key": {
-        "description": "Handy connection key to use for interactive videos. Setting this key will allow Stash to share your current video information with handyfeeling.com",
+        "description": "Handy connection key to use for interactive videos. Setting this key will allow Treasury to share your current video information with handyfeeling.com",
         "heading": "Handy Connection Key"
       },
       "image_lightbox": {
@@ -798,7 +798,7 @@
       },
       "title": "User Interface",
       "use_stash_hosted_funscript": {
-        "description": "When enabled, funscripts will be served directly from Stash to your Handy device without using the third party Handy server. Requires that Stash be accessible from your Handy device, and that an API key is generated if stash has credentials configured.",
+        "description": "When enabled, funscripts will be served directly from Treasury to your Handy device without using the third party Handy server. Requires that Treasury be accessible from your Handy device, and that an API key is generated if treasury has credentials configured.",
         "heading": "Serve funscripts directly"
       }
     }
@@ -1054,7 +1054,7 @@
     "image_index_greater_than_zero": "Image index must be greater than 0",
     "invalid_javascript_string": "Invalid javascript code: {error}",
     "invalid_json_string": "Invalid JSON string: {error}",
-    "lazy_component_error_help": "If you recently upgraded Stash, please reload the page or clear your browser cache.",
+    "lazy_component_error_help": "If you recently upgraded Treasury, please reload the page or clear your browser cache.",
     "loading_type": "Error loading {type}",
     "something_went_wrong": "Something went wrong."
   },
@@ -1311,7 +1311,7 @@
       "database_file_path": "Database file path",
       "generated_directory": "Generated directory",
       "nearly_there": "Nearly there!",
-      "stash_library_directories": "Stash library directories"
+      "stash_library_directories": "Treasury library directories"
     },
     "creating": {
       "creating_your_system": "Creating your system"
@@ -1335,66 +1335,66 @@
       "migration_failed": "Migration failed",
       "migration_failed_error": "The following error was encountered while migrating the database:",
       "migration_failed_help": "Please make any necessary corrections and try again. Otherwise, raise a bug on the {githubLink} or seek help in the {discordLink}.",
-      "migration_irreversible_warning": "The schema migration process is not reversible. Once the migration is performed, your database will be incompatible with previous versions of stash.",
+      "migration_irreversible_warning": "The schema migration process is not reversible. Once the migration is performed, your database will be incompatible with previous versions of treasury.",
       "migration_notes": "Migration Notes",
       "migration_required": "Migration required",
       "perform_schema_migration": "Perform schema migration",
-      "schema_too_old": "Your current stash database is schema version <strong>{databaseSchema}</strong> and needs to be migrated to version <strong>{appSchema}</strong>. This version of Stash will not function without migrating the database. If you do not wish to migrate, you will need to downgrade to a version that matches your database schema."
+      "schema_too_old": "Your current treasury database is schema version <strong>{databaseSchema}</strong> and needs to be migrated to version <strong>{appSchema}</strong>. This version of Treasury will not function without migrating the database. If you do not wish to migrate, you will need to downgrade to a version that matches your database schema."
     },
     "paths": {
       "database_filename_empty_for_default": "database filename (empty for default)",
-      "description": "Next up, we need to determine where to find your media collection, and where to store the Stash database, generated files and cache files. These settings can be changed later if needed.",
+      "description": "Next up, we need to determine where to find your media collection, and where to store the Treasury database, generated files and cache files. These settings can be changed later if needed.",
       "path_to_blobs_directory_empty_for_default": "path to blobs directory (empty for default)",
       "path_to_cache_directory_empty_for_default": "path to cache directory (empty for default)",
       "path_to_generated_directory_empty_for_default": "path to generated directory (empty for default)",
       "set_up_your_paths": "Set up your paths",
-      "stash_alert": "No library paths have been selected. No media will be able to be scanned into Stash. Are you sure?",
+      "stash_alert": "No library paths have been selected. No media will be able to be scanned into Treasury. Are you sure?",
       "store_blobs_in_database": "Store blobs in database",
-      "where_can_stash_store_blobs": "Where can Stash store database binary data?",
-      "where_can_stash_store_blobs_description": "Stash can store binary data such as video covers, person, studio and tag images either in the database or in the filesystem. By default, it will store this data in the filesystem in the subdirectory <code>blobs</code> within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
+      "where_can_stash_store_blobs": "Where can Treasury store database binary data?",
+      "where_can_stash_store_blobs_description": "Treasury can store binary data such as video covers, person, studio and tag images either in the database or in the filesystem. By default, it will store this data in the filesystem in the subdirectory <code>blobs</code> within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Treasury will create this directory if it does not already exist.",
       "where_can_stash_store_blobs_description_addendum": "Alternatively, you can store this data in the database. <strong>Note:</strong> This will increase the size of your database file, and will increase database migration times.",
-      "where_can_stash_store_cache_files": "Where can Stash store cache files?",
-      "where_can_stash_store_cache_files_description": "In order for some functionality like HLS/DASH live transcoding to function, Stash requires a cache directory for temporary files. By default, Stash will create a <code>cache</code> directory within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
-      "where_can_stash_store_its_database": "Where can Stash store its database?",
-      "where_can_stash_store_its_database_description": "Stash uses an SQLite database to store your media metadata. By default, this will be created as <code>stash-go.sqlite</code> in the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) filename.",
-      "where_can_stash_store_its_database_warning": "WARNING: storing the database on a different system to where Stash is run from (e.g. storing the database on a NAS while running the Stash server on another computer) is <strong>unsupported</strong>! SQLite is not intended for use across a network, and attempting to do so can very easily cause your entire database to become corrupted.",
-      "where_can_stash_store_its_generated_content": "Where can Stash store its generated content?",
-      "where_can_stash_store_its_generated_content_description": "In order to provide thumbnails, previews and sprites, Stash generates images and videos. This also includes transcodes for unsupported file formats. By default, Stash will create a <code>generated</code> directory within the directory containing your config file. If you want to change where this generated media will be stored, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
+      "where_can_stash_store_cache_files": "Where can Treasury store cache files?",
+      "where_can_stash_store_cache_files_description": "In order for some functionality like HLS/DASH live transcoding to function, Treasury requires a cache directory for temporary files. By default, Treasury will create a <code>cache</code> directory within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Treasury will create this directory if it does not already exist.",
+      "where_can_stash_store_its_database": "Where can Treasury store its database?",
+      "where_can_stash_store_its_database_description": "Treasury uses an SQLite database to store your media metadata. By default, this will be created as <code>treasury-go.sqlite</code> in the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) filename.",
+      "where_can_stash_store_its_database_warning": "WARNING: storing the database on a different system to where Treasury is run from (e.g. storing the database on a NAS while running the Treasury server on another computer) is <strong>unsupported</strong>! SQLite is not intended for use across a network, and attempting to do so can very easily cause your entire database to become corrupted.",
+      "where_can_stash_store_its_generated_content": "Where can Treasury store its generated content?",
+      "where_can_stash_store_its_generated_content_description": "In order to provide thumbnails, previews and sprites, Treasury generates images and videos. This also includes transcodes for unsupported file formats. By default, Treasury will create a <code>generated</code> directory within the directory containing your config file. If you want to change where this generated media will be stored, please enter an absolute or relative (to the current working directory) path. Treasury will create this directory if it does not already exist.",
       "where_is_your_porn_located": "Where is your media located?",
-      "where_is_your_porn_located_description": "Add directories containing your media videos and images. Stash will use these directories to find videos and images during scanning."
+      "where_is_your_porn_located_description": "Add directories containing your media videos and images. Treasury will use these directories to find videos and images during scanning."
     },
-    "stash_setup_wizard": "Stash Setup Wizard",
+    "stash_setup_wizard": "Treasury Setup Wizard",
     "success": {
       "download_ffmpeg": "Download ffmpeg",
       "getting_help": "Getting help",
       "help_links": "If you run into issues or have any questions or suggestions, feel free to open an issue in the {githubLink}, or ask the community in the {discordLink}.",
       "in_app_manual_explained": "You are encouraged to check out the in-app manual which can be accessed from the icon in the top-right corner of the screen that looks like this: {icon}",
-      "missing_ffmpeg": "You are missing the required <code>ffmpeg</code> binary. You can automatically download it into your configuration directory by checking the box below. Alternatively, you can supply paths to the <code>ffmpeg</code> and <code>ffprobe</code> binaries in the System Settings. These binaries must be present for Stash to function.",
+      "missing_ffmpeg": "You are missing the required <code>ffmpeg</code> binary. You can automatically download it into your configuration directory by checking the box below. Alternatively, you can supply paths to the <code>ffmpeg</code> and <code>ffprobe</code> binaries in the System Settings. These binaries must be present for Treasury to function.",
       "next_config_step_one": "You will be taken to the Configuration page next. This page will allow you to customize what files to include and exclude, set a username and password to protect your system, and a whole bunch of other options.",
-      "next_config_step_two": "When you are satisfied with these settings, you can begin scanning your content into Stash by clicking on <code>{localized_task}</code>, then <code>{localized_scan}</code>.",
-      "open_collective": "Check out our {open_collective_link} to see how you can contribute to the continued development of Stash.",
+      "next_config_step_two": "When you are satisfied with these settings, you can begin scanning your content into Treasury by clicking on <code>{localized_task}</code>, then <code>{localized_scan}</code>.",
+      "open_collective": "Check out our {open_collective_link} to see how you can contribute to the continued development of Treasury.",
       "support_us": "Support us",
-      "thanks_for_trying_stash": "Thanks for trying Stash!",
+      "thanks_for_trying_stash": "Thanks for trying Treasury!",
       "welcome_contrib": "We also welcome contributions in the form of code (bug fixes, improvements and new features), testing, bug reports, improvement and feature requests, and user support. Details can be found in the Contribution section of the in-app manual.",
       "your_system_has_been_created": "Success! Your system has been created!"
     },
     "welcome": {
-      "config_path_logic_explained": "Stash tries to find its configuration file (<code>config.yml</code>) from the current working directory first, and if it does not find it there, it falls back to <code>{fallback_path}</code>. You can also make Stash read from a specific configuration file by running it with the <code>-c '<path to config file>'</code> or <code>--config '<path to config file>'</code> options.",
+      "config_path_logic_explained": "Treasury tries to find its configuration file (<code>config.yml</code>) from the current working directory first, and if it does not find it there, it falls back to <code>{fallback_path}</code>. You can also make Treasury read from a specific configuration file by running it with the <code>-c '<path to config file>'</code> or <code>--config '<path to config file>'</code> options.",
       "in_current_stash_directory": "In the <code>{path}</code> directory:",
       "in_the_current_working_directory": "In <code>{path}</code>, the working directory, currently:",
       "in_the_current_working_directory_disabled": "In <code>{path}</code>, the working directory:",
-      "in_the_current_working_directory_disabled_macos": "Unsupported when running <code>Stash.app</code>,<br></br>run <code>stash-macos</code> to set up in the working directory",
+      "in_the_current_working_directory_disabled_macos": "Unsupported when running <code>Treasury.app</code>,<br></br>run <code>treasury-macos</code> to set up in the working directory",
       "next_step": "With all of that out of the way, if you're ready to proceed with setting up a new system, please choose where you'd like to store your configuration file.",
-      "store_stash_config": "Where do you want to store your Stash configuration?",
-      "unable_to_locate_config": "If you're reading this, then Stash couldn't find an existing configuration. This wizard will guide you through the process of setting up a new configuration.",
-      "unexpected_explained": "If you're getting this screen unexpectedly, please try restarting Stash in the correct working directory or with the <code>-c</code> flag."
+      "store_stash_config": "Where do you want to store your Treasury configuration?",
+      "unable_to_locate_config": "If you're reading this, then Treasury couldn't find an existing configuration. This wizard will guide you through the process of setting up a new configuration.",
+      "unexpected_explained": "If you're getting this screen unexpectedly, please try restarting Treasury in the correct working directory or with the <code>-c</code> flag."
     },
     "welcome_specific_config": {
-      "config_path": "Stash will use the following configuration file path: <code>{path}</code>",
+      "config_path": "Treasury will use the following configuration file path: <code>{path}</code>",
       "next_step": "When you're ready to proceed with setting up a new system, click Next.",
-      "unable_to_locate_specified_config": "If you're reading this, then Stash couldn't find the configuration file specified at the command line or the environment. This wizard will guide you through the process of setting up a new configuration."
+      "unable_to_locate_specified_config": "If you're reading this, then Treasury couldn't find the configuration file specified at the command line or the environment. This wizard will guide you through the process of setting up a new configuration."
     },
-    "welcome_to_stash": "Welcome to Stash"
+    "welcome_to_stash": "Welcome to Treasury"
   },
   "stash_id": "Stash ID",
   "stash_id_endpoint": "Stash ID Endpoint",
