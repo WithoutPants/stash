@@ -8,7 +8,6 @@ fragment ImageData on Image {
   details
   photographer
   organized
-  o_counter
   created_at
   updated_at
 

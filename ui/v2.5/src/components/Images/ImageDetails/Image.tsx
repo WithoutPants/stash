@@ -5,11 +5,8 @@ import { useHistory, Link, RouteComponentProps } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import {
   useFindImage,
-  useImageIncrementO,
   useImageUpdate,
   mutateMetadataScan,
-  useImageDecrementO,
-  useImageResetO,
 } from "src/core/StashService";
 import { ErrorMessage } from "src/components/Shared/ErrorMessage";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
@@ -18,7 +15,6 @@ import { Counter } from "src/components/Shared/Counter";
 import { useToast } from "src/hooks/Toast";
 import * as Mousetrap from "mousetrap";
 import * as GQL from "src/core/generated-graphql";
-import { OCounterButton } from "src/components/Scenes/SceneDetails/OCounterButton";
 import { OrganizedButton } from "src/components/Scenes/SceneDetails/OrganizedButton";
 import { ImageFileInfoPanel } from "./ImageFileInfoPanel";
 import { ImageEditPanel } from "./ImageEditPanel";
@@ -48,10 +44,6 @@ const ImagePage: React.FC<IProps> = ({ image }) => {
   const Toast = useToast();
   const intl = useIntl();
   const { configuration } = useContext(ConfigurationContext);
-
-  const [incrementO] = useImageIncrementO(image.id);
-  const [decrementO] = useImageDecrementO(image.id);
-  const [resetO] = useImageResetO(image.id);
 
   const [updateImage] = useImageUpdate();
 
@@ -109,30 +101,6 @@ const ImagePage: React.FC<IProps> = ({ image }) => {
       Toast.error(e);
     } finally {
       setOrganizedLoading(false);
-    }
-  };
-
-  const onIncrementClick = async () => {
-    try {
-      await incrementO();
-    } catch (e) {
-      Toast.error(e);
-    }
-  };
-
-  const onDecrementClick = async () => {
-    try {
-      await decrementO();
-    } catch (e) {
-      Toast.error(e);
-    }
-  };
-
-  const onResetClick = async () => {
-    try {
-      await resetO();
-    } catch (e) {
-      Toast.error(e);
     }
   };
 
@@ -261,9 +229,6 @@ const ImagePage: React.FC<IProps> = ({ image }) => {
     Mousetrap.bind("a", () => setActiveTabKey("image-details-panel"));
     Mousetrap.bind("e", () => setActiveTabKey("image-edit-panel"));
     Mousetrap.bind("f", () => setActiveTabKey("image-file-info-panel"));
-    Mousetrap.bind("o", () => {
-      onIncrementClick();
-    });
 
     return () => {
       Mousetrap.unbind("a");
@@ -344,14 +309,6 @@ const ImagePage: React.FC<IProps> = ({ image }) => {
             />
           </span>
           <span className="image-toolbar-group">
-            <span>
-              <OCounterButton
-                value={image.o_counter || 0}
-                onIncrement={onIncrementClick}
-                onDecrement={onDecrementClick}
-                onReset={onResetClick}
-              />
-            </span>
             <span>
               <OrganizedButton
                 loading={organizedLoading}

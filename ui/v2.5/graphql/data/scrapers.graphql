@@ -23,14 +23,6 @@ fragment ScrapedPerformerData on ScrapedPerformer {
   ethnicity
   country
   eye_color
-  height
-  measurements
-  fake_tits
-  penis_length
-  circumcised
-  career_length
-  tattoos
-  piercings
   aliases
   tags {
     ...ScrapedSceneTagData
@@ -39,7 +31,6 @@ fragment ScrapedPerformerData on ScrapedPerformer {
   details
   death_date
   hair_color
-  weight
   remote_site_id
 }
 
@@ -53,14 +44,6 @@ fragment ScrapedScenePerformerData on ScrapedPerformer {
   ethnicity
   country
   eye_color
-  height
-  measurements
-  fake_tits
-  penis_length
-  circumcised
-  career_length
-  tattoos
-  piercings
   aliases
   tags {
     ...ScrapedSceneTagData
@@ -70,7 +53,6 @@ fragment ScrapedScenePerformerData on ScrapedPerformer {
   details
   death_date
   hair_color
-  weight
 }
 
 fragment ScrapedGroupStudioData on ScrapedStudio {

@@ -725,67 +725,6 @@ export const useSceneDecrementO = (id: string) =>
     },
   });
 
-export const useSceneResetO = (id: string) =>
-  GQL.useSceneResetOMutation({
-    variables: { id },
-    update(cache, result) {
-      const updatedOCount = result.data?.sceneResetO;
-      if (updatedOCount === undefined) return;
-
-      const scene = cache.readFragment<GQL.SlimSceneDataFragment>({
-        id: cache.identify({ __typename: "Scene", id }),
-        fragment: GQL.SlimSceneDataFragmentDoc,
-        fragmentName: "SlimSceneData",
-      });
-
-      if (scene) {
-        // if we have the scene, update performer o_counters manually
-        const old_count = scene.o_counter ?? 0;
-        for (const performer of scene.performers) {
-          cache.modify({
-            id: cache.identify(performer),
-            fields: {
-              o_counter(value) {
-                return value - old_count;
-              },
-            },
-          });
-        }
-        updateStats(cache, "total_o_count", -old_count);
-      } else {
-        // else refresh all performer o_counters
-        evictTypeFields(cache, {
-          Performer: ["o_counter"],
-        });
-        // also refresh stats total_o_count
-        cache.modify({
-          fields: {
-            stats: (value) => ({
-              ...value,
-              total_o_count: undefined,
-            }),
-          },
-        });
-      }
-
-      cache.modify({
-        id: cache.identify({ __typename: "Scene", id }),
-        fields: {
-          o_history() {
-            const ret: string[] = [];
-            return ret;
-          },
-        },
-      });
-
-      updateO(cache, "Scene", id, updatedOCount);
-      evictQueries(cache, [
-        GQL.FindScenesDocument, // filter by o_counter
-        GQL.FindPerformersDocument, // filter by o_counter
-      ]);
-    },
-  });
-
 export const useSceneResetActivity = (
   id: string,
   reset_resume: boolean,

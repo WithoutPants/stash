@@ -42,10 +42,7 @@ import {
 import { objectPath, objectTitle } from "src/core/files";
 import { RatingSystem } from "src/components/Shared/Rating/RatingSystem";
 import TextUtils from "src/utils/text";
-import {
-  OCounterButton,
-  ViewCountButton,
-} from "src/components/Shared/CountButton";
+import { ViewCountButton } from "src/components/Shared/CountButton";
 import { useRatingKeybinds } from "src/hooks/keybinds";
 import { lazyComponent } from "src/utils/lazyComponent";
 import cx from "classnames";
@@ -637,12 +634,6 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
                 <ViewCountButton
                   value={scene.play_count ?? 0}
                   onIncrement={() => incrementPlayCount()}
-                />
-              </span>
-              <span>
-                <OCounterButton
-                  value={scene.o_counter ?? 0}
-                  onIncrement={() => onIncrementOClick()}
                 />
               </span>
               <span>

@@ -237,18 +237,11 @@ const PerformerModal: React.FC<IPerformerModalProps> = ({
       ethnicity: performer.ethnicity,
       eye_color: performer.eye_color,
       country: performer.country,
-      height_cm: Number.parseFloat(performer.height ?? "") ?? undefined,
-      measurements: performer.measurements,
-      fake_tits: performer.fake_tits,
-      career_length: performer.career_length,
-      tattoos: performer.tattoos,
-      piercings: performer.piercings,
       urls: performer.urls,
       image: images.length > imageIndex ? images[imageIndex] : undefined,
       details: performer.details,
       death_date: performer.death_date,
       hair_color: performer.hair_color,
-      weight: Number.parseFloat(performer.weight ?? "") ?? undefined,
     };
 
     if (Number.isNaN(performerData.weight ?? 0)) {
@@ -321,15 +314,6 @@ const PerformerModal: React.FC<IPerformerModalProps> = ({
           {maybeRenderField("country", getCountryByISO(performer.country))}
           {maybeRenderField("hair_color", performer.hair_color)}
           {maybeRenderField("eye_color", performer.eye_color)}
-          {maybeRenderField("height", performer.height)}
-          {maybeRenderField("weight", performer.weight)}
-          {maybeRenderField("measurements", performer.measurements)}
-          {performer?.gender !== GQL.GenderEnum.Male &&
-            maybeRenderField("fake_tits", performer.fake_tits)}
-          {maybeRenderField("career_length", performer.career_length)}
-          {maybeRenderField("tattoos", performer.tattoos, false)}
-          {maybeRenderField("piercings", performer.piercings, false)}
-          {maybeRenderField("weight", performer.weight, false)}
           {maybeRenderField("details", performer.details)}
           {maybeRenderURLListField("urls", performer.urls)}
           {maybeRenderStashBoxLink()}

@@ -48,7 +48,6 @@ const StashIDsField: React.FC<IStashIDsField> = ({ values }) => {
 type MergeOptions = {
   values: GQL.SceneUpdateInput;
   includeViewHistory: boolean;
-  includeOHistory: boolean;
 };
 
 interface ISceneMergeDetailsProps {
@@ -81,10 +80,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
 
   const [rating, setRating] = useState(
     new ZeroableScrapeResult<number>(dest.rating100)
-  );
-  // zero values can be treated as missing for these fields
-  const [oCounter, setOCounter] = useState(
-    new ScrapeResult<number>(dest.o_counter)
   );
   const [playCount, setPlayCount] = useState(
     new ScrapeResult<number>(dest.play_count)
@@ -274,13 +269,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
       )
     );
 
-    setOCounter(
-      new ScrapeResult(
-        dest.o_counter ?? 0,
-        all.map((s) => s.o_counter ?? 0).reduce((pv, cv) => pv + cv, 0)
-      )
-    );
-
     setPlayCount(
       new ScrapeResult(
         dest.play_count ?? 0,
@@ -327,7 +315,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
       url,
       date,
       rating,
-      oCounter,
       galleries,
       studio,
       performers,
@@ -344,7 +331,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
     url,
     date,
     rating,
-    oCounter,
     galleries,
     studio,
     performers,
@@ -409,27 +395,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
             <RatingSystem value={rating.newValue} disabled />
           )}
           onChange={(value) => setRating(value)}
-        />
-        <ScrapeDialogRow
-          title={intl.formatMessage({ id: "o_count" })}
-          result={oCounter}
-          renderOriginalField={() => (
-            <FormControl
-              value={oCounter.originalValue ?? 0}
-              readOnly
-              onChange={() => {}}
-              className="bg-secondary text-white border-secondary"
-            />
-          )}
-          renderNewField={() => (
-            <FormControl
-              value={oCounter.newValue ?? 0}
-              readOnly
-              onChange={() => {}}
-              className="bg-secondary text-white border-secondary"
-            />
-          )}
-          onChange={(value) => setOCounter(value)}
         />
         <ScrapeDialogRow
           title={intl.formatMessage({ id: "play_count" })}
@@ -580,7 +545,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
         urls: url.getNewValue(),
         date: date.getNewValue(),
         rating100: rating.getNewValue(),
-        o_counter: oCounter.getNewValue(),
         play_count: playCount.getNewValue(),
         play_duration: playDuration.getNewValue(),
         gallery_ids: galleries.getNewValue(),
@@ -604,7 +568,6 @@ const SceneMergeDetails: React.FC<ISceneMergeDetailsProps> = ({
         cover_image: coverImage,
       },
       includeViewHistory: playCount.getNewValue() !== undefined,
-      includeOHistory: oCounter.getNewValue() !== undefined,
     };
   }
 
@@ -688,7 +651,7 @@ export const SceneMergeModal: React.FC<ISceneMergeModalProps> = ({
   }
 
   async function onMerge(options: MergeOptions) {
-    const { values, includeViewHistory, includeOHistory } = options;
+    const { values, includeViewHistory } = options;
     try {
       setRunning(true);
       const result = await mutateSceneMerge(
@@ -696,7 +659,7 @@ export const SceneMergeModal: React.FC<ISceneMergeModalProps> = ({
         sourceScenes.map((s) => s.id),
         values,
         includeViewHistory,
-        includeOHistory
+        false
       );
       if (result.data?.sceneMerge) {
         Toast.success(intl.formatMessage({ id: "toast.merged_scenes" }));

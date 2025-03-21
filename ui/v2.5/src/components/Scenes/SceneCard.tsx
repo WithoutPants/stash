@@ -6,7 +6,6 @@ import * as GQL from "src/core/generated-graphql";
 import { Icon } from "../Shared/Icon";
 import { GalleryLink, TagLink, SceneMarkerLink } from "../Shared/TagLink";
 import { HoverPopover } from "../Shared/HoverPopover";
-import { SweatDrops } from "../Shared/SweatDrops";
 import { TruncatedText } from "../Shared/TruncatedText";
 import NavUtils from "src/utils/navigation";
 import TextUtils from "src/utils/text";
@@ -217,21 +216,6 @@ const SceneCardPopovers = PatchComponent(
       );
     }
 
-    function maybeRenderOCounter() {
-      if (props.scene.o_counter) {
-        return (
-          <div className="o-count">
-            <Button className="minimal">
-              <span className="fa-icon">
-                <SweatDrops />
-              </span>
-              <span>{props.scene.o_counter}</span>
-            </Button>
-          </div>
-        );
-      }
-    }
-
     function maybeRenderGallery() {
       if (props.scene.galleries.length <= 0) return;
 
@@ -296,7 +280,6 @@ const SceneCardPopovers = PatchComponent(
           props.scene.performers.length > 0 ||
           props.scene.groups.length > 0 ||
           props.scene.scene_markers.length > 0 ||
-          props.scene?.o_counter ||
           props.scene.galleries.length > 0 ||
           props.scene.organized ||
           sceneNumber !== undefined)
@@ -310,7 +293,6 @@ const SceneCardPopovers = PatchComponent(
               {maybeRenderPerformerPopoverButton()}
               {maybeRenderGroupPopoverButton()}
               {maybeRenderSceneMarkerPopoverButton()}
-              {maybeRenderOCounter()}
               {maybeRenderGallery()}
               {maybeRenderOrganized()}
               {maybeRenderDupeCopies()}

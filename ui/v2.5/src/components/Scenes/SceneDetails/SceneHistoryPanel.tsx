@@ -12,11 +12,8 @@ import { DateInput } from "src/components/Shared/DateInput";
 import { Icon } from "src/components/Shared/Icon";
 import { ModalComponent } from "src/components/Shared/Modal";
 import {
-  useSceneDecrementO,
   useSceneDecrementPlayCount,
-  useSceneIncrementO,
   useSceneIncrementPlayCount,
-  useSceneResetO,
   useSceneResetPlayCount,
   useSceneResetActivity,
 } from "src/core/StashService";
@@ -186,9 +183,6 @@ export const SceneHistoryPanel: React.FC<ISceneHistoryProps> = ({ scene }) => {
   const [incrementPlayCount] = useSceneIncrementPlayCount();
   const [decrementPlayCount] = useSceneDecrementPlayCount();
   const [clearPlayCount] = useSceneResetPlayCount();
-  const [incrementOCount] = useSceneIncrementO(scene.id);
-  const [decrementOCount] = useSceneDecrementO(scene.id);
-  const [resetO] = useSceneResetO(scene.id);
   const [resetResume] = useSceneResetActivity(scene.id, true, false);
   const [resetDuration] = useSceneResetActivity(scene.id, false, true);
 
@@ -219,33 +213,6 @@ export const SceneHistoryPanel: React.FC<ISceneHistoryProps> = ({ scene }) => {
   function handleClearPlayDates() {
     setDialogPartial({ playHistory: false });
     clearPlayCount({
-      variables: {
-        id: scene.id,
-      },
-    });
-  }
-
-  function handleAddODate(time?: string) {
-    incrementOCount({
-      variables: {
-        id: scene.id,
-        times: time ? [time] : undefined,
-      },
-    });
-  }
-
-  function handleDeleteODate(time: string) {
-    decrementOCount({
-      variables: {
-        id: scene.id,
-        times: time ? [time] : undefined,
-      },
-    });
-  }
-
-  function handleClearODates() {
-    setDialogPartial({ oHistory: false });
-    resetO({
       variables: {
         id: scene.id,
       },
@@ -310,13 +277,6 @@ export const SceneHistoryPanel: React.FC<ISceneHistoryProps> = ({ scene }) => {
           onConfirm={() => handleClearPlayDates()}
           onCancel={() => setDialogPartial({ playHistory: false })}
         />
-        <AlertModal
-          show={dialogs.oHistory}
-          text={intl.formatMessage({ id: "dialogs.clear_o_history_confirm" })}
-          confirmButtonText={intl.formatMessage({ id: "actions.clear" })}
-          onConfirm={() => handleClearODates()}
-          onCancel={() => setDialogPartial({ oHistory: false })}
-        />
         {/* add conditions here so that date is generated correctly */}
         {dialogs.addPlay && (
           <DatePickerModal
@@ -330,18 +290,6 @@ export const SceneHistoryPanel: React.FC<ISceneHistoryProps> = ({ scene }) => {
             }}
           />
         )}
-        {dialogs.addO && (
-          <DatePickerModal
-            show
-            onClose={(t) => {
-              const tt = t ? dateStringToISOString(t) : null;
-              if (tt) {
-                handleAddODate(tt);
-              }
-              setDialogPartial({ addO: false });
-            }}
-          />
-        )}
       </>
     );
   }
@@ -349,7 +297,6 @@ export const SceneHistoryPanel: React.FC<ISceneHistoryProps> = ({ scene }) => {
   const playHistory = (scene.play_history ?? []).filter(
     (h) => h != null
   ) as string[];
-  const oHistory = (scene.o_history ?? []).filter((h) => h != null) as string[];
 
   return (
     <div>
@@ -395,42 +342,6 @@ export const SceneHistoryPanel: React.FC<ISceneHistoryProps> = ({ scene }) => {
             value={TextUtils.secondsToTimestamp(scene.play_duration ?? 0)}
           />
         </dl>
-      </div>
-
-      <div className="o-history">
-        <div className="history-header">
-          <h5>
-            <span>
-              <FormattedMessage id="o_history" />
-              <Counter count={oHistory.length} hideZero />
-            </span>
-            <span>
-              <Button
-                size="sm"
-                variant="minimal"
-                className="add-date-button"
-                title={intl.formatMessage({ id: "actions.add_o" })}
-                onClick={() => handleAddODate()}
-              >
-                <Icon icon={faPlus} />
-              </Button>
-              <HistoryMenu
-                hasHistory={oHistory.length > 0}
-                showResetResumeDuration={false}
-                onAddDate={() => setDialogPartial({ addO: true })}
-                onClearDates={() => setDialogPartial({ oHistory: true })}
-                resetResume={() => handleResetResume()}
-                resetDuration={() => handleResetDuration()}
-              />
-            </span>
-          </h5>
-        </div>
-        <History
-          history={oHistory}
-          noneID="odate_recorded_no"
-          unknownDate={scene.created_at}
-          onRemove={(t) => handleDeleteODate(t)}
-        />
       </div>
     </div>
   );

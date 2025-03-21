@@ -13,12 +13,6 @@ fragment SlimPerformerData on Performer {
   hair_color
   eye_color
   height_cm
-  fake_tits
-  penis_length
-  circumcised
-  career_length
-  tattoos
-  piercings
   alias_list
   tags {
     id
@@ -31,7 +25,6 @@ fragment SlimPerformerData on Performer {
   }
   rating100
   death_date
-  weight
 }
 
 fragment SelectPerformerData on Performer {

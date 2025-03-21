@@ -153,9 +153,6 @@ export const EditPerformersDialog: React.FC<IListOperationProps> = (
 
     const state = props.selected;
     let updateTagIds: string[] = [];
-    let updateHeight: string | undefined | null = undefined;
-    let updateWeight: string | undefined | null = undefined;
-    let updatePenisLength: string | undefined | null = undefined;
     let first = true;
 
     state.forEach((performer: GQL.SlimPerformerDataFragment) => {
@@ -166,34 +163,10 @@ export const EditPerformersDialog: React.FC<IListOperationProps> = (
       updateTagIds =
         getAggregateState(updateTagIds, performerTagIDs, first) ?? [];
 
-      const thisHeight =
-        performer.height_cm !== undefined && performer.height_cm !== null
-          ? performer.height_cm.toString()
-          : performer.height_cm;
-      updateHeight = getAggregateState(updateHeight, thisHeight, first);
-
-      const thisWeight =
-        performer.weight !== undefined && performer.weight !== null
-          ? performer.weight.toString()
-          : performer.weight;
-      updateWeight = getAggregateState(updateWeight, thisWeight, first);
-
-      const thisPenisLength =
-        performer.penis_length !== undefined && performer.penis_length !== null
-          ? performer.penis_length.toString()
-          : performer.penis_length;
-      updatePenisLength = getAggregateState(
-        updatePenisLength,
-        thisPenisLength,
-        first
-      );
-
       first = false;
     });
 
     setExistingTagIds(updateTagIds);
-    setHeight(updateHeight);
-    setWeight(updateWeight);
     setAggregateState(updateState);
     setUpdateInput(updateState);
   }, [props.selected]);

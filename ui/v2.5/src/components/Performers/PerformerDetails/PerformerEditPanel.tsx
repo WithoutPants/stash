@@ -25,10 +25,6 @@ import {
   stringGenderMap,
   stringToGender,
 } from "src/utils/gender";
-import {
-  circumcisedToString,
-  stringToCircumcised,
-} from "src/utils/circumcised";
 import { ConfigurationContext } from "src/hooks/Config";
 import { PerformerScrapeDialog } from "./PerformerScrapeDialog";
 import PerformerScrapeModal from "./PerformerScrapeModal";
@@ -180,21 +176,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
     }
   }
 
-  function translateScrapedCircumcised(scrapedCircumcised?: string) {
-    if (!scrapedCircumcised) {
-      return;
-    }
-
-    const upperCircumcised = scrapedCircumcised.toUpperCase();
-    const asEnum = circumcisedToString(upperCircumcised);
-    if (asEnum) {
-      return stringToCircumcised(asEnum);
-    } else {
-      const caseInsensitive = true;
-      return stringToCircumcised(scrapedCircumcised, caseInsensitive);
-    }
-  }
-
   function updatePerformerEditStateFromScraper(
     state: Partial<GQL.ScrapedPerformerDataFragment>
   ) {
@@ -222,24 +203,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
     if (state.eye_color) {
       formik.setFieldValue("eye_color", state.eye_color);
     }
-    if (state.height) {
-      formik.setFieldValue("height_cm", parseInt(state.height, 10));
-    }
-    if (state.measurements) {
-      formik.setFieldValue("measurements", state.measurements);
-    }
-    if (state.fake_tits) {
-      formik.setFieldValue("fake_tits", state.fake_tits);
-    }
-    if (state.career_length) {
-      formik.setFieldValue("career_length", state.career_length);
-    }
-    if (state.tattoos) {
-      formik.setFieldValue("tattoos", state.tattoos);
-    }
-    if (state.piercings) {
-      formik.setFieldValue("piercings", state.piercings);
-    }
     if (state.urls) {
       formik.setFieldValue("urls", state.urls);
     }
@@ -248,13 +211,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
       const newGender = translateScrapedGender(state.gender);
       if (newGender) {
         formik.setFieldValue("gender", newGender);
-      }
-    }
-    if (state.circumcised) {
-      // circumcised is a string in the scraper data
-      const newCircumcised = translateScrapedCircumcised(state.circumcised);
-      if (newCircumcised) {
-        formik.setFieldValue("circumcised", newCircumcised);
       }
     }
     updateTagsStateFromScraper(state.tags ?? undefined);
@@ -279,12 +235,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
     }
     if (state.hair_color) {
       formik.setFieldValue("hair_color", state.hair_color);
-    }
-    if (state.weight) {
-      formik.setFieldValue("weight", state.weight);
-    }
-    if (state.penis_length) {
-      formik.setFieldValue("penis_length", state.penis_length);
     }
 
     updateStashIDs(state.remote_site_id);

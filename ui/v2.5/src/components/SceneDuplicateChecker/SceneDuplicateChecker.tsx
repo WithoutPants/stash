@@ -25,7 +25,6 @@ import {
   SceneMarkerLink,
   TagLink,
 } from "../Shared/TagLink";
-import { SweatDrops } from "../Shared/SweatDrops";
 import { Pagination } from "src/components/List/Pagination";
 import TextUtils from "src/utils/text";
 import { DeleteScenesDialog } from "src/components/Scenes/DeleteScenesDialog";
@@ -431,21 +430,6 @@ export const SceneDuplicateChecker: React.FC = () => {
     );
   }
 
-  function maybeRenderOCounter(scene: GQL.SlimSceneDataFragment) {
-    if (scene.o_counter) {
-      return (
-        <div>
-          <Button className="minimal">
-            <span className="fa-icon">
-              <SweatDrops />
-            </span>
-            <span>{scene.o_counter}</span>
-          </Button>
-        </div>
-      );
-    }
-  }
-
   function maybeRenderGallery(scene: GQL.SlimSceneDataFragment) {
     if (scene.galleries.length <= 0) return;
 
@@ -501,7 +485,6 @@ export const SceneDuplicateChecker: React.FC = () => {
       scene.performers.length > 0 ||
       scene.groups.length > 0 ||
       scene.scene_markers.length > 0 ||
-      scene?.o_counter ||
       scene.galleries.length > 0 ||
       scene.files.length > 1 ||
       scene.organized
@@ -513,7 +496,6 @@ export const SceneDuplicateChecker: React.FC = () => {
             {maybeRenderPerformerPopoverButton(scene)}
             {maybeRenderGroupPopoverButton(scene)}
             {maybeRenderSceneMarkerPopoverButton(scene)}
-            {maybeRenderOCounter(scene)}
             {maybeRenderGallery(scene)}
             {maybeRenderFileCount(scene)}
             {maybeRenderOrganized(scene)}

@@ -333,11 +333,6 @@ export const SceneListTable: React.FC<ISceneListTableProps> = (
       render: PlayDurationCell,
     },
     {
-      value: "o_counter",
-      label: intl.formatMessage({ id: "o_count" }),
-      render: (s) => <>{s.o_counter}</>,
-    },
-    {
       value: "resolution",
       label: intl.formatMessage({ id: "resolution" }),
       render: ResolutionCell,
