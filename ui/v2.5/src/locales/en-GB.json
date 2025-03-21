@@ -74,7 +74,7 @@
     "merge_from": "Merge from",
     "merge_into": "Merge into",
     "migrate_blobs": "Migrate Blobs",
-    "migrate_scene_screenshots": "Migrate Scene Screenshots",
+    "migrate_scene_screenshots": "Migrate Video Screenshots",
     "next_action": "Next",
     "not_running": "not running",
     "open_in_external_player": "Open in external player",
@@ -132,7 +132,7 @@
     "submit_update": "Submit update",
     "swap": "Swap",
     "tasks": {
-      "clean_confirm_message": "Are you sure you want to Clean? This will delete database information and generated content for all scenes and galleries that are no longer found in the filesystem.",
+      "clean_confirm_message": "Are you sure you want to Clean? This will delete database information and generated content for all videos and galleries that are no longer found in the filesystem.",
       "dry_mode_selected": "Dry Mode selected. No actual deleting will take place, only logging.",
       "import_warning": "Are you sure you want to import? This will delete the database and re-import from your exported metadata."
     },
@@ -177,7 +177,7 @@
       "errors": {
         "blacklist_duplicate": "Duplicate blacklist item"
       },
-      "mark_organized_desc": "Immediately mark the scene as Organized after the Save button is clicked.",
+      "mark_organized_desc": "Immediately mark the video as Organized after the Save button is clicked.",
       "mark_organized_label": "Mark as Organized on save",
       "query_mode_auto": "Auto",
       "query_mode_auto_desc": "Uses metadata if present, or filename",
@@ -190,12 +190,12 @@
       "query_mode_metadata_desc": "Only uses metadata",
       "query_mode_path": "Path",
       "query_mode_path_desc": "Uses entire file path",
-      "set_cover_desc": "Replace the scene cover if one is found.",
-      "set_cover_label": "Set scene cover image",
-      "set_tag_desc": "Attach tags to scene, either by overwriting or merging with existing tags on scene.",
+      "set_cover_desc": "Replace the video cover if one is found.",
+      "set_cover_label": "Set video cover image",
+      "set_tag_desc": "Attach tags to video, either by overwriting or merging with existing tags on video.",
       "set_tag_label": "Set tags",
-      "show_male_desc": "Toggle whether male performers will be available to tag.",
-      "show_male_label": "Show male performers",
+      "show_male_desc": "REMVOE",
+      "show_male_label": "REMOVE",
       "source": "Source"
     },
     "noun_query": "Query",
@@ -206,9 +206,9 @@
       "fp_matches": "Duration is a match",
       "fp_matches_multi": "Duration matches {matchCount}/{durationsLength} fingerprints",
       "hash_matches": "{hash_type} is a match",
-      "match_failed_already_tagged": "Scene already tagged",
+      "match_failed_already_tagged": "Video already tagged",
       "match_failed_no_result": "No results found",
-      "match_success": "Scene successfully tagged",
+      "match_success": "Video successfully tagged",
       "phash_matches": "{count} PHashes match",
       "unnamed": "Unnamed"
     },
@@ -217,7 +217,7 @@
     "verb_scrape_all": "Scrape All",
     "verb_submit_fp": "Submit {fpCount, plural, one{# Fingerprint} other{# Fingerprints}}",
     "verb_toggle_config": "{toggle} {configuration}",
-    "verb_toggle_unmatched": "{toggle} unmatched scenes"
+    "verb_toggle_unmatched": "{toggle} unmatched videos"
   },
   "config": {
     "about": {
@@ -308,7 +308,7 @@
         "heading": "Binary data filesystem path"
       },
       "blobs_storage": {
-        "description": "Where to store binary data such as scene covers, performer, studio and tag images. After changing this value, the existing data must be migrated using the Migrate Blobs tasks. See Tasks page for migration.",
+        "description": "Where to store binary data such as video covers, person, studio and tag images. After changing this value, the existing data must be migrated using the Migrate Blobs tasks. See Tasks page for migration.",
         "heading": "Binary data storage type"
       },
       "cache_location": "Directory location of the cache. Required if streaming using HLS (such as on Apple devices) or DASH.",
@@ -372,9 +372,9 @@
       "gallery_cover_regex_label": "Gallery cover pattern",
       "gallery_ext_desc": "Comma-delimited list of file extensions that will be identified as gallery zip files.",
       "gallery_ext_head": "Gallery zip Extensions",
-      "generated_file_naming_hash_desc": "Use MD5 or oshash for generated file naming. Changing this requires that all scenes have the applicable MD5/oshash value populated. After changing this value, existing generated files will need to be migrated or regenerated. See Tasks page for migration.",
+      "generated_file_naming_hash_desc": "Use MD5 or oshash for generated file naming. Changing this requires that all videos have the applicable MD5/oshash value populated. After changing this value, existing generated files will need to be migrated or regenerated. See Tasks page for migration.",
       "generated_file_naming_hash_head": "Generated file naming hash",
-      "generated_files_location": "Directory location for the generated files (scene markers, scene previews, sprites, etc)",
+      "generated_files_location": "Directory location for the generated files (video markers, video previews, sprites, etc)",
       "generated_path_head": "Generated Path",
       "hashing": "Hashing",
       "heatmap_generation": "Funscript Heatmap Generation",
@@ -445,7 +445,7 @@
     "stashbox": {
       "add_instance": "Add stash-box instance",
       "api_key": "API key",
-      "description": "Stash-box facilitates automated tagging of scenes and performers based on fingerprints and filenames.\nEndpoint and API key can be found on your account page on the stash-box instance. Names are required when more than one instance is added.",
+      "description": "Stash-box facilitates automated tagging of videos and people based on fingerprints and filenames.\nEndpoint and API key can be found on your account page on the stash-box instance. Names are required when more than one instance is added.",
       "endpoint": "Endpoint",
       "graphql_endpoint": "GraphQL endpoint",
       "name": "Name",
@@ -475,10 +475,10 @@
         "image_thumbnails": "Image Thumbnails",
         "image_thumbnails_desc": "Image thumbnails and clips",
         "markers": "Marker Previews",
-        "previews": "Scene Previews",
-        "previews_desc": "Scene previews and thumbnails",
-        "sprites": "Scene Sprites",
-        "transcodes": "Scene Transcodes"
+        "previews": "Video Previews",
+        "previews_desc": "Video previews and thumbnails",
+        "sprites": "Video Sprites",
+        "transcodes": "Video Transcodes"
       },
       "data_management": "Data management",
       "defaults_set": "Defaults have been set and will be used when clicking the {action} button on the Tasks page.",
@@ -486,49 +486,49 @@
       "empty_queue": "No tasks are currently running.",
       "export_to_json": "Exports the database content into JSON format in the metadata directory.",
       "generate": {
-        "generating_from_paths": "Generating for scenes from the following paths",
+        "generating_from_paths": "Generating for videos from the following paths",
         "generating_scenes": "Generating for {num} {scene}"
       },
       "generate_clip_previews_during_scan": "Generate previews for image clips",
       "generate_desc": "Generate supporting image, sprite, video, vtt and other files.",
       "generate_phashes_during_scan": "Generate perceptual hashes",
-      "generate_phashes_during_scan_tooltip": "For deduplication and scene identification.",
+      "generate_phashes_during_scan_tooltip": "For deduplication and video identification.",
       "generate_previews_during_scan": "Generate animated image previews",
-      "generate_previews_during_scan_tooltip": "Also generate animated (webp) previews, only required when Scene/Marker Wall Preview Type is set to Animated Image. When browsing they use less CPU than the video previews, but are generated in addition to them and are larger files.",
+      "generate_previews_during_scan_tooltip": "Also generate animated (webp) previews, only required when Video/Marker Wall Preview Type is set to Animated Image. When browsing they use less CPU than the video previews, but are generated in addition to them and are larger files.",
       "generate_sprites_during_scan": "Generate scrubber sprites",
       "generate_sprites_during_scan_tooltip": "The set of images displayed below the video player for easy navigation.",
       "generate_thumbnails_during_scan": "Generate thumbnails for images",
-      "generate_video_covers_during_scan": "Generate scene covers",
+      "generate_video_covers_during_scan": "Generate video covers",
       "generate_video_previews_during_scan": "Generate previews",
-      "generate_video_previews_during_scan_tooltip": "Generate video previews which play when hovering over a scene",
+      "generate_video_previews_during_scan_tooltip": "Generate video previews which play when hovering over a video",
       "generated_content": "Generated Content",
       "identify": {
         "and_create_missing": "and create missing",
         "create_missing": "Create missing",
         "default_options": "Default Options",
-        "description": "Automatically set scene metadata using stash-box and scraper sources.",
+        "description": "Automatically set video metadata using stash-box and scraper sources.",
         "explicit_set_description": "The following options will be used where not overridden in the source-specific options.",
         "field": "Field",
         "field_behaviour": "{strategy} {field}",
         "field_options": "Field Options",
         "heading": "Identify",
-        "identifying_from_paths": "Identifying scenes from the following paths",
+        "identifying_from_paths": "Identifying videos from the following paths",
         "identifying_scenes": "Identifying {num} {scene}",
-        "include_male_performers": "Include male performers",
+        "include_male_performers": "REMOVE",
         "set_cover_images": "Set cover images",
         "set_organized": "Set organised flag",
         "skip_multiple_matches": "Skip matches that have more than one result",
         "skip_multiple_matches_tooltip": "If this is not enabled and more than one result is returned, one will be randomly chosen to match",
-        "skip_single_name_performers": "Skip single name performers with no disambiguation",
-        "skip_single_name_performers_tooltip": "If this is not enabled, performers that are often generic like Samantha or Olga will be matched",
+        "skip_single_name_performers": "Skip single name people with no disambiguation",
+        "skip_single_name_performers_tooltip": "If this is not enabled, people that are often generic like Samantha or Olga will be matched",
         "source": "Source",
         "source_options": "{source} Options",
         "sources": "Sources",
         "strategy": "Strategy",
         "tag_skipped_matches": "Tag skipped matches with",
-        "tag_skipped_matches_tooltip": "Create a tag like 'Identify: Multiple Matches' that you can filter for in the Scene Tagger view and choose the correct match by hand",
-        "tag_skipped_performer_tooltip": "Create a tag like 'Identify: Single Name Performer' that you can filter for in the Scene Tagger view and choose how you want to handle these performers",
-        "tag_skipped_performers": "Tag skipped performers with"
+        "tag_skipped_matches_tooltip": "Create a tag like 'Identify: Multiple Matches' that you can filter for in the Video Tagger view and choose the correct match by hand",
+        "tag_skipped_performer_tooltip": "Create a tag like 'Identify: Single Name Person' that you can filter for in the Video Tagger view and choose how you want to handle these people",
+        "tag_skipped_performers": "Tag skipped people with"
       },
       "import_from_exported_json": "Import from exported JSON in the metadata directory. Wipes the existing database.",
       "incremental_import": "Incremental import from a supplied export zip file.",
@@ -541,7 +541,7 @@
       "migrate_hash_files": "Used after changing the Generated file naming hash to rename existing generated files to the new hash format.",
       "migrate_scene_screenshots": {
         "delete_files": "Delete screenshot files",
-        "description": "Migrate scene screenshots into the new blob storage system. This migration should be run after migrating an existing system to 0.20. Can optionally delete the old screenshots after migration.",
+        "description": "Migrate video screenshots into the new blob storage system. This migration should be run after migrating an existing system to 0.20. Can optionally delete the old screenshots after migration.",
         "overwrite_existing": "Overwrite existing blobs with screenshot data"
       },
       "migrations": "Migrations",
@@ -559,7 +559,7 @@
       "set_name_date_details_from_metadata_if_present": "Set name, date, details from embedded file metadata"
     },
     "tools": {
-      "scene_duplicate_checker": "Scene Duplicate Checker",
+      "scene_duplicate_checker": "Video Duplicate Checker",
       "scene_filename_parser": {
         "add_field": "Add Field",
         "capitalize_title": "Capitalize title",
@@ -567,15 +567,15 @@
         "escape_chars": "Use \\ to escape literal characters",
         "filename": "Filename",
         "filename_pattern": "Filename Pattern",
-        "ignore_organized": "Ignore organized scenes",
+        "ignore_organized": "Ignore organized videos",
         "ignored_words": "Ignored words",
         "matches_with": "Matches with {i}",
         "select_parser_recipe": "Select Parser Recipe",
-        "title": "Scene Filename Parser",
+        "title": "Video Filename Parser",
         "whitespace_chars": "Whitespace characters",
         "whitespace_chars_desc": "These characters will be replaced with whitespace in the title"
       },
-      "scene_tools": "Scene Tools"
+      "scene_tools": "Video Tools"
     },
     "ui": {
       "abbreviate_counters": {
@@ -599,7 +599,7 @@
         "option_label": "Custom localisation enabled"
       },
       "delete_options": {
-        "description": "Default settings when deleting images, galleries, and scenes.",
+        "description": "Default settings when deleting images, galleries, and videos.",
         "heading": "Delete Options",
         "options": {
           "delete_file": "Delete file by default",
@@ -671,7 +671,7 @@
         "sync": "Sync"
       },
       "handy_connection_key": {
-        "description": "Handy connection key to use for interactive scenes. Setting this key will allow Stash to share your current scene information with handyfeeling.com",
+        "description": "Handy connection key to use for interactive videos. Setting this key will allow Stash to share your current video information with handyfeeling.com",
         "heading": "Handy Connection Key"
       },
       "image_lightbox": {
@@ -700,7 +700,7 @@
         "heading": "Language"
       },
       "max_loop_duration": {
-        "description": "Maximum scene duration where scene player will loop the video - 0 to disable",
+        "description": "Maximum video duration where video player will loop the video - 0 to disable",
         "heading": "Maximum loop duration"
       },
       "menu_items": {
@@ -708,14 +708,14 @@
         "heading": "Menu Items"
       },
       "minimum_play_percent": {
-        "description": "The percentage of time in which a scene must be played before its play count is incremented.",
+        "description": "The percentage of time in which a video must be played before its play count is incremented.",
         "heading": "Minimum Play Percent"
       },
       "performers": {
         "options": {
           "image_location": {
-            "description": "Custom path for default performer images. Leave empty to use in-built defaults",
-            "heading": "Custom Performer Image Path"
+            "description": "Custom path for default person images. Leave empty to use in-built defaults",
+            "heading": "Custom Person Image Path"
           }
         }
       },
@@ -735,16 +735,16 @@
         }
       },
       "scene_player": {
-        "heading": "Scene Player",
+        "heading": "Video Player",
         "options": {
           "always_start_from_beginning": "Always start video from beginning",
           "auto_start_video": "Auto-start video",
           "auto_start_video_on_play_selected": {
-            "description": "Auto-start scene videos when playing from queue, or playing selected or random from Scenes page",
+            "description": "Auto-start video videos when playing from queue, or playing selected or random from Videos page",
             "heading": "Auto-start video when playing selected"
           },
           "continue_playlist_default": {
-            "description": "Play next scene in queue when video finishes",
+            "description": "Play next video in queue when video finishes",
             "heading": "Continue playlist by default"
           },
           "disable_mobile_media_auto_rotate": "Disable auto-rotate of fullscreen media on Mobile",
@@ -752,15 +752,15 @@
           "show_ab_loop_controls": "Show AB Loop plugin controls",
           "show_scrubber": "Show Scrubber",
           "show_range_markers": "Show Range Markers",
-          "track_activity": "Enable Scene Play history",
+          "track_activity": "Enable Video Play history",
           "vr_tag": {
-            "description": "The VR button will only be displayed for scenes with this tag.",
+            "description": "The VR button will only be displayed for videos with this tag.",
             "heading": "VR Tag"
           }
         }
       },
       "scene_wall": {
-        "heading": "Scene / Marker Wall",
+        "heading": "Video / Marker Wall",
         "options": {
           "display_title": "Display title and tags",
           "toggle_sound": "Enable sound"
@@ -931,22 +931,22 @@
       "source": "Source"
     },
     "overwrite_filter_confirm": "Are you sure you want to overwrite existing saved query {entityName}?",
-    "performers_found": "{count} performers found",
+    "performers_found": "{count} people found",
     "reassign_entity_title": "{count, plural, one {Reassign {singularEntity}} other {Reassign {pluralEntity}}}",
     "reassign_files": {
       "destination": "Reassign to"
     },
     "scene_gen": {
       "clip_previews": "Image Clip Previews",
-      "covers": "Scene covers",
+      "covers": "Video covers",
       "force_transcodes": "Force Transcode generation",
       "force_transcodes_tooltip": "By default, transcodes are only generated when the video file is not supported in the browser. When enabled, transcodes will be generated even when the video file appears to be supported in the browser.",
       "image_previews": "Animated Image Previews",
-      "image_previews_tooltip": "Also generate animated (webp) previews, only required when Scene/Marker Wall Preview Type is set to Animated Image. When browsing they use less CPU than the video previews, but are generated in addition to them and are larger files.",
+      "image_previews_tooltip": "Also generate animated (webp) previews, only required when Video/Marker Wall Preview Type is set to Animated Image. When browsing they use less CPU than the video previews, but are generated in addition to them and are larger files.",
       "image_thumbnails": "Image Thumbnails",
-      "interactive_heatmap_speed": "Generate heatmaps and speeds for interactive scenes",
+      "interactive_heatmap_speed": "Generate heatmaps and speeds for interactive videos",
       "marker_image_previews": "Marker Animated Image Previews",
-      "marker_image_previews_tooltip": "Also generate animated (webp) previews, only required when Scene/Marker Wall Preview Type is set to Animated Image. When browsing they use less CPU than the video previews, but are generated in addition to them and are larger files.",
+      "marker_image_previews_tooltip": "Also generate animated (webp) previews, only required when Video/Marker Wall Preview Type is set to Animated Image. When browsing they use less CPU than the video previews, but are generated in addition to them and are larger files.",
       "marker_screenshots": "Marker Screenshots",
       "marker_screenshots_tooltip": "Marker static JPG images",
       "markers": "Marker Previews",
@@ -955,10 +955,10 @@
       "override_preview_generation_options_desc": "Override Preview Generation Options for this operation. Defaults are set in System -> Preview Generation.",
       "overwrite": "Overwrite existing files",
       "phash": "Perceptual hashes",
-      "phash_tooltip": "For deduplication and scene identification",
-      "preview_exclude_end_time_desc": "Exclude the last x seconds from scene previews. This can be a value in seconds, or a percentage (eg 2%) of the total scene duration.",
+      "phash_tooltip": "For deduplication and video identification",
+      "preview_exclude_end_time_desc": "Exclude the last x seconds from video previews. This can be a value in seconds, or a percentage (eg 2%) of the total video duration.",
       "preview_exclude_end_time_head": "Exclude end time",
-      "preview_exclude_start_time_desc": "Exclude the first x seconds from scene previews. This can be a value in seconds, or a percentage (eg 2%) of the total scene duration.",
+      "preview_exclude_start_time_desc": "Exclude the first x seconds from video previews. This can be a value in seconds, or a percentage (eg 2%) of the total video duration.",
       "preview_exclude_start_time_head": "Exclude start time",
       "preview_generation_options": "Preview Generation Options",
       "preview_options": "Preview Options",
@@ -968,14 +968,14 @@
       "preview_seg_count_head": "Number of segments in preview",
       "preview_seg_duration_desc": "Duration of each preview segment, in seconds.",
       "preview_seg_duration_head": "Preview segment duration",
-      "sprites": "Scene Scrubber Sprites",
+      "sprites": "Video Scrubber Sprites",
       "sprites_tooltip": "The set of images displayed below the video player for easy navigation.",
       "transcodes": "Transcodes",
       "transcodes_tooltip": "MP4 transcodes will be pre-generated for all content; useful for slow CPUs but requires much more disk space",
       "video_previews": "Previews",
-      "video_previews_tooltip": "Video previews which play when hovering over a scene"
+      "video_previews_tooltip": "Video previews which play when hovering over a video"
     },
-    "scenes_found": "{count} scenes found",
+    "scenes_found": "{count} videos found",
     "scrape_entity_query": "{entity_type} Scrape Query",
     "scrape_entity_title": "{entity_type} Scrape Results",
     "scrape_results_existing": "Existing",
@@ -1017,7 +1017,7 @@
     "select_oldest": "Select the oldest file in the duplicate group",
     "select_options": "Select Options…",
     "select_youngest": "Select the youngest file in the duplicate group",
-    "title": "Duplicate Scenes"
+    "title": "Duplicate Videos"
   },
   "duplicated_phash": "Duplicated (pHash)",
   "duration": "Duration",
@@ -1042,7 +1042,7 @@
     "scale": "Scale",
     "warmth": "Warmth"
   },
-  "empty_server": "Add some scenes to your server to view recommendations on this page.",
+  "empty_server": "Add some videos to your server to view recommendations on this page.",
   "errors": {
     "custom_fields": {
       "duplicate_field": "Field name must be unique",
@@ -1098,7 +1098,7 @@
   },
   "group": "Group",
   "group_count": "Group Count",
-  "group_scene_number": "Scene Number",
+  "group_scene_number": "Video Number",
   "groups": "Groups",
   "hair_color": "Hair Colour",
   "handy_connection_status": {
@@ -1222,48 +1222,48 @@
   "penis_length": "Penis Length",
   "penis_length_cm": "Penis Length (cm)",
   "perceptual_similarity": "Perceptual Similarity (pHash)",
-  "performer": "Performer",
-  "performer_age": "Performer Age",
-  "performer_count": "Performer Count",
-  "performer_favorite": "Performer Favourited",
-  "performer_image": "Performer Image",
+  "performer": "Person",
+  "performer_age": "Person Age",
+  "performer_count": "Person Count",
+  "performer_favorite": "Person Favourited",
+  "performer_image": "Person Image",
   "performer_tagger": {
-    "add_new_performers": "Add New Performers",
+    "add_new_performers": "Add New People",
     "any_names_entered_will_be_queried": "Any names entered will be queried from the remote Stash-Box instance and added if found. Only exact matches will be considered a match.",
-    "batch_add_performers": "Batch Add Performers",
-    "batch_update_performers": "Batch Update Performers",
+    "batch_add_performers": "Batch Add People",
+    "batch_update_performers": "Batch Update People",
     "config": {
       "active_stash-box_instance": "Active stash-box instance:",
       "edit_excluded_fields": "Edit Excluded Fields",
       "excluded_fields": "Excluded fields:",
       "no_fields_are_excluded": "No fields are excluded",
       "no_instances_found": "No instances found",
-      "these_fields_will_not_be_changed_when_updating_performers": "These fields will not be changed when updating performers."
+      "these_fields_will_not_be_changed_when_updating_performers": "These fields will not be changed when updating people."
     },
     "current_page": "Current page",
-    "failed_to_save_performer": "Failed to save performer \"{performer}\"",
+    "failed_to_save_performer": "Failed to save person \"{performer}\"",
     "name_already_exists": "Name already exists",
     "network_error": "Network Error",
     "no_results_found": "No results found.",
-    "number_of_performers_will_be_processed": "{performer_count} performers will be processed",
-    "performer_already_tagged": "Performer already tagged",
-    "performer_names_separated_by_comma": "Performer names separated by comma",
-    "performer_selection": "Performer selection",
-    "performer_successfully_tagged": "Performer successfully tagged:",
-    "query_all_performers_in_the_database": "All performers in the database",
-    "refresh_tagged_performers": "Refresh tagged performers",
-    "refreshing_will_update_the_data": "Refreshing will update the data of any tagged performers from the stash-box instance.",
+    "number_of_performers_will_be_processed": "{performer_count} people will be processed",
+    "performer_already_tagged": "Person already tagged",
+    "performer_names_separated_by_comma": "Person names separated by comma",
+    "performer_selection": "Person selection",
+    "performer_successfully_tagged": "Person successfully tagged:",
+    "query_all_performers_in_the_database": "All people in the database",
+    "refresh_tagged_performers": "Refresh tagged people",
+    "refreshing_will_update_the_data": "Refreshing will update the data of any tagged people from the stash-box instance.",
     "status_tagging_job_queued": "Status: Tagging job queued",
-    "status_tagging_performers": "Status: Tagging performers",
+    "status_tagging_performers": "Status: Tagging people",
     "tag_status": "Tag Status",
-    "to_use_the_performer_tagger": "To use the performer tagger a stash-box instance needs to be configured.",
-    "untagged_performers": "Untagged performers",
-    "update_performer": "Update Performer",
-    "update_performers": "Update Performers",
-    "updating_untagged_performers_description": "Updating untagged performers will try to match any performers that lack a stashid and update the metadata."
+    "to_use_the_performer_tagger": "To use the person tagger a stash-box instance needs to be configured.",
+    "untagged_performers": "Untagged people",
+    "update_performer": "Update Person",
+    "update_performers": "Update People",
+    "updating_untagged_performers_description": "Updating untagged people will try to match any people that lack a stashid and update the metadata."
   },
-  "performer_tags": "Performer Tags",
-  "performers": "Performers",
+  "performer_tags": "Person Tags",
+  "performers": "People",
   "photographer": "Photographer",
   "piercings": "Piercings",
   "play_count": "Play Count",
@@ -1281,17 +1281,17 @@
   "release_notes": "Release Notes",
   "resolution": "Resolution",
   "resume_time": "Resume Time",
-  "scene": "Scene",
-  "sceneTagger": "Scene Tagger",
+  "scene": "Video",
+  "sceneTagger": "Video Tagger",
   "scene_code": "Studio Code",
-  "scene_count": "Scene Count",
-  "scene_created_at": "Scene Created At",
-  "scene_date": "Date of Scene",
-  "scene_id": "Scene ID",
-  "scene_tags": "Scene Tags",
-  "scene_updated_at": "Scene Updated At",
-  "scenes": "Scenes",
-  "scenes_updated_at": "Scene Updated At",
+  "scene_count": "Video Count",
+  "scene_created_at": "Video Created At",
+  "scene_date": "Date of Video",
+  "scene_id": "Video ID",
+  "scene_tags": "Video Tags",
+  "scene_updated_at": "Video Updated At",
+  "scenes": "Videos",
+  "scenes_updated_at": "Video Updated At",
   "search_filter": {
     "edit_filter": "Edit Filter",
     "name": "Filter",
@@ -1343,7 +1343,7 @@
     },
     "paths": {
       "database_filename_empty_for_default": "database filename (empty for default)",
-      "description": "Next up, we need to determine where to find your porn collection, and where to store the Stash database, generated files and cache files. These settings can be changed later if needed.",
+      "description": "Next up, we need to determine where to find your media collection, and where to store the Stash database, generated files and cache files. These settings can be changed later if needed.",
       "path_to_blobs_directory_empty_for_default": "path to blobs directory (empty for default)",
       "path_to_cache_directory_empty_for_default": "path to cache directory (empty for default)",
       "path_to_generated_directory_empty_for_default": "path to generated directory (empty for default)",
@@ -1351,17 +1351,17 @@
       "stash_alert": "No library paths have been selected. No media will be able to be scanned into Stash. Are you sure?",
       "store_blobs_in_database": "Store blobs in database",
       "where_can_stash_store_blobs": "Where can Stash store database binary data?",
-      "where_can_stash_store_blobs_description": "Stash can store binary data such as scene covers, performer, studio and tag images either in the database or in the filesystem. By default, it will store this data in the filesystem in the subdirectory <code>blobs</code> within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
+      "where_can_stash_store_blobs_description": "Stash can store binary data such as video covers, person, studio and tag images either in the database or in the filesystem. By default, it will store this data in the filesystem in the subdirectory <code>blobs</code> within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
       "where_can_stash_store_blobs_description_addendum": "Alternatively, you can store this data in the database. <strong>Note:</strong> This will increase the size of your database file, and will increase database migration times.",
       "where_can_stash_store_cache_files": "Where can Stash store cache files?",
       "where_can_stash_store_cache_files_description": "In order for some functionality like HLS/DASH live transcoding to function, Stash requires a cache directory for temporary files. By default, Stash will create a <code>cache</code> directory within the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
       "where_can_stash_store_its_database": "Where can Stash store its database?",
-      "where_can_stash_store_its_database_description": "Stash uses an SQLite database to store your porn metadata. By default, this will be created as <code>stash-go.sqlite</code> in the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) filename.",
+      "where_can_stash_store_its_database_description": "Stash uses an SQLite database to store your media metadata. By default, this will be created as <code>stash-go.sqlite</code> in the directory containing your config file. If you want to change this, please enter an absolute or relative (to the current working directory) filename.",
       "where_can_stash_store_its_database_warning": "WARNING: storing the database on a different system to where Stash is run from (e.g. storing the database on a NAS while running the Stash server on another computer) is <strong>unsupported</strong>! SQLite is not intended for use across a network, and attempting to do so can very easily cause your entire database to become corrupted.",
       "where_can_stash_store_its_generated_content": "Where can Stash store its generated content?",
       "where_can_stash_store_its_generated_content_description": "In order to provide thumbnails, previews and sprites, Stash generates images and videos. This also includes transcodes for unsupported file formats. By default, Stash will create a <code>generated</code> directory within the directory containing your config file. If you want to change where this generated media will be stored, please enter an absolute or relative (to the current working directory) path. Stash will create this directory if it does not already exist.",
-      "where_is_your_porn_located": "Where is your porn located?",
-      "where_is_your_porn_located_description": "Add directories containing your porn videos and images. Stash will use these directories to find videos and images during scanning."
+      "where_is_your_porn_located": "Where is your media located?",
+      "where_is_your_porn_located_description": "Add directories containing your media videos and images. Stash will use these directories to find videos and images during scanning."
     },
     "stash_setup_wizard": "Stash Setup Wizard",
     "success": {
@@ -1410,9 +1410,9 @@
   "statistics": "Statistics",
   "stats": {
     "image_size": "Images size",
-    "scenes_duration": "Scenes duration",
-    "scenes_played": "Scenes Played",
-    "scenes_size": "Scenes size",
+    "scenes_duration": "Videos duration",
+    "scenes_played": "Videos Played",
+    "scenes_size": "Videos size",
     "total_o_count": "Total O-Count",
     "total_play_count": "Total Play Count",
     "total_play_duration": "Total Play Duration"
@@ -1490,7 +1490,7 @@
     "delete_past_tense": "Deleted {count, plural, one {{singularEntity}} other {{pluralEntity}}}",
     "generating_screenshot": "Generating screenshot…",
     "image_index_too_large": "Error: Image index is larger than the number of images in the Gallery",
-    "merged_scenes": "Merged scenes",
+    "merged_scenes": "Merged videos",
     "merged_tags": "Merged tags",
     "reassign_past_tense": "File reassigned",
     "removed_entity": "Removed {count, plural, one {{singularEntity}} other {{pluralEntity}}}",
