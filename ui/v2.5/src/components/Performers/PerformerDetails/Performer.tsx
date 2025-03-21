@@ -17,7 +17,6 @@ import { ErrorMessage } from "src/components/Shared/ErrorMessage";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { useToast } from "src/hooks/Toast";
 import { ConfigurationContext } from "src/hooks/Config";
-import { RatingSystem } from "src/components/Shared/Rating/RatingSystem";
 import {
   CompressedPerformerDetailsPanel,
   PerformerDetailsPanel,
@@ -398,12 +397,6 @@ const PerformerPage: React.FC<IProps> = PatchComponent(
                   </span>
                 </DetailTitle>
                 <AliasList aliases={performer.alias_list} />
-                <RatingSystem
-                  value={performer.rating100}
-                  onSetRating={(value) => setRating(value)}
-                  clickToRate
-                  withoutContext
-                />
                 {!isEditing && (
                   <PerformerDetailsPanel
                     performer={performer}

@@ -27,7 +27,6 @@ import {
 } from "src/utils/gender";
 import {
   circumcisedToString,
-  stringCircumMap,
   stringToCircumcised,
 } from "src/utils/circumcised";
 import { ConfigurationContext } from "src/hooks/Config";
@@ -40,7 +39,6 @@ import isEqual from "lodash-es/isEqual";
 import { formikUtils } from "src/utils/form";
 import {
   yupFormikValidate,
-  yupInputNumber,
   yupInputEnum,
   yupDateString,
   yupUniqueAliases,
@@ -112,15 +110,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
     ethnicity: yup.string().ensure(),
     hair_color: yup.string().ensure(),
     eye_color: yup.string().ensure(),
-    height_cm: yupInputNumber().positive().truncate().nullable().defined(),
-    weight: yupInputNumber().positive().truncate().nullable().defined(),
-    measurements: yup.string().ensure(),
-    fake_tits: yup.string().ensure(),
-    penis_length: yupInputNumber().positive().nullable().defined(),
-    circumcised: yupInputEnum(GQL.CircumisedEnum).nullable().defined(),
-    tattoos: yup.string().ensure(),
-    piercings: yup.string().ensure(),
-    career_length: yup.string().ensure(),
     urls: yupUniqueStringList(intl),
     details: yup.string().ensure(),
     tag_ids: yup.array(yup.string().required()).defined(),
@@ -142,14 +131,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
     hair_color: performer.hair_color ?? "",
     eye_color: performer.eye_color ?? "",
     height_cm: performer.height_cm ?? null,
-    weight: performer.weight ?? null,
-    measurements: performer.measurements ?? "",
-    fake_tits: performer.fake_tits ?? "",
-    penis_length: performer.penis_length ?? null,
-    circumcised: performer.circumcised ?? null,
-    tattoos: performer.tattoos ?? "",
-    piercings: performer.piercings ?? "",
-    career_length: performer.career_length ?? "",
     urls: performer.urls ?? [],
     details: performer.details ?? "",
     tag_ids: (performer.tags ?? []).map((t) => t.id),
@@ -683,19 +664,6 @@ export const PerformerEditPanel: React.FC<IPerformerDetails> = ({
         {renderInputField("ethnicity")}
         {renderInputField("hair_color")}
         {renderInputField("eye_color")}
-        {renderInputField("height_cm", "number")}
-        {renderInputField("weight", "number", "weight_kg")}
-        {renderInputField("penis_length", "number", "penis_length_cm")}
-
-        {renderSelectField("circumcised", stringCircumMap)}
-
-        {renderInputField("measurements")}
-        {renderInputField("fake_tits")}
-
-        {renderInputField("tattoos", "textarea")}
-        {renderInputField("piercings", "textarea")}
-
-        {renderInputField("career_length")}
 
         {renderURLListField("urls", onScrapePerformerURL, urlScrapable)}
 

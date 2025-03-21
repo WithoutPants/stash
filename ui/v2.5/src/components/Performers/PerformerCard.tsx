@@ -6,7 +6,6 @@ import NavUtils from "src/utils/navigation";
 import TextUtils from "src/utils/text";
 import { GridCard, calculateCardWidth } from "../Shared/GridCard/GridCard";
 import { CountryFlag } from "../Shared/CountryFlag";
-import { SweatDrops } from "../Shared/SweatDrops";
 import { HoverPopover } from "../Shared/HoverPopover";
 import { Icon } from "../Shared/Icon";
 import { TagLink } from "../Shared/TagLink";
@@ -18,7 +17,6 @@ import {
 import { PopoverCountButton } from "../Shared/PopoverCountButton";
 import GenderIcon from "./GenderIcon";
 import { faTag } from "@fortawesome/free-solid-svg-icons";
-import { RatingBanner } from "../Shared/RatingBanner";
 import { usePerformerUpdate } from "src/core/StashService";
 import { ILabeledId } from "src/models/list-filter/types";
 import ScreenUtils from "src/utils/screen";
@@ -98,21 +96,6 @@ const PerformerCardPopovers: React.FC<IPerformerCardProps> = PatchComponent(
       );
     }
 
-    function maybeRenderOCounter() {
-      if (!performer.o_counter) return;
-
-      return (
-        <div className="o-counter">
-          <Button className="minimal">
-            <span className="fa-icon">
-              <SweatDrops />
-            </span>
-            <span>{performer.o_counter}</span>
-          </Button>
-        </div>
-      );
-    }
-
     function maybeRenderTagPopoverButton() {
       if (performer.tags.length <= 0) return;
 
@@ -152,7 +135,6 @@ const PerformerCardPopovers: React.FC<IPerformerCardProps> = PatchComponent(
       performer.image_count ||
       performer.gallery_count ||
       performer.tags.length > 0 ||
-      performer.o_counter ||
       performer.group_count
     ) {
       return (
@@ -164,7 +146,6 @@ const PerformerCardPopovers: React.FC<IPerformerCardProps> = PatchComponent(
             {maybeRenderImagesPopoverButton()}
             {maybeRenderGalleriesPopoverButton()}
             {maybeRenderTagPopoverButton()}
-            {maybeRenderOCounter()}
           </ButtonGroup>
         </>
       );
@@ -192,13 +173,6 @@ const PerformerCardOverlays: React.FC<IPerformerCardProps> = PatchComponent(
       }
     }
 
-    function maybeRenderRatingBanner() {
-      if (!performer.rating100) {
-        return;
-      }
-      return <RatingBanner rating={performer.rating100} />;
-    }
-
     function maybeRenderFlag() {
       if (performer.country) {
         return (
@@ -224,7 +198,6 @@ const PerformerCardOverlays: React.FC<IPerformerCardProps> = PatchComponent(
           size="2x"
           className="hide-not-favorite"
         />
-        {maybeRenderRatingBanner()}
         {maybeRenderFlag()}
       </>
     );

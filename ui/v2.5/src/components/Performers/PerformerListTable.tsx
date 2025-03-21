@@ -10,14 +10,8 @@ import NavUtils from "src/utils/navigation";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import { usePerformerUpdate } from "src/core/StashService";
 import { useTableColumns } from "src/hooks/useTableColumns";
-import { RatingSystem } from "../Shared/Rating/RatingSystem";
 import cx from "classnames";
-import {
-  FormatCircumcised,
-  FormatHeight,
-  FormatPenisLength,
-  FormatWeight,
-} from "./PerformerList";
+import { FormatHeight } from "./PerformerList";
 import TextUtils from "src/utils/text";
 import { getCountryByISO } from "src/utils/country";
 import { IColumn, ListTable } from "../List/ListTable";
@@ -36,19 +30,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
   const intl = useIntl();
 
   const [updatePerformer] = usePerformerUpdate();
-
-  function setRating(v: number | null, performerId: string) {
-    if (performerId) {
-      updatePerformer({
-        variables: {
-          input: {
-            id: performerId,
-            rating100: v,
-          },
-        },
-      });
-    }
-  }
 
   function setFavorite(v: boolean, performerId: string) {
     if (performerId) {
@@ -104,14 +85,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
     </>
   );
 
-  const RatingCell = (performer: GQL.PerformerDataFragment) => (
-    <RatingSystem
-      value={performer.rating100}
-      onSetRating={(value) => setRating(value, performer.id)}
-      clickToRate
-    />
-  );
-
   const AgeCell = (performer: GQL.PerformerDataFragment) => (
     <span
       title={
@@ -155,22 +128,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
     <>{performer.ethnicity}</>
   );
 
-  const MeasurementsCell = (performer: GQL.PerformerDataFragment) => (
-    <span className="ellips-data">{performer.measurements}</span>
-  );
-
-  const FakeTitsCell = (performer: GQL.PerformerDataFragment) => (
-    <>{performer.fake_tits}</>
-  );
-
-  const PenisLengthCell = (performer: GQL.PerformerDataFragment) => (
-    <>{FormatPenisLength(performer.penis_length)}</>
-  );
-
-  const CircumcisedCell = (performer: GQL.PerformerDataFragment) => (
-    <>{FormatCircumcised(performer.circumcised)}</>
-  );
-
   const HairColorCell = (performer: GQL.PerformerDataFragment) => (
     <span className="ellips-data">{performer.hair_color}</span>
   );
@@ -181,14 +138,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
 
   const HeightCell = (performer: GQL.PerformerDataFragment) => (
     <>{FormatHeight(performer.height_cm)}</>
-  );
-
-  const WeightCell = (performer: GQL.PerformerDataFragment) => (
-    <>{FormatWeight(performer.weight)}</>
-  );
-
-  const CareerLengthCell = (performer: GQL.PerformerDataFragment) => (
-    <span className="ellips-data">{performer.career_length}</span>
   );
 
   const SceneCountCell = (performer: GQL.PerformerDataFragment) => (
@@ -207,10 +156,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
     <Link to={NavUtils.makePerformerImagesUrl(performer)}>
       <span>{performer.image_count}</span>
     </Link>
-  );
-
-  const OCounterCell = (performer: GQL.PerformerDataFragment) => (
-    <>{performer.o_counter}</>
   );
 
   interface IColumnSpec {
@@ -249,12 +194,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
       label: intl.formatMessage({ id: "gender" }),
       defaultShow: true,
       render: GenderCell,
-    },
-    {
-      value: "rating",
-      label: intl.formatMessage({ id: "rating" }),
-      defaultShow: true,
-      render: RatingCell,
     },
     {
       value: "age",
@@ -301,37 +240,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
       render: HeightCell,
     },
     {
-      value: "weight_kg",
-      label: intl.formatMessage({ id: "weight_kg" }),
-      render: WeightCell,
-    },
-    {
-      value: "penis_length_cm",
-      label: intl.formatMessage({ id: "penis_length_cm" }),
-      render: PenisLengthCell,
-    },
-    {
-      value: "circumcised",
-      label: intl.formatMessage({ id: "circumcised" }),
-      render: CircumcisedCell,
-    },
-    {
-      value: "measurements",
-      label: intl.formatMessage({ id: "measurements" }),
-      render: MeasurementsCell,
-    },
-    {
-      value: "fake_tits",
-      label: intl.formatMessage({ id: "fake_tits" }),
-      render: FakeTitsCell,
-    },
-    {
-      value: "career_length",
-      label: intl.formatMessage({ id: "career_length" }),
-      defaultShow: true,
-      render: CareerLengthCell,
-    },
-    {
       value: "scene_count",
       label: intl.formatMessage({ id: "scene_count" }),
       defaultShow: true,
@@ -348,12 +256,6 @@ export const PerformerListTable: React.FC<IPerformerListTableProps> = (
       label: intl.formatMessage({ id: "image_count" }),
       defaultShow: true,
       render: ImageCountCell,
-    },
-    {
-      value: "o_counter",
-      label: intl.formatMessage({ id: "o_count" }),
-      defaultShow: true,
-      render: OCounterCell,
     },
   ];
 

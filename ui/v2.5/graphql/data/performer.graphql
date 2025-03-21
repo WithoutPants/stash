@@ -9,13 +9,6 @@ fragment PerformerData on Performer {
   country
   eye_color
   height_cm
-  measurements
-  fake_tits
-  penis_length
-  circumcised
-  career_length
-  tattoos
-  piercings
   alias_list
   favorite
   ignore_auto_tag
@@ -25,7 +18,6 @@ fragment PerformerData on Performer {
   gallery_count
   group_count
   performer_count
-  o_counter
 
   tags {
     ...SlimTagData
@@ -36,11 +28,9 @@ fragment PerformerData on Performer {
     endpoint
     updated_at
   }
-  rating100
   details
   death_date
   hair_color
-  weight
 
   custom_fields
 }

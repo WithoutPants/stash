@@ -6,13 +6,7 @@ import TextUtils from "src/utils/text";
 import { DetailItem } from "src/components/Shared/DetailItem";
 import { CountryFlag } from "src/components/Shared/CountryFlag";
 import { StashIDPill } from "src/components/Shared/StashID";
-import {
-  FormatAge,
-  FormatCircumcised,
-  FormatHeight,
-  FormatPenisLength,
-  FormatWeight,
-} from "../PerformerList";
+import { FormatAge, FormatHeight } from "../PerformerList";
 import { PatchComponent } from "src/patch";
 import { CustomFields } from "src/components/Shared/CustomFields";
 
@@ -128,46 +122,6 @@ export const PerformerDetailsPanel: React.FC<IPerformerDetails> =
         <DetailItem
           id="height"
           value={FormatHeight(performer.height_cm)}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="weight"
-          value={FormatWeight(performer.weight)}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="penis_length"
-          value={FormatPenisLength(performer.penis_length)}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="circumcised"
-          value={FormatCircumcised(performer.circumcised)}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="measurements"
-          value={performer?.measurements}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="fake_tits"
-          value={performer?.fake_tits}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="tattoos"
-          value={performer?.tattoos}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="piercings"
-          value={performer?.piercings}
-          fullWidth={fullWidth}
-        />
-        <DetailItem
-          id="career_length"
-          value={performer?.career_length}
           fullWidth={fullWidth}
         />
         <DetailItem id="details" value={details} fullWidth={fullWidth} />
