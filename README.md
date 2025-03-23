@@ -1,6 +1,6 @@
-# Stash
+# Treasury
 
-[![Build](https://github.com/stashapp/stash/actions/workflows/build.yml/badge.svg?branch=develop&event=push)](https://github.com/stashapp/stash/actions/workflows/build.yml)
+<!-- [![Build](https://github.com/stashapp/stash/actions/workflows/build.yml/badge.svg?branch=develop&event=push)](https://github.com/stashapp/stash/actions/workflows/build.yml)
 [![Docker pulls](https://img.shields.io/docker/pulls/stashapp/stash.svg)](https://hub.docker.com/r/stashapp/stash 'DockerHub')
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/stashapp?logo=github)](https://github.com/sponsors/stashapp)
 [![Open Collective backers](https://img.shields.io/opencollective/backers/stashapp?logo=opencollective)](https://opencollective.com/stashapp)
@@ -8,21 +8,29 @@
 [![Matrix](https://img.shields.io/matrix/stashapp:unredacted.org?logo=matrix&server_fqdn=matrix.org)](https://matrix.to/#/#stashapp:unredacted.org)
 [![Discord](https://img.shields.io/discord/559159668438728723.svg?logo=discord)](https://discord.gg/2TsNFKt)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/stashapp/stash?logo=github)](https://github.com/stashapp/stash/releases/latest)
-[![GitHub issues by-label](https://img.shields.io/github/issues-raw/stashapp/stash/bounty)](https://github.com/stashapp/stash/labels/bounty)
+[![GitHub issues by-label](https://img.shields.io/github/issues-raw/stashapp/stash/bounty)](https://github.com/stashapp/stash/labels/bounty) -->
 
-### **Stash is a self-hosted webapp written in Go which organizes and serves your porn.**
-![demo image](docs/readme_assets/demo_image.png)
+### **Treasury is a self-hosted webapp written in Go which organizes and serves your _media_.**
+<!-- ![demo image](docs/readme_assets/demo_image.png) -->
 
-* Stash gathers information about videos in your collection from the internet, and is extensible through the use of community-built plugins for a large number of content producers and sites.
+<!-- * Stash gathers information about videos in your collection from the internet, and is extensible through the use of community-built plugins for a large number of content producers and sites.
 * Stash supports a wide variety of both video and image formats.
 * You can tag videos and find them later.
 * Stash provides statistics about performers, tags, studios and more.
 
 You can [watch a SFW demo video](https://vimeo.com/545323354) to see it in action.
 
-For further information you can consult the [documentation](https://docs.stashapp.cc) or [read the in-app manual](ui/v2.5/src/docs/en).
+For further information you can consult the [documentation](https://docs.stashapp.cc) or [read the in-app manual](ui/v2.5/src/docs/en). -->
 
-# Installing Stash
+Treasury is a fork of Stash. This is currently a work in progress and is not yet ready for use.
+
+TODO:
+
+- [ ] New colour schema to distinguish from stash
+- [ ] New logo
+- [ ] Remove nsfw elements identified in i8n
+
+<!-- # Installing Stash
 
 #### Windows Users:
 
@@ -89,4 +97,4 @@ You can also change the Stash interface to fit your desired style with various s
 
 Pull requests are welcome! 
 
-See [Development](docs/DEVELOPMENT.md) and [Contributing](docs/CONTRIBUTING.md) for information on working with the codebase, getting a local development setup, and contributing changes.
+See [Development](docs/DEVELOPMENT.md) and [Contributing](docs/CONTRIBUTING.md) for information on working with the codebase, getting a local development setup, and contributing changes. -->
