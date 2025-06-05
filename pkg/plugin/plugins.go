@@ -250,6 +250,7 @@ func (c Cache) makeServerConnection(ctx context.Context) common.StashServerConne
 		Port:          c.config.GetPort(),
 		SessionCookie: cookie,
 		Dir:           c.config.GetConfigPathAbs(),
+		PathSeparator: string(os.PathSeparator),
 	}
 
 	if c.config.HasTLSConfig() {

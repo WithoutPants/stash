@@ -24,6 +24,9 @@ type StashServerConnection struct {
 	// PluginDir specifies the directory containing the plugin configuration
 	// file.
 	PluginDir string
+
+	// PathSeparator is the path separator used by the server.
+	PathSeparator string
 }
 
 // PluginArgValue represents a single value parameter for plugin operations.
