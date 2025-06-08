@@ -1,10 +1,13 @@
 import cloneDeep from "lodash-es/cloneDeep";
-import React from "react";
+import React, { useMemo } from "react";
 import { Form } from "react-bootstrap";
+import AsyncSelect from "react-select/async";
+import Select from "react-select";
 import {
   CriterionValue,
   ModifierCriterion,
 } from "src/models/list-filter/criteria/criterion";
+import { SelectComponent } from "src/components/Shared/FilterSelect";
 
 interface IOptionsFilter {
   criterion: ModifierCriterion<CriterionValue>;
@@ -76,18 +79,35 @@ export const OptionListFilter: React.FC<IOptionsListFilter> = ({
   const { options } = criterion.modifierCriterionOption();
   const value = criterion.value as string[];
 
+  const selectOptions = useMemo(() => {
+    return options?.map((o) => ({
+      value: o.toString(),
+      label: o.toString(),
+    })) ?? [];
+  }, [options]);
+
+  const selectValue = useMemo(() => {
+    return value.map((v) => (selectOptions.find((o) => o.value === v) ?? { value: v, label: v }));
+  }, [value]);
+
   return (
     <div className="option-list-filter">
-      {options?.map((o) => (
-        <Form.Check
-          id={`${criterion.getId()}-${o.toString()}`}
-          key={o.toString()}
-          onChange={() => onSelect(o.toString())}
-          checked={value.includes(o.toString())}
-          type="checkbox"
-          label={o.toString()}
-        />
-      ))}
+      <SelectComponent
+        isMulti
+        isClearable
+        isSearchable={(options ?? []).length > 10}
+        closeMenuOnSelect={false}
+        className="input-control"
+        selectedOptions={selectValue}
+        onChange={(selected) => {
+          const newValue = selected.map((s) => s.value);
+          const c = cloneDeep(criterion);
+          c.value = newValue;
+          setCriterion(c);
+        }}
+        options={selectOptions}
+        menuPortalTarget={document.body}
+      />
     </div>
   );
 };

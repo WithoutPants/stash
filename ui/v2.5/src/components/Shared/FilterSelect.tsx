@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
-import {
+import Select, {
   OnChangeValue,
   StylesConfig,
   GroupBase,
   OptionsOrGroups,
   Options,
+  Props as SelectProps,
 } from "react-select";
 import AsyncSelect from "react-select/async";
 import AsyncCreatableSelect, {
@@ -18,7 +19,7 @@ import { IHasID } from "src/utils/data";
 
 export type Option<T> = { value: string; object: T };
 
-interface ISelectProps<T, IsMulti extends boolean>
+interface IAsyncSelectProps<T, IsMulti extends boolean>
   extends AsyncCreatableProps<Option<T>, IsMulti, GroupBase<Option<T>>> {
   selectedOptions?: OnChangeValue<Option<T>, IsMulti>;
   creatable?: boolean;
@@ -32,7 +33,7 @@ interface ISelectProps<T, IsMulti extends boolean>
 
 interface IFilterSelectProps<T, IsMulti extends boolean>
   extends Pick<
-    ISelectProps<T, IsMulti>,
+    IAsyncSelectProps<T, IsMulti>,
     | "selectedOptions"
     | "isLoading"
     | "isMulti"
@@ -40,6 +41,16 @@ interface IFilterSelectProps<T, IsMulti extends boolean>
     | "placeholder"
     | "closeMenuOnSelect"
   > {}
+
+interface ISelectProps<T, IsMulti extends boolean>
+  extends SelectProps<T, IsMulti, GroupBase<T>> {
+  selectedOptions?: OnChangeValue<T, IsMulti>;
+  isDisabled?: boolean;
+  placeholder?: string;
+  showDropdown?: boolean;
+  groupHeader?: string;
+  noOptionsMessageText?: string | null;
+}
 
 const getSelectedItems = <T,>(
   selectedItems: OnChangeValue<Option<T>, boolean>
@@ -53,8 +64,8 @@ const getSelectedItems = <T,>(
   }
 };
 
-const SelectComponent = <T, IsMulti extends boolean>(
-  props: ISelectProps<T, IsMulti>
+const AsyncSelectComponent = <T, IsMulti extends boolean>(
+  props: IAsyncSelectProps<T, IsMulti>
 ) => {
   const {
     selectedOptions,
@@ -108,6 +119,54 @@ const SelectComponent = <T, IsMulti extends boolean>(
   ) : (
     <AsyncSelect {...componentProps} />
   );
+};
+
+export const SelectComponent = <T, IsMulti extends boolean>(
+  props: ISelectProps<T, IsMulti>
+) => {
+  const {
+    selectedOptions,
+    isDisabled = false,
+    components,
+    placeholder,
+    showDropdown = true,
+    noOptionsMessageText: noOptionsMessage = "None",
+  } = props;
+
+  const styles: StylesConfig<T, IsMulti> = {
+    option: (base) => ({
+      ...base,
+      color: "#000",
+    }),
+    container: (base, state) => ({
+      ...base,
+      zIndex: state.isFocused ? 10 : base.zIndex,
+    }),
+    multiValueRemove: (base, state) => ({
+      ...base,
+      color: state.isFocused ? base.color : "#333333",
+    }),
+  };
+
+  const componentProps = {
+    ...props,
+    styles,
+    defaultOptions: true,
+    isClearable: true,
+    value: selectedOptions ?? null,
+    className: cx("react-select", props.className),
+    classNamePrefix: "react-select",
+    noOptionsMessage: () => noOptionsMessage,
+    placeholder: isDisabled ? "" : placeholder,
+    components: {
+      ...components,
+      IndicatorSeparator: () => null,
+      ...((!showDropdown || isDisabled) && { DropdownIndicator: () => null }),
+      ...(isDisabled && { MultiValueRemove: () => null }),
+    },
+  };
+
+  return <Select {...componentProps} />;
 };
 
 export interface IFilterValueProps<T> {
@@ -243,7 +302,7 @@ export const FilterSelectComponent = <
   }, debounceDelay);
 
   return (
-    <SelectComponent<T, IsMulti>
+    <AsyncSelectComponent<T, IsMulti>
       {...props}
       loadOptions={debounceLoadOptions}
       isLoading={props.isLoading || loading}
