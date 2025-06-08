@@ -1,5 +1,5 @@
 import cloneDeep from "lodash-es/cloneDeep";
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo } from "react";
 import { CriterionModifier } from "src/core/generated-graphql";
 import {
   DurationCriterion,
@@ -45,7 +45,6 @@ import TagsFilter from "./Filters/TagsFilter";
 import { PhashCriterion } from "src/models/list-filter/criteria/phash";
 import { PhashFilter } from "./Filters/PhashFilter";
 import { PathCriterion } from "src/models/list-filter/criteria/path";
-import { ModifierSelectorButtons } from "./ModifierSelect";
 import { CustomFieldsCriterion } from "src/models/list-filter/criteria/custom-fields";
 import { CustomFieldsFilter } from "./Filters/CustomFieldsFilter";
 
@@ -58,19 +57,7 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
   criterion,
   setCriterion,
 }) => {
-  const { options, modifierOptions } = criterion.modifierCriterionOption();
-
-  const showModifierSelector = useMemo(() => {
-    if (
-      criterion instanceof PerformersCriterion ||
-      criterion instanceof StudiosCriterion ||
-      criterion instanceof TagsCriterion
-    ) {
-      return false;
-    }
-
-    return modifierOptions && modifierOptions.length > 1;
-  }, [criterion, modifierOptions]);
+  const { options } = criterion.modifierCriterionOption();
 
   const alwaysShowFilter = useMemo(() => {
     return (
@@ -80,34 +67,6 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
       criterion instanceof TagsCriterion
     );
   }, [criterion]);
-
-  const onChangedModifierSelect = useCallback(
-    (m: CriterionModifier) => {
-      const newCriterion = cloneDeep(criterion);
-      newCriterion.modifier = m;
-      setCriterion(newCriterion);
-    },
-    [criterion, setCriterion]
-  );
-
-  const modifierSelector = useMemo(() => {
-    if (!showModifierSelector) {
-      return;
-    }
-
-    return (
-      <ModifierSelectorButtons
-        options={modifierOptions}
-        value={criterion.modifier}
-        onChanged={onChangedModifierSelect}
-      />
-    );
-  }, [
-    showModifierSelector,
-    modifierOptions,
-    onChangedModifierSelect,
-    criterion.modifier,
-  ]);
 
   const valueControl = useMemo(() => {
     function onValueChanged(value: CriterionValue) {
@@ -249,22 +208,17 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
     );
   }, [criterion, setCriterion, options, alwaysShowFilter]);
 
-  return (
-    <div>
-      {modifierSelector}
-      {valueControl}
-    </div>
-  );
+  return <div>{valueControl}</div>;
 };
 
 interface ICriterionEditor {
   criterion: Criterion;
-  setCriterion: (c: Criterion) => void;
+  onChange: (c: Criterion) => void;
 }
 
 export const CriterionEditor: React.FC<ICriterionEditor> = ({
   criterion,
-  setCriterion,
+  onChange: setCriterion,
 }) => {
   const filterControl = useMemo(() => {
     if (criterion instanceof BooleanCriterion) {

@@ -98,7 +98,7 @@ export abstract class Criterion {
 
 // V = criterion value type
 export abstract class ModifierCriterion<
-  V extends CriterionValue
+  V extends CriterionValue = CriterionValue
 > extends Criterion {
   protected _modifier!: CriterionModifier;
   public get modifier(): CriterionModifier {
@@ -130,6 +130,12 @@ export abstract class ModifierCriterion<
 
   public modifierCriterionOption() {
     return this.criterionOption as ModifierCriterionOption;
+  }
+
+  public withModifier(modifier: CriterionModifier) {
+    const ret = this.clone();
+    ret.modifier = modifier;
+    return ret;
   }
 
   public clone() {
