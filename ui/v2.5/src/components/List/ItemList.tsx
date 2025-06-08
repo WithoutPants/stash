@@ -295,9 +295,7 @@ export const ItemList = <T extends QueryResult, E extends IHasID>(
 
   function onRemoveCriterion(removedCriterion: Criterion, valueIndex?: number) {
     if (valueIndex === undefined) {
-      updateFilter(
-        filter.removeCriterion(removedCriterion.criterionOption.type)
-      );
+      updateFilter(filter.removeCriterion(removedCriterion));
     } else {
       updateFilter(
         filter.removeCustomFieldCriterion(

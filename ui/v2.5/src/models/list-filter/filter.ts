@@ -489,7 +489,8 @@ export class ListFilterModel {
     return ret;
   }
 
-  public removeCriterion(type: CriterionType) {
+  // deprecated
+  public removeCriterionType(type: CriterionType) {
     const ret = this.clone();
     const c = ret.criteria.find((cc) => cc.criterionOption.type === type);
 
@@ -499,6 +500,15 @@ export class ListFilterModel {
       return cc.getId() !== c.getId();
     });
 
+    ret.criteria = newCriteria;
+    ret.currentPage = 1;
+    return ret;
+  }
+
+  public removeCriterion(criterion: Criterion) {
+    // filter out the criterion first
+    const newCriteria = this.criteria.filter((cc) => cc !== criterion);
+    const ret = this.clone();
     ret.criteria = newCriteria;
     ret.currentPage = 1;
     return ret;

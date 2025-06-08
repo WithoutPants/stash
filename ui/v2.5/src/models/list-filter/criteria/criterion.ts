@@ -220,7 +220,17 @@ export abstract class ModifierCriterion<
   }
 
   public applyToCriterionInput(input: Record<string, unknown>) {
-    input[this.criterionOption.type] = this.toCriterionInput();
+    if (!input[this.criterionOption.type]) {
+      input[this.criterionOption.type] = this.toCriterionInput();
+      return;
+    }
+
+    // already exists, recurse to AND
+    if (!input.AND) {
+      input.AND = {};
+    }
+
+    this.applyToCriterionInput(input.AND as Record<string, unknown>);
   }
 
   // TODO - saved criterion _should_ be criterion input
