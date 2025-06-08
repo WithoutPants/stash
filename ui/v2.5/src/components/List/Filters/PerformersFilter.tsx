@@ -17,6 +17,10 @@ import {
   useLabeledIdFilterState,
 } from "./LabeledIdFilter";
 import { SidebarListFilter } from "./SidebarListFilter";
+import {
+  Performer,
+  PerformerIDSelect,
+} from "src/components/Performers/PerformerSelect";
 
 interface IPerformersFilter {
   criterion: PerformersCriterion;
@@ -118,6 +122,34 @@ export const SidebarPerformersFilter: React.FC<{
   });
 
   return <SidebarListFilter {...state} title={title} />;
+};
+
+export const PerformerFilterSelect: React.FC<IPerformersFilter> = ({
+  criterion,
+  setCriterion,
+}) => {
+  const selectValue = useMemo(
+    () => criterion.value.items.map((p) => p.id),
+    [criterion.value]
+  );
+
+  function onSelect(performers: Performer[]) {
+    const newCriterion = criterion.clone() as PerformersCriterion;
+    newCriterion.value = {
+      items: performers.map((p) => ({ id: p.id, label: p.name })),
+      excluded: [],
+    };
+    setCriterion(newCriterion);
+  }
+
+  return (
+    <PerformerIDSelect
+      isMulti
+      onSelect={onSelect}
+      ids={selectValue}
+      menuPortalTarget={document.body}
+    />
+  );
 };
 
 export default PerformersFilter;

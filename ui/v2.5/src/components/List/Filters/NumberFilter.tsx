@@ -1,5 +1,4 @@
 import React from "react";
-import { Form } from "react-bootstrap";
 import { useIntl } from "react-intl";
 import { CriterionModifier } from "../../../core/generated-graphql";
 import { INumberValue } from "../../../models/list-filter/types";
@@ -36,14 +35,14 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
     criterion.modifier === CriterionModifier.NotEquals
   ) {
     equalsControl = (
-        <NumberField
-          className="btn-secondary"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onChanged(e, "value")
-          }
-          value={value?.value ?? ""}
-          placeholder={intl.formatMessage({ id: "criterion.value" })}
-        />
+      <NumberField
+        className="btn-secondary"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          onChanged(e, "value")
+        }
+        value={value?.value ?? ""}
+        placeholder={intl.formatMessage({ id: "criterion.value" })}
+      />
     );
   }
 
@@ -54,14 +53,14 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
     criterion.modifier === CriterionModifier.NotBetween
   ) {
     lowerControl = (
-        <NumberField
-          className="btn-secondary"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onChanged(e, "value")
-          }
-          value={value?.value ?? ""}
-          placeholder={intl.formatMessage({ id: "criterion.greater_than" })}
-        />
+      <NumberField
+        className="btn-secondary"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          onChanged(e, "value")
+        }
+        value={value?.value ?? ""}
+        placeholder={intl.formatMessage({ id: "criterion.greater_than" })}
+      />
     );
   }
 
@@ -72,23 +71,23 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
     criterion.modifier === CriterionModifier.NotBetween
   ) {
     upperControl = (
-        <NumberField
-          className="btn-secondary"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onChanged(
-              e,
-              criterion.modifier === CriterionModifier.LessThan
-                ? "value"
-                : "value2"
-            )
-          }
-          value={
-            (criterion.modifier === CriterionModifier.LessThan
-              ? value?.value
-              : value?.value2) ?? ""
-          }
-          placeholder={intl.formatMessage({ id: "criterion.less_than" })}
-        />
+      <NumberField
+        className="btn-secondary"
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          onChanged(
+            e,
+            criterion.modifier === CriterionModifier.LessThan
+              ? "value"
+              : "value2"
+          )
+        }
+        value={
+          (criterion.modifier === CriterionModifier.LessThan
+            ? value?.value
+            : value?.value2) ?? ""
+        }
+        placeholder={intl.formatMessage({ id: "criterion.less_than" })}
+      />
     );
   }
 

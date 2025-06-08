@@ -37,11 +37,11 @@ import { BooleanFilter } from "./Filters/BooleanFilter";
 import { OptionFilter, OptionListFilter } from "./Filters/OptionFilter";
 import { PathFilter } from "./Filters/PathFilter";
 import { PerformersCriterion } from "src/models/list-filter/criteria/performers";
-import PerformersFilter from "./Filters/PerformersFilter";
+import { PerformerFilterSelect } from "./Filters/PerformersFilter";
 import { StudiosCriterion } from "src/models/list-filter/criteria/studios";
-import StudiosFilter from "./Filters/StudiosFilter";
+import { StudioFilterSelect } from "./Filters/StudiosFilter";
 import { TagsCriterion } from "src/models/list-filter/criteria/tags";
-import TagsFilter from "./Filters/TagsFilter";
+import { TagFilterSelect } from "./Filters/TagsFilter";
 import { PhashCriterion } from "src/models/list-filter/criteria/phash";
 import { PhashFilter } from "./Filters/PhashFilter";
 import { PathCriterion } from "src/models/list-filter/criteria/path";
@@ -93,7 +93,7 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
 
     if (criterion instanceof PerformersCriterion) {
       return (
-        <PerformersFilter
+        <PerformerFilterSelect
           criterion={criterion}
           setCriterion={(c) => setCriterion(c)}
         />
@@ -102,7 +102,7 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
 
     if (criterion instanceof StudiosCriterion) {
       return (
-        <StudiosFilter
+        <StudioFilterSelect
           criterion={criterion}
           setCriterion={(c) => setCriterion(c)}
         />
@@ -111,7 +111,7 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
 
     if (criterion instanceof TagsCriterion) {
       return (
-        <TagsFilter
+        <TagFilterSelect
           criterion={criterion}
           setCriterion={(c) => setCriterion(c)}
         />
@@ -126,6 +126,7 @@ const GenericCriterionEditor: React.FC<IGenericCriterionEditor> = ({
         />
       );
     }
+
     if (criterion instanceof IHierarchicalLabeledIdCriterion) {
       return (
         <HierarchicalLabelValueFilter

@@ -15,6 +15,9 @@ import {
   useLabeledIdFilterState,
 } from "./LabeledIdFilter";
 import { SidebarListFilter } from "./SidebarListFilter";
+import { Studio, StudioIDSelect } from "src/components/Studios/StudioSelect";
+import { Form } from "react-bootstrap";
+import { FormattedMessage } from "react-intl";
 
 interface IStudiosFilter {
   criterion: StudiosCriterion;
@@ -109,6 +112,49 @@ export const SidebarStudiosFilter: React.FC<{
   });
 
   return <SidebarListFilter {...state} title={title} />;
+};
+
+export const StudioFilterSelect: React.FC<IStudiosFilter> = ({
+  criterion,
+  setCriterion,
+}) => {
+  const selectValue = useMemo(
+    () => criterion.value.items.map((p) => p.id),
+    [criterion.value]
+  );
+
+  function onSelect(studios: Studio[]) {
+    const newCriterion = criterion.clone() as StudiosCriterion;
+    newCriterion.value = {
+      ...criterion.value,
+      items: studios.map((p) => ({ id: p.id, label: p.name })),
+    };
+    setCriterion(newCriterion);
+  }
+
+  function onChangeDepth(depth: number) {
+    const newCriterion = criterion.clone() as StudiosCriterion;
+    newCriterion.value.depth = depth;
+    setCriterion(newCriterion);
+  }
+
+  return (
+    <div>
+      <StudioIDSelect
+        isMulti
+        onSelect={onSelect}
+        ids={selectValue}
+        menuPortalTarget={document.body}
+      />
+      <Form.Check
+        type="checkbox"
+        className="mt-2"
+        checked={criterion.value.depth === -1}
+        onChange={(e) => onChangeDepth(e.target.checked ? -1 : 0)}
+        label={<FormattedMessage id="include_sub_studios" />}
+      />
+    </div>
+  );
 };
 
 export default StudiosFilter;

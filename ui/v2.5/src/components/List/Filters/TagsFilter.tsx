@@ -16,6 +16,9 @@ import {
 } from "./LabeledIdFilter";
 import { SidebarListFilter } from "./SidebarListFilter";
 import { TagsCriterion } from "src/models/list-filter/criteria/tags";
+import { Tag, TagIDSelect } from "src/components/Tags/TagSelect";
+import { FormattedMessage } from "react-intl";
+import { Form } from "react-bootstrap";
 
 interface ITagsFilter {
   criterion: TagsCriterion;
@@ -113,6 +116,49 @@ export const SidebarTagsFilter: React.FC<{
   });
 
   return <SidebarListFilter {...state} title={title} />;
+};
+
+export const TagFilterSelect: React.FC<ITagsFilter> = ({
+  criterion,
+  setCriterion,
+}) => {
+  const selectValue = useMemo(
+    () => criterion.value.items.map((p) => p.id),
+    [criterion.value]
+  );
+
+  function onSelect(tags: Tag[]) {
+    const newCriterion = criterion.clone() as TagsCriterion;
+    newCriterion.value = {
+      ...criterion.value,
+      items: tags.map((t) => ({ id: t.id, label: t.name })),
+    };
+    setCriterion(newCriterion);
+  }
+
+  function onChangeDepth(depth: number) {
+    const newCriterion = criterion.clone() as TagsCriterion;
+    newCriterion.value.depth = depth;
+    setCriterion(newCriterion);
+  }
+
+  return (
+    <div>
+      <TagIDSelect
+        isMulti
+        onSelect={onSelect}
+        ids={selectValue}
+        menuPortalTarget={document.body}
+      />
+      <Form.Check
+        type="checkbox"
+        className="mt-2"
+        checked={criterion.value.depth === -1}
+        onChange={(e) => onChangeDepth(e.target.checked ? -1 : 0)}
+        label={<FormattedMessage id="include_sub_tags" />}
+      />
+    </div>
+  );
 };
 
 export default TagsFilter;

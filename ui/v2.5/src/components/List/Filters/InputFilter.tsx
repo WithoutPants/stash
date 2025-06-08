@@ -19,11 +19,11 @@ export const InputFilter: React.FC<IInputFilterProps> = ({
   }
 
   return (
-      <Form.Control
-        className="btn-secondary"
-        type={criterion.modifierCriterionOption().inputType}
-        onChange={onChanged}
-        value={criterion.value ? criterion.value.toString() : ""}
-      />
+    <Form.Control
+      className="btn-secondary"
+      type={criterion.modifierCriterionOption().inputType}
+      onChange={onChanged}
+      value={criterion.value ? criterion.value.toString() : ""}
+    />
   );
 };

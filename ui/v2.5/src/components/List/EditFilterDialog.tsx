@@ -207,7 +207,7 @@ export const EditFilterDialog: React.FC<IEditFilterProps> = ({
 
   function applyClicked() {
     const newFilter = cloneDeep(filter);
-    newFilter.criteria = criteria.filter((c) => c !== undefined);
+    newFilter.criteria = criteria.filter((c) => c !== undefined) as Criterion[];
 
     onApply(newFilter);
   }
@@ -216,7 +216,7 @@ export const EditFilterDialog: React.FC<IEditFilterProps> = ({
     const filteredCriteria = criteria.filter((c) => c !== undefined);
     return (
       filteredCriteria.length === 0 ||
-      filteredCriteria.every((c) => c.isValid())
+      filteredCriteria.every((c) => !c || c.isValid())
     );
   }
 
