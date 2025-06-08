@@ -134,8 +134,7 @@ const CriterionRow: React.FC<{
       <Col xs="auto">
         {criterion !== undefined && (
           <Button
-            variant="danger"
-            className="minimal"
+            className="minimal btn-danger-minimal"
             onClick={() => onRemove()}
           >
             <Icon icon={faTimes} />

@@ -28,18 +28,26 @@ export const OptionFilter: React.FC<IOptionsFilter> = ({
 
   const { options } = criterion.modifierCriterionOption();
 
+  if (!options || options.length === 0) {
+    throw new Error(
+      `OptionFilter: No options found for criterion ${criterion.getId()}`
+    );
+  }
+
   return (
     <div className="option-list-filter">
-      {options?.map((o) => (
-        <Form.Check
-          id={`${criterion.getId()}-${o.toString()}`}
-          key={o.toString()}
-          onChange={() => onSelect(o.toString())}
-          checked={criterion.value === o.toString()}
-          type="radio"
-          label={o.toString()}
-        />
-      ))}
+      <Form.Control
+        as="select"
+        className="input-control"
+        value={criterion.value as string}
+        onChange={(e) => onSelect(e.target.value)}
+      >
+        {options.map(o => o.toString()).map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </Form.Control>
     </div>
   );
 };

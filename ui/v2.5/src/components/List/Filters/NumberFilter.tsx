@@ -36,7 +36,6 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
     criterion.modifier === CriterionModifier.NotEquals
   ) {
     equalsControl = (
-      <Form.Group>
         <NumberField
           className="btn-secondary"
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -45,7 +44,6 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
           value={value?.value ?? ""}
           placeholder={intl.formatMessage({ id: "criterion.value" })}
         />
-      </Form.Group>
     );
   }
 
@@ -56,7 +54,6 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
     criterion.modifier === CriterionModifier.NotBetween
   ) {
     lowerControl = (
-      <Form.Group>
         <NumberField
           className="btn-secondary"
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -65,7 +62,6 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
           value={value?.value ?? ""}
           placeholder={intl.formatMessage({ id: "criterion.greater_than" })}
         />
-      </Form.Group>
     );
   }
 
@@ -76,7 +72,6 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
     criterion.modifier === CriterionModifier.NotBetween
   ) {
     upperControl = (
-      <Form.Group>
         <NumberField
           className="btn-secondary"
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -94,7 +89,6 @@ export const NumberFilter: React.FC<IDurationFilterProps> = ({
           }
           placeholder={intl.formatMessage({ id: "criterion.less_than" })}
         />
-      </Form.Group>
     );
   }
 

@@ -67,6 +67,15 @@ body {
   }
 }
 
+button.btn-danger-minimal:not(:disabled):not(.disabled) {
+  color: $danger;
+
+  &:hover,
+  &:active {
+    color: $danger;
+  }
+}
+
 #group-page,
 #performer-page,
 #studio-page,
