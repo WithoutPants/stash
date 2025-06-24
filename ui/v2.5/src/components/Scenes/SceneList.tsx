@@ -38,7 +38,7 @@ import {
   OperationDropdownItem,
 } from "../List/ListOperationButtons";
 import { useFilteredItemList } from "../List/ItemList";
-import { FilterTags } from "../List/FilterTags";
+import { FilterTagList, FilterTags, FilterTagsSlider } from "../List/FilterTags";
 import { Sidebar, SidebarPane, useSidebarState } from "../Shared/Sidebar";
 import { SidebarPerformersFilter } from "../List/Filters/PerformersFilter";
 import { SidebarStudiosFilter } from "../List/Filters/StudiosFilter";
@@ -63,6 +63,7 @@ import { Icon } from "../Shared/Icon";
 import { ListViewOptions } from "../List/ListViewOptions";
 import { PageSizeSelector, SortBySelect } from "../List/ListFilter";
 import { Criterion } from "src/models/list-filter/criteria/criterion";
+import Slider from "@ant-design/react-slick";
 
 function renderMetadataByline(result: GQL.FindScenesQueryResult) {
   const duration = result?.data?.findScenes?.duration;
@@ -360,7 +361,8 @@ const ListToolbarContent: React.FC<{
             count={criteria.length}
             title={intl.formatMessage({ id: "actions.sidebar.toggle" })}
           />
-          <FilterTags
+          
+          <FilterTagsSlider
             criteria={criteria}
             onEditCriterion={onEditCriterion}
             onRemoveCriterion={onRemoveCriterion}

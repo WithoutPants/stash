@@ -1070,12 +1070,16 @@ input[type="range"].blue-slider {
     scrollbar-width: none;
   }
 
+  .slick-slider {
+    // overflow-x: auto;
+    margin-left: 20px;
+    width: calc(100% - 35px - 50px - 0.5rem);
+  }
+
   .filter-tags {
     flex-wrap: nowrap;
     justify-content: flex-start;
     margin-bottom: 0;
-    overflow-x: auto;
-    width: calc(100% - 35px - 0.5rem);
 
     @include media-breakpoint-down(xs) {
       scrollbar-width: none;
