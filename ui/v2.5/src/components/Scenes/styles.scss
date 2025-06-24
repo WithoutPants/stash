@@ -1026,12 +1026,14 @@ input[type="range"].blue-slider {
 
 .scene-list-toolbar {
   flex-wrap: nowrap;
+  gap: 1rem;
   // offset the main padding
   margin-top: -0.5rem;
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
   position: sticky;
   top: $navbar-height;
+  width: 100%;
   z-index: 10;
 
   @include media-breakpoint-down(xs) {
@@ -1063,9 +1065,9 @@ input[type="range"].blue-slider {
   }
 
   > div:first-child {
+    flex: 1;
     overflow-x: auto;
     scrollbar-width: none;
-    width: 60%;
   }
 
   .filter-tags {
