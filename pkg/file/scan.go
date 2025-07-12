@@ -99,7 +99,7 @@ type ProgressReporter interface {
 	ExecuteTask(description string, fn func())
 }
 
-type scanJob struct {
+type ScanJob struct {
 	*Scanner
 
 	// handlers are called after a file has been scanned.
@@ -141,7 +141,7 @@ type ScanOptions struct {
 
 // Scan starts the scanning process.
 func (s *Scanner) Scan(ctx context.Context, handlers []Handler, options ScanOptions, progressReporter ProgressReporter) {
-	job := &scanJob{
+	job := &ScanJob{
 		Scanner:         s,
 		handlers:        handlers,
 		ProgressReports: progressReporter,
@@ -155,21 +155,36 @@ func (s *Scanner) Scan(ctx context.Context, handlers []Handler, options ScanOpti
 	job.execute(ctx)
 }
 
+func (s *Scanner) CreateScanJob(ctx context.Context, handlers []Handler, options ScanOptions, progressReporter ProgressReporter) *ScanJob {
+	job := &ScanJob{
+		Scanner:         s,
+		handlers:        handlers,
+		ProgressReports: progressReporter,
+		options:         options,
+		txnRetryer: txn.Retryer{
+			Manager: s.Repository.TxnManager,
+			Retries: maxRetries,
+		},
+	}
+
+	return job
+}
+
 type scanFile struct {
 	*models.BaseFile
 	fs   models.FS
 	info fs.FileInfo
 }
 
-func (s *scanJob) withTxn(ctx context.Context, fn func(ctx context.Context) error) error {
+func (s *ScanJob) withTxn(ctx context.Context, fn func(ctx context.Context) error) error {
 	return s.txnRetryer.WithTxn(ctx, fn)
 }
 
-func (s *scanJob) withDB(ctx context.Context, fn func(ctx context.Context) error) error {
+func (s *ScanJob) withDB(ctx context.Context, fn func(ctx context.Context) error) error {
 	return s.Repository.WithDB(ctx, fn)
 }
 
-func (s *scanJob) execute(ctx context.Context) {
+func (s *ScanJob) execute(ctx context.Context) {
 	paths := s.options.Paths
 	logger.Infof("scanning %d paths", len(paths))
 	s.startTime = time.Now()
@@ -204,7 +219,7 @@ func (s *scanJob) execute(ctx context.Context) {
 	}
 }
 
-func (s *scanJob) queueFiles(ctx context.Context, paths []string) error {
+func (s *ScanJob) queueFiles(ctx context.Context, paths []string) error {
 	var err error
 	s.ProgressReports.ExecuteTask("Walking directory tree", func() {
 		for _, p := range paths {
@@ -225,7 +240,7 @@ func (s *scanJob) queueFiles(ctx context.Context, paths []string) error {
 	return err
 }
 
-func (s *scanJob) queueFileFunc(ctx context.Context, f models.FS, zipFile *scanFile) fs.WalkDirFunc {
+func (s *ScanJob) queueFileFunc(ctx context.Context, f models.FS, zipFile *scanFile) fs.WalkDirFunc {
 	return func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// don't let errors prevent scanning
@@ -294,7 +309,7 @@ func (s *scanJob) queueFileFunc(ctx context.Context, f models.FS, zipFile *scanF
 		// if zip file is present, we handle immediately
 		if zipFile != nil {
 			s.ProgressReports.ExecuteTask("Scanning "+path, func() {
-				if err := s.handleFile(ctx, ff); err != nil {
+				if err := s.scanFileProgress(ctx, ff); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						logger.Errorf("error processing %q: %v", path, err)
 					}
@@ -326,7 +341,7 @@ func getFileSize(f models.FS, path string, info fs.FileInfo) (int64, error) {
 	return info.Size(), nil
 }
 
-func (s *scanJob) acceptEntry(ctx context.Context, path string, info fs.FileInfo) bool {
+func (s *ScanJob) acceptEntry(ctx context.Context, path string, info fs.FileInfo) bool {
 	// always accept if there's no filters
 	accept := len(s.options.ScanFilters) == 0
 	for _, filter := range s.options.ScanFilters {
@@ -340,7 +355,7 @@ func (s *scanJob) acceptEntry(ctx context.Context, path string, info fs.FileInfo
 	return accept
 }
 
-func (s *scanJob) scanZipFile(ctx context.Context, f scanFile) error {
+func (s *ScanJob) scanZipFile(ctx context.Context, f scanFile) error {
 	zipFS, err := f.fs.OpenZip(f.Path, f.Size)
 	if err != nil {
 		if errors.Is(err, errNotReaderAt) {
@@ -357,7 +372,7 @@ func (s *scanJob) scanZipFile(ctx context.Context, f scanFile) error {
 	return symWalk(zipFS, f.Path, s.queueFileFunc(ctx, zipFS, &f))
 }
 
-func (s *scanJob) processQueue(ctx context.Context) error {
+func (s *ScanJob) processQueue(ctx context.Context) error {
 	parallelTasks := s.options.ParallelTasks
 	if parallelTasks < 1 {
 		parallelTasks = 1
@@ -412,7 +427,7 @@ func (s *scanJob) processQueue(ctx context.Context) error {
 	return nil
 }
 
-func (s *scanJob) incrementProgress(f scanFile) {
+func (s *ScanJob) incrementProgress(f scanFile) {
 	// don't increment for files inside zip files since these aren't
 	// counted during the initial walking
 	if s.ProgressReports != nil && f.ZipFile == nil {
@@ -420,13 +435,13 @@ func (s *scanJob) incrementProgress(f scanFile) {
 	}
 }
 
-func (s *scanJob) processQueueItem(ctx context.Context, f scanFile) {
+func (s *ScanJob) processQueueItem(ctx context.Context, f scanFile) {
 	s.ProgressReports.ExecuteTask("Scanning "+f.Path, func() {
 		var err error
 		if f.info.IsDir() {
 			err = s.handleFolder(ctx, f)
 		} else {
-			err = s.handleFile(ctx, f)
+			err = s.scanFileProgress(ctx, f)
 		}
 
 		if err != nil && !errors.Is(err, context.Canceled) {
@@ -435,7 +450,7 @@ func (s *scanJob) processQueueItem(ctx context.Context, f scanFile) {
 	})
 }
 
-func (s *scanJob) getFolderID(ctx context.Context, path string) (*models.FolderID, error) {
+func (s *ScanJob) getFolderID(ctx context.Context, path string) (*models.FolderID, error) {
 	// check the folder cache first
 	if f, ok := s.folderPathToID.Load(path); ok {
 		v := f.(models.FolderID)
@@ -455,7 +470,7 @@ func (s *scanJob) getFolderID(ctx context.Context, path string) (*models.FolderI
 	return &ret.ID, nil
 }
 
-func (s *scanJob) getZipFileID(ctx context.Context, zipFile *scanFile) (*models.FileID, error) {
+func (s *ScanJob) getZipFileID(ctx context.Context, zipFile *scanFile) (*models.FileID, error) {
 	if zipFile == nil {
 		return nil, nil
 	}
@@ -485,7 +500,7 @@ func (s *scanJob) getZipFileID(ctx context.Context, zipFile *scanFile) (*models.
 	return &ret.Base().ID, nil
 }
 
-func (s *scanJob) handleFolder(ctx context.Context, file scanFile) error {
+func (s *ScanJob) handleFolder(ctx context.Context, file scanFile) error {
 	path := file.Path
 
 	return s.withTxn(ctx, func(ctx context.Context) error {
@@ -516,7 +531,7 @@ func (s *scanJob) handleFolder(ctx context.Context, file scanFile) error {
 	})
 }
 
-func (s *scanJob) onNewFolder(ctx context.Context, file scanFile) (*models.Folder, error) {
+func (s *ScanJob) onNewFolder(ctx context.Context, file scanFile) (*models.Folder, error) {
 	renamed, err := s.handleFolderRename(ctx, file)
 	if err != nil {
 		return nil, err
@@ -563,7 +578,7 @@ func (s *scanJob) onNewFolder(ctx context.Context, file scanFile) (*models.Folde
 	return toCreate, nil
 }
 
-func (s *scanJob) handleFolderRename(ctx context.Context, file scanFile) (*models.Folder, error) {
+func (s *ScanJob) handleFolderRename(ctx context.Context, file scanFile) (*models.Folder, error) {
 	// ignore folders in zip files
 	if file.ZipFileID != nil {
 		return nil, nil
@@ -604,7 +619,7 @@ func (s *scanJob) handleFolderRename(ctx context.Context, file scanFile) (*model
 	return renamedFrom, nil
 }
 
-func (s *scanJob) onExistingFolder(ctx context.Context, f scanFile, existing *models.Folder) (*models.Folder, error) {
+func (s *ScanJob) onExistingFolder(ctx context.Context, f scanFile, existing *models.Folder) (*models.Folder, error) {
 	update := false
 
 	// update if mod time is changed
@@ -642,10 +657,14 @@ func modTime(info fs.FileInfo) time.Time {
 	return info.ModTime().Truncate(time.Second)
 }
 
-func (s *scanJob) handleFile(ctx context.Context, f scanFile) error {
+func (s *ScanJob) scanFileProgress(ctx context.Context, f scanFile) error {
 	defer s.incrementProgress(f)
 
-	var ff models.File
+	_, err := s.scanFile(ctx, f)
+	return err
+}
+
+func (s *ScanJob) scanFile(ctx context.Context, f scanFile) (ff models.File, err error) {
 	// don't use a transaction to check if new or existing
 	if err := s.withDB(ctx, func(ctx context.Context) error {
 		// determine if file already exists in data store
@@ -664,7 +683,7 @@ func (s *scanJob) handleFile(ctx context.Context, f scanFile) error {
 		ff, err = s.onExistingFile(ctx, f, ff)
 		return err
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
 	if ff != nil && s.isZipFile(f.info.Name()) {
@@ -680,10 +699,60 @@ func (s *scanJob) handleFile(ctx context.Context, f scanFile) error {
 		}
 	}
 
-	return nil
+	return ff, nil
 }
 
-func (s *scanJob) isZipFile(path string) bool {
+func (s *ScanJob) ScanFile(ctx context.Context, path string) (models.File, error) {
+	info, err := s.FS.Lstat(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("file %q does not exist", path)
+		}
+
+		return nil, fmt.Errorf("lstat %q: %w", path, err)
+	}
+
+	if info.Mode().Type()&os.ModeSymlink == os.ModeSymlink {
+		finalPath, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return nil, fmt.Errorf("evaluating symlink %q: %w", path, err)
+		}
+		info, err = s.FS.Lstat(finalPath)
+		if err != nil {
+			return nil, fmt.Errorf("lstat final path %q: %w", finalPath, err)
+		}
+	}
+
+	if info.IsDir() {
+		return nil, fmt.Errorf("path %q is a directory, not a file", path)
+	}
+
+	if !s.acceptEntry(ctx, path, info) {
+		return nil, fmt.Errorf("path %q is not accepted by the configured filters", path)
+	}
+
+	size, err := getFileSize(s.FS, path, info)
+	if err != nil {
+		return nil, err
+	}
+
+	ff := scanFile{
+		BaseFile: &models.BaseFile{
+			DirEntry: models.DirEntry{
+				ModTime: modTime(info),
+			},
+			Path:     path,
+			Basename: filepath.Base(path),
+			Size:     size,
+		},
+		fs:   s.FS,
+		info: info,
+	}
+
+	return s.scanFile(ctx, ff)
+}
+
+func (s *ScanJob) isZipFile(path string) bool {
 	fExt := filepath.Ext(path)
 	for _, ext := range s.options.ZipFileExtensions {
 		if strings.EqualFold(fExt, "."+ext) {
@@ -694,7 +763,7 @@ func (s *scanJob) isZipFile(path string) bool {
 	return false
 }
 
-func (s *scanJob) onNewFile(ctx context.Context, f scanFile) (models.File, error) {
+func (s *ScanJob) onNewFile(ctx context.Context, f scanFile) (models.File, error) {
 	now := time.Now()
 
 	baseFile := f.BaseFile
@@ -768,7 +837,7 @@ func (s *scanJob) onNewFile(ctx context.Context, f scanFile) (models.File, error
 	return file, nil
 }
 
-func (s *scanJob) fireDecorators(ctx context.Context, fs models.FS, f models.File) (models.File, error) {
+func (s *ScanJob) fireDecorators(ctx context.Context, fs models.FS, f models.File) (models.File, error) {
 	for _, h := range s.FileDecorators {
 		var err error
 		f, err = h.Decorate(ctx, fs, f)
@@ -780,7 +849,7 @@ func (s *scanJob) fireDecorators(ctx context.Context, fs models.FS, f models.Fil
 	return f, nil
 }
 
-func (s *scanJob) fireHandlers(ctx context.Context, f models.File, oldFile models.File) error {
+func (s *ScanJob) fireHandlers(ctx context.Context, f models.File, oldFile models.File) error {
 	for _, h := range s.handlers {
 		if err := h.Handle(ctx, f, oldFile); err != nil {
 			return err
@@ -790,7 +859,7 @@ func (s *scanJob) fireHandlers(ctx context.Context, f models.File, oldFile model
 	return nil
 }
 
-func (s *scanJob) calculateFingerprints(fs models.FS, f *models.BaseFile, path string, useExisting bool) (models.Fingerprints, error) {
+func (s *ScanJob) calculateFingerprints(fs models.FS, f *models.BaseFile, path string, useExisting bool) (models.Fingerprints, error) {
 	// only log if we're (re)calculating fingerprints
 	if !useExisting {
 		logger.Infof("Calculating fingerprints for %s ...", path)
@@ -827,7 +896,7 @@ func appendFileUnique(v []models.File, toAdd []models.File) []models.File {
 	return v
 }
 
-func (s *scanJob) getFileFS(f *models.BaseFile) (models.FS, error) {
+func (s *ScanJob) getFileFS(f *models.BaseFile) (models.FS, error) {
 	if f.ZipFile == nil {
 		return s.FS, nil
 	}
@@ -841,7 +910,7 @@ func (s *scanJob) getFileFS(f *models.BaseFile) (models.FS, error) {
 	return fs.OpenZip(zipPath, f.Size)
 }
 
-func (s *scanJob) handleRename(ctx context.Context, f models.File, fp []models.Fingerprint) (models.File, error) {
+func (s *ScanJob) handleRename(ctx context.Context, f models.File, fp []models.Fingerprint) (models.File, error) {
 	var others []models.File
 
 	for _, tfp := range fp {
@@ -938,7 +1007,7 @@ func (s *scanJob) handleRename(ctx context.Context, f models.File, fp []models.F
 	return updated, nil
 }
 
-func (s *scanJob) isHandlerRequired(ctx context.Context, f models.File) bool {
+func (s *ScanJob) isHandlerRequired(ctx context.Context, f models.File) bool {
 	accept := len(s.options.HandlerRequiredFilters) == 0
 	for _, filter := range s.options.HandlerRequiredFilters {
 		// accept if any filter accepts the file
@@ -959,7 +1028,7 @@ func (s *scanJob) isHandlerRequired(ctx context.Context, f models.File) bool {
 // - file size
 // - image format, width or height
 // - video codec, audio codec, format, width, height, framerate or bitrate
-func (s *scanJob) isMissingMetadata(ctx context.Context, f scanFile, existing models.File) bool {
+func (s *ScanJob) isMissingMetadata(ctx context.Context, f scanFile, existing models.File) bool {
 	for _, h := range s.FileDecorators {
 		if h.IsMissingMetadata(ctx, f.fs, existing) {
 			return true
@@ -969,7 +1038,7 @@ func (s *scanJob) isMissingMetadata(ctx context.Context, f scanFile, existing mo
 	return false
 }
 
-func (s *scanJob) setMissingMetadata(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
+func (s *ScanJob) setMissingMetadata(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
 	path := existing.Base().Path
 	logger.Infof("Updating metadata for %s", path)
 
@@ -995,7 +1064,7 @@ func (s *scanJob) setMissingMetadata(ctx context.Context, f scanFile, existing m
 	return existing, nil
 }
 
-func (s *scanJob) setMissingFingerprints(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
+func (s *ScanJob) setMissingFingerprints(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
 	const useExisting = true
 	fp, err := s.calculateFingerprints(f.fs, existing.Base(), f.Path, useExisting)
 	if err != nil {
@@ -1020,7 +1089,7 @@ func (s *scanJob) setMissingFingerprints(ctx context.Context, f scanFile, existi
 }
 
 // returns a file only if it was updated
-func (s *scanJob) onExistingFile(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
+func (s *ScanJob) onExistingFile(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
 	base := existing.Base()
 	path := base.Path
 
@@ -1077,7 +1146,7 @@ func (s *scanJob) onExistingFile(ctx context.Context, f scanFile, existing model
 	return existing, nil
 }
 
-func (s *scanJob) removeOutdatedFingerprints(existing models.File, fp models.Fingerprints) {
+func (s *ScanJob) removeOutdatedFingerprints(existing models.File, fp models.Fingerprints) {
 	// HACK - if no MD5 fingerprint was returned, and the oshash is changed
 	// then remove the MD5 fingerprint
 	oshash := fp.For(models.FingerprintTypeOshash)
@@ -1105,7 +1174,7 @@ func (s *scanJob) removeOutdatedFingerprints(existing models.File, fp models.Fin
 }
 
 // returns a file only if it was updated
-func (s *scanJob) onUnchangedFile(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
+func (s *ScanJob) onUnchangedFile(ctx context.Context, f scanFile, existing models.File) (models.File, error) {
 	var err error
 
 	isMissingMetdata := s.isMissingMetadata(ctx, f, existing)

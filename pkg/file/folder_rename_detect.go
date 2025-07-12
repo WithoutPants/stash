@@ -75,7 +75,7 @@ func (d *folderRenameDetector) bestCandidate() *models.Folder {
 	return best.folder
 }
 
-func (s *scanJob) detectFolderMove(ctx context.Context, file scanFile) (*models.Folder, error) {
+func (s *ScanJob) detectFolderMove(ctx context.Context, file scanFile) (*models.Folder, error) {
 	// in order for a folder to be considered moved, the existing folder must be
 	// missing, and the majority of the old folder's files must be present, unchanged,
 	// in the new folder.
