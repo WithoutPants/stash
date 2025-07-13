@@ -99,6 +99,31 @@ type ProgressReporter interface {
 	ExecuteTask(description string, fn func())
 }
 
+type OnParentFolderNotFoundFunc func(ctx context.Context, j *ScanJob, f scanFile) (*models.Folder, error)
+
+func OnParentFolderNotFoundRetry(ctx context.Context, j *ScanJob, f scanFile) (*models.Folder, error) {
+	// if parent folder doesn't exist, assume it's not yet created
+	// add this file to the queue to be created later
+	if j.retrying {
+		// if we're retrying and the folder still doesn't exist, then it's a problem
+		return nil, fmt.Errorf("parent folder for %q doesn't exist", f.BaseFile.Path)
+	}
+
+	j.retryList = append(j.retryList, f)
+	return nil, nil
+}
+
+func OnParentFolderNotFoundCreate(ctx context.Context, j *ScanJob, f scanFile) (*models.Folder, error) {
+	var ret *models.Folder
+	err := j.withTxn(ctx, func(ctx context.Context) error {
+		missingFolderPath := filepath.Dir(f.Path)
+		var err error
+		ret, err = GetOrCreateFolderHierarchy(ctx, j.Repository.Folder, missingFolderPath)
+		return err
+	})
+	return ret, err
+}
+
 type ScanJob struct {
 	*Scanner
 
@@ -108,10 +133,13 @@ type ScanJob struct {
 	ProgressReports ProgressReporter
 	options         ScanOptions
 
-	startTime      time.Time
-	fileQueue      chan scanFile
-	retryList      []scanFile
-	retrying       bool
+	startTime time.Time
+	fileQueue chan scanFile
+
+	OnParentFolderNotFound OnParentFolderNotFoundFunc
+	retryList              []scanFile
+	retrying               bool
+
 	folderPathToID sync.Map
 	zipPathToID    sync.Map
 	count          int
@@ -147,10 +175,11 @@ func (s *Scanner) Scan(ctx context.Context, handlers []Handler, options ScanOpti
 
 func (s *Scanner) CreateScanJob(handlers []Handler, options ScanOptions, progressReporter ProgressReporter) *ScanJob {
 	job := &ScanJob{
-		Scanner:         s,
-		handlers:        handlers,
-		ProgressReports: progressReporter,
-		options:         options,
+		Scanner:                s,
+		OnParentFolderNotFound: OnParentFolderNotFoundRetry,
+		handlers:               handlers,
+		ProgressReports:        progressReporter,
+		options:                options,
 		txnRetryer: txn.Retryer{
 			Manager: s.Repository.TxnManager,
 			Retries: maxRetries,
@@ -769,15 +798,16 @@ func (s *ScanJob) onNewFile(ctx context.Context, f scanFile) (models.File, error
 	}
 
 	if parentFolderID == nil {
-		// if parent folder doesn't exist, assume it's not yet created
-		// add this file to the queue to be created later
-		if s.retrying {
-			// if we're retrying and the folder still doesn't exist, then it's a problem
-			return nil, fmt.Errorf("parent folder for %q doesn't exist", path)
+		parentFolder, err := s.OnParentFolderNotFound(ctx, s, f)
+		if err != nil {
+			return nil, err
 		}
 
-		s.retryList = append(s.retryList, f)
-		return nil, nil
+		if parentFolder == nil {
+			return nil, nil
+		}
+
+		parentFolderID = &parentFolder.ID
 	}
 
 	baseFile.ParentFolderID = *parentFolderID

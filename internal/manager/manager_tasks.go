@@ -167,6 +167,7 @@ func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.Fil
 	cfg := config.GetInstance()
 	p := &job.Progress{}
 
+	// TODO - run job to generate from task queue
 	const taskQueueSize = 200000
 	taskQueue := job.CreateTaskQueue(ctx, nil, taskQueueSize, cfg.GetParallelTasksWithAutoDetection())
 
@@ -184,6 +185,7 @@ func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.Fil
 	}
 
 	j := scanner.CreateScanJob(scanHandlers, options, p)
+	j.OnParentFolderNotFound = file.OnParentFolderNotFoundCreate
 	f, err := j.ScanFile(ctx, input.Path)
 
 	return f, err
