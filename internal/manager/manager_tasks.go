@@ -134,9 +134,9 @@ func (s *Manager) Scan(ctx context.Context, input ScanMetadataInput) (int, error
 	return s.JobManager.Add(ctx, "Scanning...", &scanJob), nil
 }
 
-func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.File, error) {
+func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.File, *int, error) {
 	if err := s.validateFFmpeg(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	scanner := &file.Scanner{
@@ -167,7 +167,6 @@ func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.Fil
 	cfg := config.GetInstance()
 	p := &job.Progress{}
 
-	// TODO - run job to generate from task queue
 	const taskQueueSize = 200000
 	taskQueue := job.CreateTaskQueue(ctx, nil, taskQueueSize, cfg.GetParallelTasksWithAutoDetection())
 
@@ -188,7 +187,19 @@ func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.Fil
 	j.OnParentFolderNotFound = file.OnParentFolderNotFoundCreate
 	f, err := j.ScanFile(ctx, input.Path)
 
-	return f, err
+	var jobID *int
+
+	if taskQueue.Len() > 0 {
+		// create a task queue job to execute the tasks
+		taskQueueJob := TaskQueueJob{
+			TaskQueue: taskQueue,
+		}
+
+		id := s.JobManager.Add(ctx, "Exporting...", &taskQueueJob)
+		jobID = &id
+	}
+
+	return f, jobID, err
 }
 
 func (s *Manager) Import(ctx context.Context) (int, error) {

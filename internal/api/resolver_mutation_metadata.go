@@ -25,14 +25,15 @@ func (r *mutationResolver) MetadataScan(ctx context.Context, input manager.ScanM
 }
 
 func (r *mutationResolver) MetadataScanFile(ctx context.Context, input manager.ScanFileInput) (*ScanFileResult, error) {
-	f, err := manager.GetInstance().ScanFile(ctx, input)
+	f, jobID, err := manager.GetInstance().ScanFile(ctx, input)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &ScanFileResult{
-		File: convertBaseFile(f),
+		File:          convertBaseFile(f),
+		GenerateJobID: jobID,
 	}, nil
 }
 

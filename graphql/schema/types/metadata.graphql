@@ -370,4 +370,5 @@ input CustomFieldsInput {
 
 type ScanFileResult {
   file: BaseFile!
+  generateJobID: Int
 }

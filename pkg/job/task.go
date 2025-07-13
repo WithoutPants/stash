@@ -12,10 +12,11 @@ type taskExec struct {
 }
 
 type TaskQueue struct {
-	Progress *Progress
-	wg       sizedwaitgroup.SizedWaitGroup
-	tasks    chan taskExec
-	done     chan struct{}
+	Progress       *Progress
+	OnTaskComplete func()
+	wg             sizedwaitgroup.SizedWaitGroup
+	tasks          chan taskExec
+	done           chan struct{}
 }
 
 func CreateAndStartTaskQueue(ctx context.Context, p *Progress, queueSize int, processes int) *TaskQueue {
@@ -56,6 +57,10 @@ func (tq *TaskQueue) Add(description string, fn func(ctx context.Context)) {
 	}
 }
 
+func (tq *TaskQueue) Len() int {
+	return len(tq.tasks)
+}
+
 func (tq *TaskQueue) Close() {
 	close(tq.tasks)
 	// wait for all tasks to finish
@@ -75,6 +80,7 @@ func (tq *TaskQueue) executer(ctx context.Context) {
 		tq.wg.Add()
 		go func() {
 			defer tq.wg.Done()
+			defer tq.OnTaskComplete()
 			tq.Progress.ExecuteTask(tt.description, func() {
 				tt.fn(ctx)
 			})
