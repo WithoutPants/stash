@@ -89,6 +89,11 @@ type ScanMetadataInput struct {
 	Filter *ScanMetaDataFilterInput `json:"filter"`
 }
 
+type ScanFileInput struct {
+	Path                       string `json:"path"`
+	config.ScanMetadataOptions `mapstructure:",squash"`
+}
+
 // Filter options for meta data scannning
 type ScanMetaDataFilterInput struct {
 	// If set, files with a modification time before this time point are ignored by the scan
@@ -127,6 +132,61 @@ func (s *Manager) Scan(ctx context.Context, input ScanMetadataInput) (int, error
 	}
 
 	return s.JobManager.Add(ctx, "Scanning...", &scanJob), nil
+}
+
+func (s *Manager) ScanFile(ctx context.Context, input ScanFileInput) (models.File, error) {
+	if err := s.validateFFmpeg(); err != nil {
+		return nil, err
+	}
+
+	scanner := &file.Scanner{
+		Repository: file.NewRepository(s.Repository),
+		FileDecorators: []file.Decorator{
+			&file.FilteredDecorator{
+				Decorator: &video.Decorator{
+					FFProbe: s.FFProbe,
+				},
+				Filter: file.FilterFunc(videoFileFilter),
+			},
+			&file.FilteredDecorator{
+				Decorator: &file_image.Decorator{
+					FFProbe: s.FFProbe,
+				},
+				Filter: file.FilterFunc(imageFileFilter),
+			},
+		},
+		FingerprintCalculator: &fingerprintCalculator{s.Config},
+		FS:                    &file.OsFS{},
+	}
+
+	i := ScanMetadataInput{
+		Paths:               []string{input.Path},
+		ScanMetadataOptions: input.ScanMetadataOptions,
+	}
+
+	cfg := config.GetInstance()
+	p := &job.Progress{}
+
+	const taskQueueSize = 200000
+	taskQueue := job.CreateTaskQueue(ctx, nil, taskQueueSize, cfg.GetParallelTasksWithAutoDetection())
+
+	mgr := GetInstance()
+	repo := mgr.Repository
+	var minModTime time.Time
+
+	scanHandlers := getScanFileHandlers(i, taskQueue)
+	options := file.ScanOptions{
+		ScanFilters:            []file.PathFilter{newScanFilter(cfg, repo, minModTime)},
+		ZipFileExtensions:      cfg.GetGalleryExtensions(),
+		ParallelTasks:          cfg.GetParallelTasksWithAutoDetection(),
+		HandlerRequiredFilters: []file.Filter{newHandlerRequiredFilter(cfg, repo)},
+		Rescan:                 input.Rescan,
+	}
+
+	j := scanner.CreateScanJob(scanHandlers, options, p)
+	f, err := j.ScanFile(ctx, input.Path)
+
+	return f, err
 }
 
 func (s *Manager) Import(ctx context.Context) (int, error) {

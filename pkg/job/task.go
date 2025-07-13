@@ -12,23 +12,39 @@ type taskExec struct {
 }
 
 type TaskQueue struct {
-	p     *Progress
-	wg    sizedwaitgroup.SizedWaitGroup
-	tasks chan taskExec
-	done  chan struct{}
+	Progress *Progress
+	wg       sizedwaitgroup.SizedWaitGroup
+	tasks    chan taskExec
+	done     chan struct{}
 }
 
-func NewTaskQueue(ctx context.Context, p *Progress, queueSize int, processes int) *TaskQueue {
-	ret := &TaskQueue{
-		p:     p,
-		wg:    sizedwaitgroup.New(processes),
-		tasks: make(chan taskExec, queueSize),
-		done:  make(chan struct{}),
-	}
+func CreateAndStartTaskQueue(ctx context.Context, p *Progress, queueSize int, processes int) *TaskQueue {
+	ret := CreateTaskQueue(ctx, p, queueSize, processes)
 
-	go ret.executer(ctx)
+	ret.Start(ctx)
 
 	return ret
+}
+
+func CreateTaskQueue(ctx context.Context, p *Progress, queueSize int, processes int) *TaskQueue {
+	ret := &TaskQueue{
+		Progress: p,
+		wg:       sizedwaitgroup.New(processes),
+		tasks:    make(chan taskExec, queueSize),
+	}
+
+	return ret
+}
+
+// Start will start the executor goroutine if it is not already started
+// This is not thread-safe!
+func (tq *TaskQueue) Start(ctx context.Context) {
+	if tq.done != nil {
+		return
+	}
+
+	tq.done = make(chan struct{})
+	go tq.executer(ctx)
 }
 
 func (tq *TaskQueue) Add(description string, fn func(ctx context.Context)) {
@@ -59,7 +75,7 @@ func (tq *TaskQueue) executer(ctx context.Context) {
 		tq.wg.Add()
 		go func() {
 			defer tq.wg.Done()
-			tq.p.ExecuteTask(tt.description, func() {
+			tq.Progress.ExecuteTask(tt.description, func() {
 				tt.fn(ctx)
 			})
 		}()

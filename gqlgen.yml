@@ -84,6 +84,8 @@ models:
     model: github.com/stashapp/stash/internal/manager.MigrateInput
   ScanMetadataInput:
     model: github.com/stashapp/stash/internal/manager.ScanMetadataInput
+  ScanFileInput:
+    model: github.com/stashapp/stash/internal/manager.ScanFileInput
   GenerateMetadataInput:
     model: github.com/stashapp/stash/internal/manager.GenerateMetadataInput
   GeneratePreviewOptionsInput:

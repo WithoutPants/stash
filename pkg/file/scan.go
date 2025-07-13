@@ -141,21 +141,11 @@ type ScanOptions struct {
 
 // Scan starts the scanning process.
 func (s *Scanner) Scan(ctx context.Context, handlers []Handler, options ScanOptions, progressReporter ProgressReporter) {
-	job := &ScanJob{
-		Scanner:         s,
-		handlers:        handlers,
-		ProgressReports: progressReporter,
-		options:         options,
-		txnRetryer: txn.Retryer{
-			Manager: s.Repository.TxnManager,
-			Retries: maxRetries,
-		},
-	}
-
+	job := s.CreateScanJob(handlers, options, progressReporter)
 	job.execute(ctx)
 }
 
-func (s *Scanner) CreateScanJob(ctx context.Context, handlers []Handler, options ScanOptions, progressReporter ProgressReporter) *ScanJob {
+func (s *Scanner) CreateScanJob(handlers []Handler, options ScanOptions, progressReporter ProgressReporter) *ScanJob {
 	job := &ScanJob{
 		Scanner:         s,
 		handlers:        handlers,

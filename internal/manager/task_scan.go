@@ -56,7 +56,7 @@ func (j *ScanJob) Execute(ctx context.Context, progress *job.Progress) error {
 	start := time.Now()
 
 	const taskQueueSize = 200000
-	taskQueue := job.NewTaskQueue(ctx, progress, taskQueueSize, cfg.GetParallelTasksWithAutoDetection())
+	taskQueue := job.CreateAndStartTaskQueue(ctx, progress, taskQueueSize, cfg.GetParallelTasksWithAutoDetection())
 
 	var minModTime time.Time
 	if j.input.Filter != nil && j.input.Filter.MinModTime != nil {
@@ -353,6 +353,66 @@ func galleryFileFilter(ctx context.Context, f models.File) bool {
 	return isZip(f.Base().Basename)
 }
 
+func getScanFileHandlers(options ScanMetadataInput, taskQueue *job.TaskQueue) []file.Handler {
+	mgr := GetInstance()
+	c := mgr.Config
+	r := mgr.Repository
+	pluginCache := mgr.PluginCache
+
+	ig := &imageGenerators{
+		input:              options,
+		taskQueue:          taskQueue,
+		progress:           nil,
+		paths:              mgr.Paths,
+		sequentialScanning: c.GetSequentialScanning(),
+	}
+
+	return []file.Handler{
+		&file.FilteredHandler{
+			Filter: file.FilterFunc(imageFileFilter),
+			Handler: &image.ScanHandler{
+				CreatorUpdater: r.Image,
+				GalleryFinder:  r.Gallery,
+				ScanGenerator:  ig,
+				ScanConfig: &scanConfig{
+					isGenerateThumbnails:       options.ScanGenerateThumbnails,
+					isGenerateClipPreviews:     options.ScanGenerateClipPreviews,
+					createGalleriesFromFolders: c.GetCreateGalleriesFromFolders(),
+				},
+				PluginCache: pluginCache,
+				Paths:       instance.Paths,
+			},
+		},
+		&file.FilteredHandler{
+			Filter: file.FilterFunc(galleryFileFilter),
+			Handler: &gallery.ScanHandler{
+				CreatorUpdater:     r.Gallery,
+				SceneFinderUpdater: r.Scene,
+				ImageFinderUpdater: r.Image,
+				PluginCache:        pluginCache,
+			},
+		},
+		&file.FilteredHandler{
+			Filter: file.FilterFunc(videoFileFilter),
+			Handler: &scene.ScanHandler{
+				CreatorUpdater: r.Scene,
+				CaptionUpdater: r.File,
+				PluginCache:    pluginCache,
+				ScanGenerator: &sceneGenerators{
+					input:               options,
+					taskQueue:           taskQueue,
+					progress:            nil,
+					paths:               mgr.Paths,
+					fileNamingAlgorithm: c.GetVideoFileNamingAlgorithm(),
+					sequentialScanning:  c.GetSequentialScanning(),
+				},
+				FileNamingAlgorithm: c.GetVideoFileNamingAlgorithm(),
+				Paths:               mgr.Paths,
+			},
+		},
+	}
+}
+
 func getScanHandlers(options ScanMetadataInput, taskQueue *job.TaskQueue, progress *job.Progress) []file.Handler {
 	mgr := GetInstance()
 	c := mgr.Config
@@ -420,10 +480,24 @@ type imageGenerators struct {
 	sequentialScanning bool
 }
 
+type progressWrapper struct{ p *job.Progress }
+
+func (p progressWrapper) AddTotal(total int) {
+	if p.p != nil {
+		p.p.AddTotal(total)
+	}
+}
+
+func (p progressWrapper) Increment() {
+	if p.p != nil {
+		p.p.Increment()
+	}
+}
+
 func (g *imageGenerators) Generate(ctx context.Context, i *models.Image, f models.File) error {
 	const overwrite = false
 
-	progress := g.progress
+	progress := progressWrapper{g.progress}
 	t := g.input
 	path := f.Base().Path
 
@@ -479,7 +553,7 @@ type sceneGenerators struct {
 func (g *sceneGenerators) Generate(ctx context.Context, s *models.Scene, f *models.VideoFile) error {
 	const overwrite = false
 
-	progress := g.progress
+	progress := progressWrapper{g.progress}
 	t := g.input
 	path := f.Path
 
