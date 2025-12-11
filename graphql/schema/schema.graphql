@@ -586,6 +586,8 @@ type Mutation {
   "Removes an IP address from the temporary DLNA whitelist"
   removeTempDLNAIP(input: RemoveTempDLNAIPInput!): Boolean!
 
+  downloadUpdate: ID!
+  installUpdate: ID!
   restart: Boolean!
 }
 

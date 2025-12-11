@@ -92,7 +92,7 @@ func main() {
 	defer server.Shutdown()
 
 	exit := make(chan int)
-	restartChan := make(chan struct{})
+	restartChan := make(chan string)
 
 	go func() {
 		err := server.Start(restartChan)
@@ -106,21 +106,24 @@ func main() {
 	desktop.Start(exit, &ui.FaviconProvider)
 
 	select {
-	case <-restartChan:
+	case execPath := <-restartChan:
 		logger.Info("Restarting stash...")
-		restart()
+		restart(execPath)
 	case exitCode = <-exit:
 	}
 }
 
-func restart() {
+func restart(execPath string) {
 	logger.Info("Restarting stash...")
 
 	// should be safe to restart the process now
-	execPath, err := os.Executable()
-	if err != nil {
-		exitError(fmt.Errorf("could not determine executable path for restart: %w", err))
-		return
+	if execPath == "" {
+		var err error
+		execPath, err = os.Executable()
+		if err != nil {
+			exitError(fmt.Errorf("could not determine executable path for restart: %w", err))
+			return
+		}
 	}
 
 	var args []string
@@ -128,12 +131,13 @@ func restart() {
 		args = os.Args[1:]
 	}
 
+	logger.Infof("Restarting process: %s %v", execPath, args)
 	e := exec.Command(execPath, args...)
 	e.Stdout = os.Stdout
 	e.Stderr = os.Stderr
 	e.Stdin = os.Stdin
 
-	if err = e.Start(); err != nil {
+	if err := e.Start(); err != nil {
 		exitError(fmt.Errorf("could not restart process: %w", err))
 	}
 

@@ -147,7 +147,7 @@ func (r *Resolver) withReadTxn(ctx context.Context, fn func(ctx context.Context)
 }
 
 func (r *mutationResolver) Restart(ctx context.Context) (bool, error) {
-	r.server.TriggerRestart()
+	r.server.TriggerRestart("")
 	return true, nil
 }
 

@@ -69,6 +69,8 @@ type Manager struct {
 	GroupService   GroupService
 
 	scanSubs *subscriptionManager
+
+	UpdatePath string
 }
 
 var instance *Manager

@@ -54,7 +54,7 @@ type Server struct {
 
 	manager *manager.Manager
 
-	restartChan chan<- struct{}
+	restartChan chan<- string
 }
 
 // TODO - os.DirFS doesn't implement ReadDir, so re-implement it here
@@ -301,7 +301,7 @@ func Initialize() (*Server, error) {
 // Start starts the server. It listens on the configured address and port.
 // It calls ListenAndServeTLS if TLS is configured, otherwise it calls ListenAndServe.
 // Calls to Start are blocked until the server is shutdown.
-func (s *Server) Start(restart chan<- struct{}) error {
+func (s *Server) Start(restart chan<- string) error {
 	logger.Infof("stash is listening on " + s.Addr)
 	logger.Infof("stash is running at " + s.displayAddress)
 
@@ -315,8 +315,8 @@ func (s *Server) Start(restart chan<- struct{}) error {
 }
 
 // TriggerRestart signals the server to restart gracefully.
-func (s *Server) TriggerRestart() {
-	s.restartChan <- struct{}{}
+func (s *Server) TriggerRestart(execPath string) {
+	s.restartChan <- execPath
 }
 
 // Shutdown gracefully shuts down the server without interrupting any active connections.

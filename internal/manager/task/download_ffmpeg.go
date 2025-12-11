@@ -67,14 +67,14 @@ func (s *DownloadFFmpegJob) download(ctx context.Context, progress *job.Progress
 	return nil
 }
 
-type downloadProgressReader struct {
+type ffmpegDownloadProgressReader struct {
 	io.Reader
 	setProgress func(taskProgress float64)
 	bytesRead   int64
 	total       int64
 }
 
-func (r *downloadProgressReader) Read(p []byte) (int, error) {
+func (r *ffmpegDownloadProgressReader) Read(p []byte) (int, error) {
 	read, err := r.Reader.Read(p)
 	if err == nil {
 		r.bytesRead += int64(read)
@@ -173,7 +173,7 @@ func (s *DownloadFFmpegJob) downloadFile(ctx context.Context, url string, out *o
 		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	reader := &downloadProgressReader{
+	reader := &ffmpegDownloadProgressReader{
 		Reader: resp.Body,
 		total:  resp.ContentLength,
 		setProgress: func(taskProgress float64) {
