@@ -53,6 +53,8 @@ type Server struct {
 	displayAddress string
 
 	manager *manager.Manager
+
+	restartChan chan<- struct{}
 }
 
 // TODO - os.DirFS doesn't implement ReadDir, so re-implement it here
@@ -162,6 +164,7 @@ func Initialize() (*Server, error) {
 	galleryService := mgr.GalleryService
 	groupService := mgr.GroupService
 	resolver := &Resolver{
+		server:         server,
 		repository:     repo,
 		sceneService:   sceneService,
 		imageService:   imageService,
@@ -298,15 +301,22 @@ func Initialize() (*Server, error) {
 // Start starts the server. It listens on the configured address and port.
 // It calls ListenAndServeTLS if TLS is configured, otherwise it calls ListenAndServe.
 // Calls to Start are blocked until the server is shutdown.
-func (s *Server) Start() error {
+func (s *Server) Start(restart chan<- struct{}) error {
 	logger.Infof("stash is listening on " + s.Addr)
 	logger.Infof("stash is running at " + s.displayAddress)
+
+	s.restartChan = restart
 
 	if s.TLSConfig != nil {
 		return s.ListenAndServeTLS("", "")
 	} else {
 		return s.ListenAndServe()
 	}
+}
+
+// TriggerRestart signals the server to restart gracefully.
+func (s *Server) TriggerRestart() {
+	s.restartChan <- struct{}{}
 }
 
 // Shutdown gracefully shuts down the server without interrupting any active connections.

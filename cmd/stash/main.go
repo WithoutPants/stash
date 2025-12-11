@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"runtime/pprof"
@@ -91,9 +92,10 @@ func main() {
 	defer server.Shutdown()
 
 	exit := make(chan int)
+	restartChan := make(chan struct{})
 
 	go func() {
-		err := server.Start()
+		err := server.Start(restartChan)
 		if !errors.Is(err, http.ErrServerClosed) {
 			exitError(fmt.Errorf("http server error: %w", err))
 			exit <- 1
@@ -103,7 +105,39 @@ func main() {
 	go handleSignals(exit)
 	desktop.Start(exit, &ui.FaviconProvider)
 
-	exitCode = <-exit
+	select {
+	case <-restartChan:
+		logger.Info("Restarting stash...")
+		restart()
+	case exitCode = <-exit:
+	}
+}
+
+func restart() {
+	logger.Info("Restarting stash...")
+
+	// should be safe to restart the process now
+	execPath, err := os.Executable()
+	if err != nil {
+		exitError(fmt.Errorf("could not determine executable path for restart: %w", err))
+		return
+	}
+
+	var args []string
+	if len(os.Args) > 1 {
+		args = os.Args[1:]
+	}
+
+	e := exec.Command(execPath, args...)
+	e.Stdout = os.Stdout
+	e.Stderr = os.Stderr
+	e.Stdin = os.Stdin
+
+	if err = e.Start(); err != nil {
+		exitError(fmt.Errorf("could not restart process: %w", err))
+	}
+
+	os.Exit(0)
 }
 
 // initLogTemp initializes a temporary logger for use before the config is loaded.

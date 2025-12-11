@@ -32,6 +32,7 @@ type hookExecutor interface {
 }
 
 type Resolver struct {
+	server         *Server
 	repository     models.Repository
 	sceneService   manager.SceneService
 	imageService   manager.ImageService
@@ -143,6 +144,11 @@ func (r *Resolver) withTxn(ctx context.Context, fn func(ctx context.Context) err
 
 func (r *Resolver) withReadTxn(ctx context.Context, fn func(ctx context.Context) error) error {
 	return r.repository.WithReadTxn(ctx, fn)
+}
+
+func (r *mutationResolver) Restart(ctx context.Context) (bool, error) {
+	r.server.TriggerRestart()
+	return true, nil
 }
 
 func (r *queryResolver) MarkerWall(ctx context.Context, q *string) (ret []*models.SceneMarker, err error) {
