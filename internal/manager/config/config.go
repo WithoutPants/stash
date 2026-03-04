@@ -43,9 +43,6 @@ const (
 	Password            = "password"
 	MaxSessionAge       = "max_session_age"
 
-	SignedURLExpiry        = "signed_url_expiry"
-	signedURLExpiryDefault = 60 * 60 * 24 // 24 hours in seconds
-
 	// SFWContentMode mode config key
 	SFWContentMode = "sfw_content_mode"
 
@@ -1219,6 +1216,7 @@ func (i *Config) ValidateStashBoxes(boxes []*StashBoxInput) error {
 
 // GetMaxSessionAge gets the maximum age for session cookies, in seconds.
 // Session cookie expiry times are refreshed every request.
+// Also dictates the maximum age of signed URLs.
 func (i *Config) GetMaxSessionAge() int {
 	i.RLock()
 	defer i.RUnlock()
@@ -1227,20 +1225,6 @@ func (i *Config) GetMaxSessionAge() int {
 	v := i.forKey(MaxSessionAge)
 	if v.Exists(MaxSessionAge) {
 		ret = v.Int(MaxSessionAge)
-	}
-
-	return ret
-}
-
-// GetSignedURLExpiry gets the expiry time for signed URLs, in seconds.
-func (i *Config) GetSignedURLExpiry() int {
-	i.RLock()
-	defer i.RUnlock()
-
-	ret := signedURLExpiryDefault
-	v := i.forKey(SignedURLExpiry)
-	if v.Exists(SignedURLExpiry) {
-		ret = v.Int(SignedURLExpiry)
 	}
 
 	return ret

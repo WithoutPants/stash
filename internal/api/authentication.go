@@ -31,21 +31,13 @@ func allowUnauthenticated(r *http.Request) bool {
 }
 
 func isSignedMediaRequest(r *http.Request) bool {
-	// Check if path starts with /scene/, /image/, or /gallery/
-	if !strings.HasPrefix(r.URL.Path, "/scene/") && !strings.HasPrefix(r.URL.Path, "/image/") && !strings.HasPrefix(r.URL.Path, "/gallery/") {
-		return false
-	}
-
 	// Check for signed URL parameters
 	q := r.URL.Query()
 	if q.Get(signedurl.ExpiresParam) == "" || q.Get(signedurl.SigParam) == "" {
 		return false
 	}
 
-	// Verify signature
-	c := config.GetInstance()
-	valid, err := signedurl.VerifyURL(r.URL.String(), c.GetJWTSignKey())
-	return err == nil && valid
+	return true
 }
 
 func authenticateHandler() func(http.Handler) http.Handler {
@@ -63,9 +55,16 @@ func authenticateHandler() func(http.Handler) http.Handler {
 
 			// Check for signed media requests
 			if isSignedMediaRequest(r) {
+				user, err := signedurl.VerifyURL(r.URL.String(), c.GetJWTSignKey())
+				if err != nil {
+					logger.Warnf("Invalid signed URL: %v", err)
+					http.Error(w, "Invalid or expired URL", http.StatusForbidden)
+					return
+				}
+
 				// Allow signed requests
 				ctx := r.Context()
-				ctx = session.SetCurrentUserID(ctx, c.GetUsername())
+				ctx = session.SetCurrentUserID(ctx, user)
 				r = r.WithContext(ctx)
 				next.ServeHTTP(w, r)
 				return
@@ -133,7 +132,9 @@ func authenticateHandler() func(http.Handler) http.Handler {
 				}
 			}
 
-			ctx = session.SetCurrentUserID(ctx, userID)
+			if userID != "" {
+				ctx = session.SetCurrentUserID(ctx, userID)
+			}
 
 			r = r.WithContext(ctx)
 

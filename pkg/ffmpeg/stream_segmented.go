@@ -436,7 +436,7 @@ func serveHLSManifest(sm *StreamManager, w http.ResponseWriter, r *http.Request,
 	urlQuery := url.Values{}
 	apikey := r.URL.Query().Get(apiKeyParamKey)
 	expires := r.URL.Query().Get(signedurl.ExpiresParam)
-	sig := r.URL.Query().Get(signedurl.SigParam)
+	user := r.URL.Query().Get(signedurl.UserParam)
 
 	if resolution != "" {
 		urlQuery.Set(resolutionParamKey, resolution)
@@ -446,11 +446,8 @@ func serveHLSManifest(sm *StreamManager, w http.ResponseWriter, r *http.Request,
 	if apikey != "" {
 		urlQuery.Set(apiKeyParamKey, apikey)
 	}
-	if expires != "" {
-		urlQuery.Set(signedurl.ExpiresParam, expires)
-	}
-	if sig != "" {
-		urlQuery.Set(signedurl.SigParam, sig)
+	if user != "" {
+		urlQuery.Set(signedurl.UserParam, user)
 	}
 
 	urlQueryString := ""
@@ -470,6 +467,10 @@ func serveHLSManifest(sm *StreamManager, w http.ResponseWriter, r *http.Request,
 	leftover := probeResult.FileDuration
 	segment := 0
 
+	signKey := sm.config.GetJWTSignKey()
+	expiresStr, _ := strconv.ParseInt(expires, 10, 64)
+	expireTime := time.Unix(expiresStr, 0)
+
 	for leftover > 0 {
 		thisLength := float64(segmentLength)
 		if leftover < thisLength {
@@ -477,7 +478,16 @@ func serveHLSManifest(sm *StreamManager, w http.ResponseWriter, r *http.Request,
 		}
 
 		fmt.Fprintf(&buf, "#EXTINF:%f,\n", thisLength)
-		fmt.Fprintf(&buf, "%s/%d.ts%s\n", baseURL, segment, urlQueryString)
+		segmentURL := fmt.Sprintf("%s/%d.ts%s", baseURL, segment, urlQueryString)
+		if user != "" {
+			segmentURL, err = signedurl.SignURL(segmentURL, []byte(signKey), user, expireTime)
+			if err != nil {
+				logger.Warnf("Invalid signed URL: %v", err)
+				http.Error(w, "Invalid or expired URL", http.StatusForbidden)
+				return
+			}
+		}
+		fmt.Fprintf(&buf, "%s\n", segmentURL)
 
 		leftover -= thisLength
 		segment++

@@ -14,13 +14,15 @@ type SceneURLBuilder struct {
 	BaseURL   string
 	SceneID   string
 	UpdatedAt string
+	User      *string
 }
 
-func NewSceneURLBuilder(baseURL string, scene *models.Scene) SceneURLBuilder {
+func NewSceneURLBuilder(baseURL string, scene *models.Scene, user *string) SceneURLBuilder {
 	return SceneURLBuilder{
 		BaseURL:   baseURL,
 		SceneID:   strconv.Itoa(scene.ID),
 		UpdatedAt: strconv.FormatInt(scene.UpdatedAt.Unix(), 10),
+		User:      user,
 	}
 }
 
@@ -40,13 +42,23 @@ func (b SceneURLBuilder) GetStreamURL(apiKey string) *url.URL {
 }
 
 func (b SceneURLBuilder) GetSignedStreamURL(secret []byte, expires time.Time) (string, error) {
-	rawURL := fmt.Sprintf("%s/scene/%s/stream", b.BaseURL, b.SceneID)
-	return signedurl.SignURL(rawURL, secret, expires)
+	rawURL := b.GetStreamURL("").String()
+
+	if b.User == nil {
+		// if no user, return unsigned URL (e.g., for public streaming)
+		return rawURL, nil
+	}
+
+	return signedurl.SignURL(rawURL, secret, *b.User, expires)
 }
 
 func (b SceneURLBuilder) GetSignedCaptionURL(secret []byte, expires time.Time) (string, error) {
 	rawURL := b.GetCaptionURL()
-	return signedurl.SignURL(rawURL, secret, expires)
+	if b.User == nil {
+		// if no user, return unsigned URL (e.g., for public streaming)
+		return rawURL, nil
+	}
+	return signedurl.SignURL(rawURL, secret, *b.User, expires)
 }
 
 func (b SceneURLBuilder) GetStreamPreviewURL() string {

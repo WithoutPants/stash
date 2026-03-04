@@ -10,6 +10,7 @@ import (
 	"github.com/stashapp/stash/internal/api/urlbuilders"
 	"github.com/stashapp/stash/internal/manager"
 	"github.com/stashapp/stash/pkg/models"
+	"github.com/stashapp/stash/pkg/session"
 )
 
 func (r *queryResolver) SceneStreams(ctx context.Context, id *string) ([]*manager.SceneStreamEndpoint, error) {
@@ -38,10 +39,11 @@ func (r *queryResolver) SceneStreams(ctx context.Context, id *string) ([]*manage
 	}
 
 	config := manager.GetInstance().Config
+	user := session.GetCurrentUserID(ctx)
 
 	baseURL, _ := ctx.Value(BaseURLCtxKey).(string)
-	builder := urlbuilders.NewSceneURLBuilder(baseURL, scene)
-	expires := time.Now().Add(24 * time.Hour)
+	builder := urlbuilders.NewSceneURLBuilder(baseURL, scene, user)
+	expires := time.Now().Add(time.Duration(config.GetMaxSessionAge()) * time.Second)
 	signedURL, err := builder.GetSignedStreamURL(config.GetJWTSignKey(), expires)
 	if err != nil {
 		// fallback to api key
