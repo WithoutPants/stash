@@ -59,6 +59,8 @@ func authenticateHandler() func(http.Handler) http.Handler {
 				return
 			}
 
+			r = session.SetLocalRequest(r)
+
 			// Check for signed media requests
 			if isSignedMediaRequest(r) {
 				// Allow signed requests
